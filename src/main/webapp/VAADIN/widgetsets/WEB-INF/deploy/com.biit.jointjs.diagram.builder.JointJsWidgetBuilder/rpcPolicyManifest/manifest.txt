@@ -1,2 +1,0 @@
-# Module com.biit.jointjs.diagram.builder.JointJsWidgetBuilder
-# RPC service class, partial path of RPC policy file
