@@ -1,0 +1,90 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf8"/>
+
+        <title>ABCD - Diagram Builder - Prototype.</title>
+
+        <link rel="stylesheet" type="text/css" href="./dist/joint.css" />
+        <link rel="stylesheet" type="text/css" href="./dist/joint.ui.stencil.css" />
+        <link rel="stylesheet" type="text/css" href="./dist/joint.ui.halo.css" />
+        <link rel="stylesheet" type="text/css" href="./dist/joint.ui.freeTransform.css" />
+        <link rel="stylesheet" type="text/css" href="./dist/joint.ui.selectionView.css" />
+        <link rel="stylesheet" type="text/css" href="./dist/joint.ui.paperScroller.css" />
+        <link rel="stylesheet" type="text/css" href="./dist/joint.ui.inspector.css" />
+        <link rel="stylesheet" type="text/css" href="./dist/joint.ui.tooltip.css" />
+        <link rel="stylesheet" type="text/css" href="./dist/joint.format.print.css" />
+
+        <link rel="stylesheet" type="text/css" href="./css/layout.css" />
+        <link rel="stylesheet" type="text/css" href="./css/paper.css" />
+        <link rel="stylesheet" type="text/css" href="./css/inspector.css" />
+        <link rel="stylesheet" type="text/css" href="./css/stencil.css" />
+        <link rel="stylesheet" type="text/css" href="./css/halo.css" />
+        <link rel="stylesheet" type="text/css" href="./css/selection.css" />
+        <link rel="stylesheet" type="text/css" href="./css/toolbar.css" />
+        <link rel="stylesheet" type="text/css" href="./css/statusbar.css" />
+        <link rel="stylesheet" type="text/css" href="./css/freetransform.css" />
+        <link rel="stylesheet" type="text/css" href="./css/style.css" />
+    </head>
+    <body>
+    	<div id="diagram-builder-html"> 
+	        <div class="toolbar-container">
+	            <button id="btn-undo" class="btn" data-tooltip="Undo"><img src="./img/undo.png" alt="Undo"/></button>
+	            <button id="btn-redo" class="btn" data-tooltip="Redo"><img src="./img/redo.png" alt="Redo"/></button>
+	            <button id="btn-clear" class="btn" data-tooltip="Clear Paper"><img src="./img/clear.png" alt="Clear"/></button>
+	            <button id="btn-svg" class="btn" data-tooltip="Open as SVG in a New Window">open as SVG</button>
+	            <button id="btn-png" class="btn" data-tooltip="Open as PNG in a New Window">open as PNG</button>
+	            <button id="btn-print" class="btn" data-tooltip="Open a Print Dialog"><img src="./img/print.png" alt="Print"/></button>
+	            <button id="btn-zoom-in" class="btn" data-tooltip="Zoom In"><img src="./img/zoomin.png" alt="Zoom in"/></button>
+	            <button id="btn-zoom-out" class="btn" data-tooltip="Zoom Out"><img src="./img/zoomout.png" alt="Zoom out"/></button>
+	            <button id="btn-fullscreen" class="btn" data-tooltip="Toggle Fullscreen Mode"><img src="./img/fullscreen.png" alt="Fullscreen"/></button>
+	            <button id="btn-to-front" class="btn" data-tooltip="Bring Object to Front">to front</button>
+	            <button id="btn-to-back" class="btn" data-tooltip="Send Object to Back">to back</button>
+	        </div>
+	        <div class="stencil-container">
+	            <label id="stencil-caption">stencil-caption</label>
+	        </div>
+	        <div class="paper-container"></div>
+	        <div class="inspector-container"></div>
+	        <div class="statusbar-container"><span class="rt-colab"></span></div>
+        </div>
+
+        <script src="./dist/joint.js"></script>
+
+        <script src="./dist/joint.shapes.devs.js"></script>
+        <script src="./dist/joint.shapes.fsa.js"></script>
+        <script src="./dist/joint.shapes.pn.js"></script>
+        <script src="./dist/joint.shapes.erd.js"></script>
+        <script src="./dist/joint.shapes.uml.js"></script>
+        <script src="./dist/joint.shapes.org.js"></script>
+
+        <script src="./dist/joint.ui.halo.js"></script>
+        <script src="./dist/joint.dia.freeTransform.js"></script>
+        <script src="./dist/joint.ui.freeTransform.js"></script>
+        <script src="./dist/joint.ui.inspector.js"></script>
+        <script src="./dist/joint.ui.selectionView.js"></script>
+        <script src="./dist/joint.ui.clipboard.js"></script>
+        <script src="./dist/joint.ui.stencil.js"></script>
+        <script src="./dist/joint.ui.paperScroller.js"></script>
+        <script src="./dist/joint.ui.tooltip.js"></script>
+        <script src="./dist/joint.format.svg.js"></script>
+        <script src="./dist/joint.format.raster.js"></script>
+        <script src="./dist/joint.format.print.js"></script>
+        <script src="./dist/joint.dia.command.js"></script>
+        <script src="./dist/joint.dia.validator.js"></script>
+        <script src="./dist/joint.layout.ForceDirected.js"></script>
+        <script src="./dist/joint.layout.GridLayout.js"></script>
+        <script src="./dist/joint.layout.DirectedGraph.js"></script>
+
+        <script src="./lib/keyboard.js"></script>
+
+        <script src="./src/inspector.js"></script>
+        <script src="./src/dataTypes.js"></script>
+        <script src="./src/main.js"></script>
+        <script>
+            var app = new Rappid;
+            Backbone.history.start();
+        </script>
+    </body>
+</html>
