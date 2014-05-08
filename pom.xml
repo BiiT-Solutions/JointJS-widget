@@ -2,14 +2,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<artifactId>jointjs-diagram-builder-vaadin-component</artifactId>
-	<groupId>com.biit</groupId>
-	<version>${project.version}</version>
+	<artifactId>jointjs-diagram-builder-widget</artifactId>
+	<groupId>com.biit.vaadin</groupId>
+	<version>${widget.version}</version>
 	<packaging>jar</packaging>
 	<name>BiiT JointJs Diagram Builder for Vaadin</name>
 
 	<properties>
-		<project.version>0.0.1</project.version>
+		<widget.version>0.0.1</widget.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<directory.root>src/main/java</directory.root>
 		<directory.resources>src/main/resources</directory.resources>
@@ -112,7 +112,7 @@
 				<activeByDefault>true</activeByDefault>
 			</activation>
 			<properties>
-				<projectVersion>${project.version}</projectVersion>
+				<projectVersion>${widget.version}</projectVersion>
 			</properties>
 		</profile>
 		<profile>
@@ -123,7 +123,7 @@
 				</property>
 			</activation>
 			<properties>
-				<projectVersion>${project.version}-WIDGET</projectVersion>
+				<projectVersion>${widget.version}-WIDGET</projectVersion>
 			</properties>
 			<build>
 				<resources>
@@ -143,6 +143,7 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-compiler-plugin</artifactId>
+						<version>${maven-compiler-plugin.version}</version>
 						<configuration>
 							<excludes>
 								<exclude>${directory.appexclude}</exclude>
