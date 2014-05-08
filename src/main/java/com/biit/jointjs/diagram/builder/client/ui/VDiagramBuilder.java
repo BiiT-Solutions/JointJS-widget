@@ -16,8 +16,6 @@
 
 package com.biit.jointjs.diagram.builder.client.ui;
 
-import java.util.logging.Logger;
-
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
@@ -35,7 +33,7 @@ public class VDiagramBuilder extends ResizeLayoutPanel {
 	public static final String STATUSBAR_CONTAINER_CLASS = "statusbar-container";
 
 	private Element vaadinElement;
-	
+
 	private boolean initializated = false;
 
 	/**
@@ -49,29 +47,27 @@ public class VDiagramBuilder extends ResizeLayoutPanel {
 
 		vaadinElement = getElement();
 		vaadinElement.insertFirst(createDiagramBuilderElement());
-		
-		initializated = false;
 
-		Logger.getLogger("kiwi").severe("create");
+		initializated = false;
 	}
 
 	private Element createDiagramBuilderElement() {
-		Element diagramBuilder = createElement(COMPONENT_ID,null);
-		
+		Element diagramBuilder = createElement(COMPONENT_ID, null);
+
 		Element stencilContainer = createStencilContainer();
 		Element paperContainer = createElement(null, PAPER_CONTAINER_CLASS);
 		Element inspectorContainer = createElement(null, INSPECTOR_CONTAINER_CLASS);
 		Element statusBarContainer = createElement(null, STATUSBAR_CONTAINER_CLASS);
-		
+
 		diagramBuilder.appendChild(stencilContainer);
 		diagramBuilder.appendChild(paperContainer);
 		diagramBuilder.appendChild(inspectorContainer);
 		diagramBuilder.appendChild(statusBarContainer);
-		
+
 		return diagramBuilder;
 	}
-	
-	private Element createStencilContainer(){
+
+	private Element createStencilContainer() {
 		Element stencilContainer = createElement(null, STENCIL_CONTAINER_CLASS);
 		Element stencilCaption = DOM.createLabel();
 		stencilCaption.setId(STENCIL_CAPTION_ID);
@@ -94,26 +90,20 @@ public class VDiagramBuilder extends ResizeLayoutPanel {
 	@Override
 	public void onAttach() {
 		super.onAttach();
-
-		Logger.getLogger("kiwi").severe("attach");
-		if(!initializated){
-			initializated=true;
-			init();			
+		if (!initializated) {
+			initializated = true;
+			init();
 		}
 	}
 
 	@Override
 	public void onDetach() {
 		super.onDetach();
-		Logger.getLogger("kiwi").severe("detach");
 	}
 
 	@Override
 	public void onLoad() {
 		super.onLoad();
-
-		Logger.getLogger("kiwi").severe("load");
-
 	}
 
 	@Override
@@ -123,14 +113,12 @@ public class VDiagramBuilder extends ResizeLayoutPanel {
 		// childNodes.getItem(i).removeFromParent();
 		// }
 		super.onUnload();
-		Logger.getLogger("kiwi").severe("unload");
 	}
 
 	public native void init()
-	/*-{	 	
-	 	$wnd.console.error("init");	  
+	/*-{	  
 	 	$wnd.app = new $wnd.Rappid;
-        $wnd.Backbone.history.start();
+	    $wnd.Backbone.history.start();
 	}-*/
 	;
 
@@ -139,58 +127,70 @@ public class VDiagramBuilder extends ResizeLayoutPanel {
 		$wnd.app.commandManager.undo();
 	}-*/
 	;
-	
+
 	public native void redo()
 	/*-{
 		$wnd.app.commandManager.redo();
 	}-*/
 	;
-	
+
 	public native void clear()
 	/*-{
 		$wnd.app.graph.clear();
 	}-*/
 	;
-	
+
 	public native void openAsSvg()
 	/*-{
 		$wnd.app.paper.openAsSVG();
 	}-*/
 	;
-	
+
 	public native void openAsPng()
 	/*-{
 		$wnd.app.openAsPNG();
 	}-*/
 	;
-	
+
 	public native void zoomIn()
 	/*-{
 		$wnd.app.zoomIn();
 	}-*/
 	;
-	
+
 	public native void zoomOut()
 	/*-{
 		$wnd.app.zoomOut();
 	}-*/
 	;
-	
+
 	public native void print()
 	/*-{
 		$wnd.app.paper.print({detachBody : false});
 	}-*/
 	;
-	
+
 	public native void toFront()
 	/*-{
 		$wnd.app.selection.invoke('toFront');
 	}-*/
 	;
-	
+
 	public native void toBack()
 	/*-{
 		$wnd.app.selection.invoke('toBack');
+	}-*/
+	;
+
+	public native String toJson()
+	/*-{
+		return JSON.stringify($wnd.app.graph);
+	}-*/
+	;
+
+	public native void fromJson(String jsonString)
+	/*-{
+		$wnd.app.graph.fromJSON(JSON.parse(jsonString));
 	}-*/
 	;
 }

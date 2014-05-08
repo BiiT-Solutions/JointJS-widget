@@ -17,6 +17,7 @@
 package com.biit.jointjs.diagram.builder.demoproject;
 
 import com.biit.jointjs.diagram.builder.server.DiagramBuilder;
+import com.biit.jointjs.diagram.builder.server.DiagramBuilder.DiagramBuilderJsonGenerationListener;
 import com.vaadin.annotations.Title;
 import com.vaadin.annotations.Widgetset;
 import com.vaadin.server.VaadinRequest;
@@ -33,9 +34,11 @@ public class JointJsDiagramBuilderUi extends UI {
 	private static final long serialVersionUID = 294546208568012664L;
 
 	private DiagramBuilder diagramBuilder = new DiagramBuilder();
+	private String jsonStringData;
 
 	@Override
 	protected void init(VaadinRequest request) {
+		jsonStringData = null;
 
 		VerticalLayout layout = new VerticalLayout();
 		layout.setMargin(true);
@@ -43,10 +46,10 @@ public class JointJsDiagramBuilderUi extends UI {
 		setContent(layout);
 
 		diagramBuilder.setSizeFull();
-		
+
 		HorizontalLayout buttons = new HorizontalLayout();
 		buttons.setHeight(null);
-		Button undoButton = new Button("Undo",new ClickListener() {
+		Button undoButton = new Button("Undo", new ClickListener() {
 			private static final long serialVersionUID = 4788920350294413743L;
 
 			public void buttonClick(ClickEvent event) {
@@ -54,7 +57,7 @@ public class JointJsDiagramBuilderUi extends UI {
 			}
 		});
 		buttons.addComponent(undoButton);
-		Button redoButton = new Button("Redo",new ClickListener() {
+		Button redoButton = new Button("Redo", new ClickListener() {
 			private static final long serialVersionUID = 4788920350294413743L;
 
 			public void buttonClick(ClickEvent event) {
@@ -62,7 +65,7 @@ public class JointJsDiagramBuilderUi extends UI {
 			}
 		});
 		buttons.addComponent(redoButton);
-		Button clearButton = new Button("Clear",new ClickListener() {
+		Button clearButton = new Button("Clear", new ClickListener() {
 			private static final long serialVersionUID = 4788920350294413743L;
 
 			public void buttonClick(ClickEvent event) {
@@ -70,7 +73,7 @@ public class JointJsDiagramBuilderUi extends UI {
 			}
 		});
 		buttons.addComponent(clearButton);
-		Button svgButton = new Button("Svg",new ClickListener() {
+		Button svgButton = new Button("Svg", new ClickListener() {
 			private static final long serialVersionUID = 4788920350294413743L;
 
 			public void buttonClick(ClickEvent event) {
@@ -78,7 +81,7 @@ public class JointJsDiagramBuilderUi extends UI {
 			}
 		});
 		buttons.addComponent(svgButton);
-		Button pngButton = new Button("Png",new ClickListener() {
+		Button pngButton = new Button("Png", new ClickListener() {
 			private static final long serialVersionUID = 4788920350294413743L;
 
 			public void buttonClick(ClickEvent event) {
@@ -86,7 +89,7 @@ public class JointJsDiagramBuilderUi extends UI {
 			}
 		});
 		buttons.addComponent(pngButton);
-		Button zoomInButton = new Button("zoomIn",new ClickListener() {
+		Button zoomInButton = new Button("zoomIn", new ClickListener() {
 			private static final long serialVersionUID = 4788920350294413743L;
 
 			public void buttonClick(ClickEvent event) {
@@ -94,7 +97,7 @@ public class JointJsDiagramBuilderUi extends UI {
 			}
 		});
 		buttons.addComponent(zoomInButton);
-		Button zoomOutButton = new Button("zoomOut",new ClickListener() {
+		Button zoomOutButton = new Button("zoomOut", new ClickListener() {
 			private static final long serialVersionUID = 4788920350294413743L;
 
 			public void buttonClick(ClickEvent event) {
@@ -102,7 +105,7 @@ public class JointJsDiagramBuilderUi extends UI {
 			}
 		});
 		buttons.addComponent(zoomOutButton);
-		Button printButton = new Button("print",new ClickListener() {
+		Button printButton = new Button("print", new ClickListener() {
 			private static final long serialVersionUID = 4788920350294413743L;
 
 			public void buttonClick(ClickEvent event) {
@@ -110,7 +113,7 @@ public class JointJsDiagramBuilderUi extends UI {
 			}
 		});
 		buttons.addComponent(printButton);
-		Button toFrontButton = new Button("toFront",new ClickListener() {
+		Button toFrontButton = new Button("toFront", new ClickListener() {
 			private static final long serialVersionUID = 4788920350294413743L;
 
 			public void buttonClick(ClickEvent event) {
@@ -118,7 +121,7 @@ public class JointJsDiagramBuilderUi extends UI {
 			}
 		});
 		buttons.addComponent(toFrontButton);
-		Button toBackButton = new Button("toBack",new ClickListener() {
+		Button toBackButton = new Button("toBack", new ClickListener() {
 			private static final long serialVersionUID = 4788920350294413743L;
 
 			public void buttonClick(ClickEvent event) {
@@ -126,7 +129,33 @@ public class JointJsDiagramBuilderUi extends UI {
 			}
 		});
 		buttons.addComponent(toBackButton);
-		
+		Button saveButton = new Button("save", new ClickListener() {
+			private static final long serialVersionUID = 4788920350294413743L;
+
+			public void buttonClick(ClickEvent event) {
+				diagramBuilder.toJson(new DiagramBuilderJsonGenerationListener() {
+
+					public void generatedJsonString(String jsonString) {
+						jsonStringData = jsonString;
+						System.out.println(jsonStringData);
+					}
+				});
+			}
+		});
+		buttons.addComponent(saveButton);
+		Button loadButton = new Button("load", new ClickListener() {
+			private static final long serialVersionUID = -6266207671920614850L;
+
+			public void buttonClick(ClickEvent event) {
+				if(jsonStringData!=null){
+					diagramBuilder.fromJson(jsonStringData);
+				}else{
+					System.out.println("No data to load");
+				}
+			}
+		});
+		buttons.addComponent(loadButton);
+
 		layout.addComponent(buttons);
 		layout.setExpandRatio(buttons, 0.0f);
 		layout.addComponent(diagramBuilder);

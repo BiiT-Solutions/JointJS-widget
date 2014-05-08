@@ -24,4 +24,8 @@ public interface DiagramBuilderClientRpc extends ClientRpc {
 
 	void toBack();
 
+	void toJsonQuery();
+
+	void fromJson(String jsonString);
+
 }

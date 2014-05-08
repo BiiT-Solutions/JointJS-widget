@@ -56,6 +56,15 @@ public class DiagramBuilderConnector extends AbstractComponentConnector {
 		public void toBack() {
 			getWidget().toBack();
 		}
+
+		public void toJsonQuery() {
+			String jsonString = getWidget().toJson();
+			serverRpc.toJsonAnswer(jsonString);
+		}
+
+		public void fromJson(String jsonString) {
+			getWidget().fromJson(jsonString);
+		}
 	}
 
 	public DiagramBuilderConnector() {

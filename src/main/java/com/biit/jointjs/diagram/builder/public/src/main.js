@@ -9,7 +9,6 @@ var Rappid = Backbone.Router.extend({
 
     initialize: function(options) {
         this.options = options || {};
-        console.error("initialize - main js");
         initializeDataTypes();
         initializeInspectorDataTypes();
     },
@@ -27,7 +26,6 @@ var Rappid = Backbone.Router.extend({
         this.initializeHaloAndInspector();
         this.initializeClipboard();
         this.initializeCommandManager();
-        this.initializeToolbar();
         // Intentionally commented out. See the `initializeValidator()` method for reasons.
         // Uncomment for demo purposes.
         //this.initializeValidator();

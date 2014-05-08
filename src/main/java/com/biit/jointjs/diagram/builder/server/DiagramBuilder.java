@@ -16,6 +16,9 @@
 
 package com.biit.jointjs.diagram.builder.server;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.biit.jointjs.diagram.builder.client.DiagramBuilderClientRpc;
 import com.biit.jointjs.diagram.builder.client.DiagramBuilderServerRpc;
 import com.vaadin.annotations.JavaScript;
@@ -53,13 +56,19 @@ import com.vaadin.ui.AbstractComponent;
 public class DiagramBuilder extends AbstractComponent {
 	private static final long serialVersionUID = -6846503871084162514L;
 	private DiagramBuilderServerRpc serverRpc;
+	private List<DiagramBuilderJsonGenerationListener> listeners;
 
 	private class DiagramBuilderServerRpcImp implements DiagramBuilderServerRpc {
 		private static final long serialVersionUID = 6985050604356040816L;
+
+		public void toJsonAnswer(String jsonString) {
+			fireAndCleanListeners(jsonString);
+		}
 	};
 
 	public DiagramBuilder() {
 		super();
+		listeners = new ArrayList<DiagramBuilderJsonGenerationListener>();
 		serverRpc = new DiagramBuilderServerRpcImp();
 		registerRpc(serverRpc);
 	}
@@ -69,42 +78,62 @@ public class DiagramBuilder extends AbstractComponent {
 	}
 
 	public void undo(){
-		getRpcProxy(DiagramBuilderClientRpc.class).undo();
+		getClientRpc().undo();
 	}
 	
 	public void redo(){
-		getRpcProxy(DiagramBuilderClientRpc.class).redo();
+		getClientRpc().redo();
 	}
 	
 	public void clear(){
-		getRpcProxy(DiagramBuilderClientRpc.class).clear();
+		getClientRpc().clear();
 	}
 	
 	public void openAsSvg(){
-		getRpcProxy(DiagramBuilderClientRpc.class).openAsSvg();
+		getClientRpc().openAsSvg();
 	}
 	
 	public void openAsPng(){
-		getRpcProxy(DiagramBuilderClientRpc.class).openAsPng();
+		getClientRpc().openAsPng();
 	}
 	
 	public void zoomIn(){
-		getRpcProxy(DiagramBuilderClientRpc.class).zoomIn();
+		getClientRpc().zoomIn();
 	}
 	
 	public void zoomOut(){
-		getRpcProxy(DiagramBuilderClientRpc.class).zoomOut();
+		getClientRpc().zoomOut();
 	}
 	
 	public void print(){
-		getRpcProxy(DiagramBuilderClientRpc.class).print();
+		getClientRpc().print();
 	}
 	
 	public void toFront(){
-		getRpcProxy(DiagramBuilderClientRpc.class).toFront();
+		getClientRpc().toFront();
 	}
 	
 	public void toBack(){
-		getRpcProxy(DiagramBuilderClientRpc.class).toBack();
+		getClientRpc().toBack();
+	}
+	
+	public void toJson(DiagramBuilderJsonGenerationListener listener){
+		listeners.add(listener);
+		getClientRpc().toJsonQuery();
+	}
+	
+	public void fromJson(String jsonString){
+		getRpcProxy(DiagramBuilderClientRpc.class).fromJson(jsonString);
+	}
+	
+	public interface DiagramBuilderJsonGenerationListener {
+		public void generatedJsonString(String jsonString);		
+	}
+	
+	private synchronized void fireAndCleanListeners(String jsonString){
+		for(DiagramBuilderJsonGenerationListener listener: listeners){
+			listener.generatedJsonString(jsonString);
+		}
+		listeners.clear();
 	}
 }
