@@ -2,19 +2,19 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<artifactId>jointjs-diagram-builder-widget</artifactId>
+	<artifactId>jointjs-diagram-builder</artifactId>
 	<groupId>com.biit.vaadin</groupId>
-	<version>${widget.version}</version>
+	<version>${profile.version}</version>
 	<packaging>jar</packaging>
-	<name>BiiT JointJs Diagram Builder for Vaadin</name>
+	<name>JointJs Diagram Builder for Vaadin</name>
 
 	<properties>
 		<widget.version>0.0.1</widget.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<directory.root>src/main/java</directory.root>
 		<directory.resources>src/main/resources</directory.resources>
-		<directory.appexclude>**/com/biit/vaadin/calendarproject/*</directory.appexclude>
-		<vaadin.version>7.1.14</vaadin.version>
+		<directory.appexclude>**/com/biit/vaadin/jointjs/*</directory.appexclude>
+		<vaadin.version>7.1.15</vaadin.version>
 		<vaadin.plugin.version>${vaadin.version}</vaadin.plugin.version>
 		<log4j.version>1.2.17</log4j.version>
 		<org.testng.version>6.8.7</org.testng.version>
@@ -112,7 +112,7 @@
 				<activeByDefault>true</activeByDefault>
 			</activation>
 			<properties>
-				<projectVersion>${widget.version}</projectVersion>
+				<profile.version>${widget.version}</profile.version>
 			</properties>
 		</profile>
 		<profile>
@@ -123,7 +123,7 @@
 				</property>
 			</activation>
 			<properties>
-				<projectVersion>${widget.version}-WIDGET</projectVersion>
+				<profile.version>${widget.version}-WIDGET</profile.version>
 			</properties>
 			<build>
 				<resources>
