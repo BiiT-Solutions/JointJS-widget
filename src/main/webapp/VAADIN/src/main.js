@@ -2,19 +2,23 @@
 DiagramBuilder = {};
 
 var Rappid = Backbone.Router.extend({
-
+	
     routes: {
         '*path': 'home'
     },
 
     initialize: function(options) {
+    	this.initialized = false;
         this.options = options || {};
         initializeDataTypes();
         initializeInspectorDataTypes();
     },
 
     home: function() {
-        this.initializeEditor();
+    	if(!this.initialized){
+	        this.initializeEditor();
+	        this.initialized = true;
+    	}
     },
 
     initializeEditor: function() {

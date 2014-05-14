@@ -16,6 +16,8 @@
 
 package com.biit.jointjs.diagram.builder.client.ui;
 
+import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
@@ -34,8 +36,6 @@ public class VDiagramBuilder extends ResizeLayoutPanel {
 
 	private Element vaadinElement;
 
-	private boolean initializated = false;
-
 	/**
 	 * The constructor should first call super() to initialize the component and
 	 * then handle any initialization relevant to Vaadin.
@@ -46,9 +46,6 @@ public class VDiagramBuilder extends ResizeLayoutPanel {
 		setStyleName(CLASSNAME);
 
 		vaadinElement = getElement();
-		vaadinElement.insertFirst(createDiagramBuilderElement());
-
-		initializated = false;
 	}
 
 	private Element createDiagramBuilderElement() {
@@ -90,10 +87,8 @@ public class VDiagramBuilder extends ResizeLayoutPanel {
 	@Override
 	public void onAttach() {
 		super.onAttach();
-		if (!initializated) {
-			initializated = true;
-			init();
-		}
+		vaadinElement.insertFirst(createDiagramBuilderElement());
+		init();
 	}
 
 	@Override
@@ -108,17 +103,24 @@ public class VDiagramBuilder extends ResizeLayoutPanel {
 
 	@Override
 	public void onUnload() {
-		// NodeList<Node> childNodes = paperElement.getChildNodes();
-		// for (int i = 0; i < childNodes.getLength(); i++) {
-		// childNodes.getItem(i).removeFromParent();
-		// }
+		stop();
+		NodeList<Node> childNodes = vaadinElement.getChildNodes();
+		for (int i = 0; i < childNodes.getLength(); i++) {
+			childNodes.getItem(i).removeFromParent();
+		}
 		super.onUnload();
 	}
 
 	public native void init()
-	/*-{	  
+	/*-{
 	 	$wnd.app = new $wnd.Rappid;
 	    $wnd.Backbone.history.start();
+	}-*/
+	;
+
+	public native void stop()
+	/*-{
+		$wnd.Backbone.history.stop();
 	}-*/
 	;
 
