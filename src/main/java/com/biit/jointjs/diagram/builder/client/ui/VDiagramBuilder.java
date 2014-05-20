@@ -31,7 +31,6 @@ public class VDiagramBuilder extends ResizeLayoutPanel {
 	public static final String STENCIL_CONTAINER_CLASS = "stencil-container";
 	public static final String STENCIL_CAPTION_ID = "stencil-caption";
 	public static final String PAPER_CONTAINER_CLASS = "paper-container";
-	public static final String INSPECTOR_CONTAINER_CLASS = "inspector-container";
 	public static final String STATUSBAR_CONTAINER_CLASS = "statusbar-container";
 
 	private Element vaadinElement;
@@ -53,20 +52,18 @@ public class VDiagramBuilder extends ResizeLayoutPanel {
 
 		Element stencilContainer = createStencilContainer();
 		Element paperContainer = createElement(null, PAPER_CONTAINER_CLASS);
-		Element inspectorContainer = createElement(null, INSPECTOR_CONTAINER_CLASS);
-		Element statusBarContainer = createElement(null, STATUSBAR_CONTAINER_CLASS);
+		//Element statusBarContainer = createElement(null, STATUSBAR_CONTAINER_CLASS);
 
 		diagramBuilder.appendChild(stencilContainer);
 		diagramBuilder.appendChild(paperContainer);
-		diagramBuilder.appendChild(inspectorContainer);
-		diagramBuilder.appendChild(statusBarContainer);
+		//diagramBuilder.appendChild(statusBarContainer);
 
 		return diagramBuilder;
 	}
 
 	private Element createStencilContainer() {
 		Element stencilContainer = createElement(null, STENCIL_CONTAINER_CLASS);
-		Element stencilCaption = DOM.createLabel();
+		Element stencilCaption = DOM.createDiv();
 		stencilCaption.setId(STENCIL_CAPTION_ID);
 		stencilCaption.setInnerText("stencil-caption");
 		stencilContainer.appendChild(stencilCaption);

@@ -5,7 +5,7 @@
    top: 0;
    left: 0;
    right: 0;
-   padding-left: 246px;
+   padding-left: 150px;
    height: 40px;
 }
 
@@ -14,24 +14,16 @@
    left: 0;
    top: 0px;
    bottom: 20px;  /* statusbar height */
-   width: 240px;
-}
-
-.inspector-container {
-   position: absolute;
-   top: 0px;
-   right: 0;
-   bottom: 20px; /* statusbar height */
-   width: 240px;
+   width: 150px;
 }
 
 .paper-container {
-   position: absolute;
-   top: 0px;
-   left: 241px;
-   right: 241px;
-   bottom: 20px; /* statusbar height */
-   overflow: hidden;
+	position: absolute;
+	top: 0px;
+	left: 151px;
+	bottom: 20px; /* statusbar height */
+	right: 0px;
+	overflow: hidden;
 }
 .paper-container .paper-scroller {
    width: 100%;

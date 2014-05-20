@@ -19,7 +19,6 @@
 	<!-- Component theme -->
 	<stylesheet src="css/layout.css"/>
 	<stylesheet src="css/paper.css"/>
-	<stylesheet src="css/inspector.css"/>
 	<stylesheet src="css/stencil.css"/>
 	<stylesheet src="css/halo.css"/>
 	<stylesheet src="css/selection.css"/>

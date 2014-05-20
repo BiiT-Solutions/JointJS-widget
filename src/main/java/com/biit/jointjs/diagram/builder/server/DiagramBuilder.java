@@ -54,7 +54,6 @@ import com.vaadin.ui.AbstractComponent;
 		"vaadin://dist/joint.layout.GridLayout.js",
 		"vaadin://dist/joint.layout.DirectedGraph.js",
 		"vaadin://lib/keyboard.js",
-		"vaadin://src/inspector.js",
 		"vaadin://src/dataTypes.js",
 		"vaadin://src/main.js", })
 public class DiagramBuilder extends AbstractComponent {

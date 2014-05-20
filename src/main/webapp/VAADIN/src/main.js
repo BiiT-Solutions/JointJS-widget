@@ -11,7 +11,6 @@ var Rappid = Backbone.Router.extend({
     	this.initialized = false;
         this.options = options || {};
         initializeDataTypes();
-        initializeInspectorDataTypes();
     },
 
     home: function() {
@@ -22,10 +21,8 @@ var Rappid = Backbone.Router.extend({
     },
 
     initializeEditor: function() {
-        this.inspectorClosedGroups = {};
-
         this.initializePaper();
-        this.initializeStencil(240,2,'Tools');
+        this.initializeStencil(120,1,'Tools');
         this.initializeSelection();
         this.initializeHaloAndInspector();
         this.initializeClipboard();
@@ -132,7 +129,7 @@ var Rappid = Backbone.Router.extend({
     		this.stencil.load(memberList);
             joint.layout.GridLayout.layout(this.stencil.getGraph(), {
                 columnWidth: this.stencil.options.width / this.stencilColumns - 10,
-                columns: 2,
+                columns: this.stencilColumns,
                 rowHeight: 60,
                 resizeToFit: true,
                 dy: 15,
@@ -142,7 +139,7 @@ var Rappid = Backbone.Router.extend({
     		this.stencil.load(Stencil.shapes.basic, name);
             joint.layout.GridLayout.layout(this.stencil.getGraph(name), {
                 columnWidth: this.stencil.options.width / this.stencilColumns - 10,
-                columns: 2,
+                columns: this.stencilColumns,
                 rowHeight: 60,
                 resizeToFit: true,
                 dy: 10,
@@ -218,80 +215,23 @@ var Rappid = Backbone.Router.extend({
         }, this));
     },
 
-    createInspector: function(cellView) {
-
-        // No need to re-render inspector if the cellView didn't change.
-        if (!this.inspector || this.inspector.options.cellView !== cellView) {
-            
-            if (this.inspector) {
-
-                this.inspectorClosedGroups[this.inspector.options.cellView.model.id] = _.map(app.inspector.$('.group.closed'), function(g) { return $(g).index() });
-                
-                // Clean up the old inspector if there was one.
-                this.inspector.remove();
-            }
-
-            var inspectorDefs = DiagramBuilder.InspectorDefs[cellView.model.get('type')];
-
-            this.inspector = new joint.ui.Inspector({
-                inputs: inspectorDefs ? inspectorDefs.inputs : CommonInspectorInputs,
-                groups: inspectorDefs ? inspectorDefs.groups : CommonInspectorGroups,
-                cellView: cellView
-            });
-
-            this.initializeInspectorTooltips();
-            
-            this.inspector.render();
-            $('.inspector-container').html(this.inspector.el);
-
-            if (this.inspectorClosedGroups[cellView.model.id]) {
-                _.each(this.inspector.$('.group'), function(g, i) {
-                    if (_.contains(this.inspectorClosedGroups[cellView.model.id], $(g).index())) {
-                        $(g).addClass('closed');
-                    }
-                }, this);
-            } else {
-                this.inspector.$('.group:not(:first-child)').addClass('closed');
-            }
-        }
-    },
-
-    initializeInspectorTooltips: function() {
-        
-        this.inspector.on('render', function() {
-
-            this.inspector.$('[data-tooltip]').each(function() {
-
-                var $label = $(this);
-                new joint.ui.Tooltip({
-                    target: $label,
-                    content: $label.data('tooltip'),
-                    right: '.inspector',
-                    direction: 'right'
-                });
-            });
-            
-        }, this);
-    },
-
     initializeHaloAndInspector: function() {
     	
         this.paper.on('cell:pointerup', function(cellView, evt) {
 
             if (cellView.model instanceof joint.dia.Link || this.selection.contains(cellView.model)) return;
+            
+            console.error("kiwi "+JSON.stringify(cellView.model.toJSON()));
+            
+            var halo = new joint.ui.Halo({
+            	graph: this.graph,
+            	paper: this.paper,
+            	cellView: cellView
+            	});
 
-            // In order to display halo link magnets on top of the freetransform div we have to create the
-            // freetransform first. This is necessary for IE9+ where pointer-events don't work and we wouldn't
-            // be able to access magnets hidden behind the div.
-            var freetransform = new joint.ui.FreeTransform({ graph: this.graph, paper: this.paper, cell: cellView.model });
-            var halo = new joint.ui.Halo({ graph: this.graph, paper: this.paper, cellView: cellView });
-
-            freetransform.render();
             halo.render();
 
             this.initializeHaloTooltips(halo);
-
-            this.createInspector(cellView);
 
             this.selectionView.cancelSelection();
             this.selection.reset([cellView.model]);
@@ -299,8 +239,7 @@ var Rappid = Backbone.Router.extend({
         }, this);
 
         this.paper.on('link:options', function(evt, cellView, x, y) {
-
-            this.createInspector(cellView);
+        	console.error("kiwi-link "+JSON.stringify(cellView.model.toJSON()));        	
         }, this);
     },
 

@@ -11,6 +11,22 @@
     display: none;
 }
 
+.halo .rotate {
+	display: none;
+}
+
+.halo.small .rotate {
+	display: none;
+}
+
+.halo .link {
+	display: none;
+}
+
+.halo.small .link {
+	display: none;
+}
+
 .halo  .clone {
     left: auto;
     top: auto;
