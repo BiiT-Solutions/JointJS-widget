@@ -421,5 +421,10 @@ var Rappid = Backbone.Router.extend({
     },
 
     zoomOut: function() { this.zoom((this.zoomLevel || 1) - 0.2); },
-    zoomIn: function() { this.zoom((this.zoomLevel || 1) + 0.2); }
+    zoomIn: function() { this.zoom((this.zoomLevel || 1) + 0.2); },
+    
+    updateCellAttrs: function(cellData){
+    	this.graph.getCell(cellData.id);
+    	this.graph.getCell(cellData.id).set('attrs', cellData.attrs);
+    }
 });

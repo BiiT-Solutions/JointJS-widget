@@ -17,8 +17,8 @@
 package com.biit.jointjs.diagram.builder.demoproject;
 
 import com.biit.jointjs.diagram.builder.server.DiagramBuilder;
-import com.biit.jointjs.diagram.builder.server.ElementPickedListener;
 import com.biit.jointjs.diagram.builder.server.DiagramBuilder.DiagramBuilderJsonGenerationListener;
+import com.biit.jointjs.diagram.builder.server.ElementPickedListener;
 import com.vaadin.annotations.Title;
 import com.vaadin.annotations.Widgetset;
 import com.vaadin.server.VaadinRequest;
@@ -148,23 +148,31 @@ public class JointJsDiagramBuilderUi extends UI {
 			private static final long serialVersionUID = -6266207671920614850L;
 
 			public void buttonClick(ClickEvent event) {
-				if(jsonStringData!=null){
+				if (jsonStringData != null) {
 					diagramBuilder.fromJson(jsonStringData);
-				}else{
+				} else {
 					System.out.println("No data to load");
 				}
 			}
 		});
 		buttons.addComponent(loadButton);
-		
+
 		diagramBuilder.addElementPickedListener(new ElementPickedListener() {
-			
+
 			public void nodePickedListener(String jsonString) {
-				System.out.println("node: "+jsonString);
+				System.out.println("node: " + jsonString);
+
+				int indexAttrs = jsonString.indexOf("\"attrs\":{");
+				String beg = jsonString.substring(0, indexAttrs + 9);
+				String end = jsonString.substring(indexAttrs + 9);
+				String newJsonString = beg
+						+ "\".biitText\":{ \"text\":\"AVeeeeeeeee\", \"fill\":\"#000000\", \"font-size\":\"16\", \"stroke\":\"#000000\", \"stroke-width\":\"0\" }"
+						+ end;
+				diagramBuilder.updateCellJson(newJsonString);
 			}
-			
+
 			public void connectionPickedListener(String jsonString) {
-				System.out.println("connection: "+jsonString);
+				System.out.println("connection: " + jsonString);
 			}
 		});
 

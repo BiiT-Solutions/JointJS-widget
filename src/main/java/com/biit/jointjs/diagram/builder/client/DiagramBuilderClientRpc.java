@@ -28,4 +28,6 @@ public interface DiagramBuilderClientRpc extends ClientRpc {
 
 	void fromJson(String jsonString);
 
+	void updateCellJson(String jsonString);
+
 }

@@ -207,6 +207,12 @@ public class VDiagramBuilder extends ResizeLayoutPanel implements HasHandlers {
 	}-*/
 	;
 
+	public native void updateCellAttrs(String jsonString)
+	/*-{
+	 	$wnd.app.updateCellAttrs(JSON.parse(jsonString));
+	}-*/
+	;
+
 	public HandlerRegistration addPickedNodeHandler(PickedNodeHandler handler) {
 		return addHandler(handler, PickedNodeEvent.TYPE);
 	}

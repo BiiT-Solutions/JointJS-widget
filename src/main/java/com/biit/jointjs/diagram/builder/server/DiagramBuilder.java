@@ -169,4 +169,8 @@ public class DiagramBuilder extends AbstractComponent {
 			listener.connectionPickedListener(jsonString);
 		}
 	}
+	
+	public void updateCellJson(String jsonString){
+		getClientRpc().updateCellJson(jsonString);
+	}
 }
