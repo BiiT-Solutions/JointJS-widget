@@ -16,13 +16,19 @@
 
 package com.biit.jointjs.diagram.builder.client.ui;
 
+import com.biit.jointjs.diagram.builder.client.ui.events.PickedConnectionEvent;
+import com.biit.jointjs.diagram.builder.client.ui.events.PickedConnectionHandler;
+import com.biit.jointjs.diagram.builder.client.ui.events.PickedNodeEvent;
+import com.biit.jointjs.diagram.builder.client.ui.events.PickedNodeHandler;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 
-public class VDiagramBuilder extends ResizeLayoutPanel {
+public class VDiagramBuilder extends ResizeLayoutPanel implements HasHandlers {
 
 	/** Set the CSS class name to allow styling. */
 	public static final String CLASSNAME = "vdiagram-builder";
@@ -52,11 +58,12 @@ public class VDiagramBuilder extends ResizeLayoutPanel {
 
 		Element stencilContainer = createStencilContainer();
 		Element paperContainer = createElement(null, PAPER_CONTAINER_CLASS);
-		//Element statusBarContainer = createElement(null, STATUSBAR_CONTAINER_CLASS);
+		// Element statusBarContainer = createElement(null,
+		// STATUSBAR_CONTAINER_CLASS);
 
 		diagramBuilder.appendChild(stencilContainer);
 		diagramBuilder.appendChild(paperContainer);
-		//diagramBuilder.appendChild(statusBarContainer);
+		// diagramBuilder.appendChild(statusBarContainer);
 
 		return diagramBuilder;
 	}
@@ -112,6 +119,13 @@ public class VDiagramBuilder extends ResizeLayoutPanel {
 	/*-{
 	 	$wnd.app = new $wnd.Rappid;
 	    $wnd.Backbone.history.start();
+	    $wnd.javaInstance = this;
+	  	$wnd.firePickedNodeHandler = function(jsonString) {
+	  		$wnd.javaInstance.@com.biit.jointjs.diagram.builder.client.ui.VDiagramBuilder::firePickedNodeHandler(Ljava/lang/String;)(jsonString);
+	  	};
+	  	$wnd.firePickedConnectionHandler = function(jsonString) {
+	  		$wnd.javaInstance.@com.biit.jointjs.diagram.builder.client.ui.VDiagramBuilder::firePickedConnectionHandler(Ljava/lang/String;)(jsonString);
+	  	};
 	}-*/
 	;
 
@@ -192,4 +206,20 @@ public class VDiagramBuilder extends ResizeLayoutPanel {
 		$wnd.app.graph.fromJSON(JSON.parse(jsonString));
 	}-*/
 	;
+
+	public HandlerRegistration addPickedNodeHandler(PickedNodeHandler handler) {
+		return addHandler(handler, PickedNodeEvent.TYPE);
+	}
+
+	public HandlerRegistration addPickedConnectionHandler(PickedConnectionHandler handler) {
+		return addHandler(handler, PickedConnectionEvent.TYPE);
+	}
+
+	protected void firePickedNodeHandler(String jsonString) {
+		fireEvent(new PickedNodeEvent(jsonString));
+	}
+
+	protected void firePickedConnectionHandler(String jsonString) {
+		fireEvent(new PickedConnectionEvent(jsonString));
+	}
 }

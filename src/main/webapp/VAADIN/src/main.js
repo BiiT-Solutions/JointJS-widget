@@ -171,7 +171,7 @@ var Rappid = Backbone.Router.extend({
         // Initiate selecting when the user grabs the blank area of the paper while the Shift key is pressed.
         // Otherwise, initiate paper pan.
         this.paper.on('blank:pointerdown', function(evt, x, y) {
-
+        	firePickedNodeHandler(null);
             if (_.contains(KeyboardJS.activeKeys(), 'shift')) {
                 this.selectionView.startSelecting(evt, x, y);
             } else {
@@ -218,10 +218,9 @@ var Rappid = Backbone.Router.extend({
     initializeHaloAndInspector: function() {
     	
         this.paper.on('cell:pointerup', function(cellView, evt) {
-
             if (cellView.model instanceof joint.dia.Link || this.selection.contains(cellView.model)) return;
-            
-            console.error("kiwi "+JSON.stringify(cellView.model.toJSON()));
+
+            firePickedNodeHandler(JSON.stringify(cellView.model.toJSON()));
             
             var halo = new joint.ui.Halo({
             	graph: this.graph,
@@ -239,7 +238,7 @@ var Rappid = Backbone.Router.extend({
         }, this);
 
         this.paper.on('link:options', function(evt, cellView, x, y) {
-        	console.error("kiwi-link "+JSON.stringify(cellView.model.toJSON()));        	
+        	firePickedConnectionHandler(JSON.stringify(cellView.model.toJSON()));
         }, this);
     },
 

@@ -17,6 +17,7 @@
 package com.biit.jointjs.diagram.builder.demoproject;
 
 import com.biit.jointjs.diagram.builder.server.DiagramBuilder;
+import com.biit.jointjs.diagram.builder.server.ElementPickedListener;
 import com.biit.jointjs.diagram.builder.server.DiagramBuilder.DiagramBuilderJsonGenerationListener;
 import com.vaadin.annotations.Title;
 import com.vaadin.annotations.Widgetset;
@@ -155,6 +156,17 @@ public class JointJsDiagramBuilderUi extends UI {
 			}
 		});
 		buttons.addComponent(loadButton);
+		
+		diagramBuilder.addElementPickedListener(new ElementPickedListener() {
+			
+			public void nodePickedListener(String jsonString) {
+				System.out.println("node: "+jsonString);
+			}
+			
+			public void connectionPickedListener(String jsonString) {
+				System.out.println("connection: "+jsonString);
+			}
+		});
 
 		layout.addComponent(buttons);
 		layout.setExpandRatio(buttons, 0.0f);

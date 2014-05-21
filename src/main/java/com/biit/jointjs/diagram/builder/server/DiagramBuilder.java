@@ -59,7 +59,8 @@ import com.vaadin.ui.AbstractComponent;
 public class DiagramBuilder extends AbstractComponent {
 	private static final long serialVersionUID = -6846503871084162514L;
 	private DiagramBuilderServerRpc serverRpc;
-	private List<DiagramBuilderJsonGenerationListener> listeners;
+	private List<DiagramBuilderJsonGenerationListener> jsonGenerationListeners;
+	private List<ElementPickedListener> elementPickedListeners;
 
 	private class DiagramBuilderServerRpcImp implements DiagramBuilderServerRpc {
 		private static final long serialVersionUID = 6985050604356040816L;
@@ -67,11 +68,20 @@ public class DiagramBuilder extends AbstractComponent {
 		public void toJsonAnswer(String jsonString) {
 			fireAndCleanListeners(jsonString);
 		}
+
+		public void pickedNode(String jsonString) {
+			fireElementPickedListenersPickedNode(jsonString);
+		}
+
+		public void pickedConnection(String jsonString) {
+			fireElementPickedListenersPickedConnection(jsonString);
+		}		
 	};
 
 	public DiagramBuilder() {
 		super();
-		listeners = new ArrayList<DiagramBuilderJsonGenerationListener>();
+		jsonGenerationListeners = new ArrayList<DiagramBuilderJsonGenerationListener>();
+		elementPickedListeners = new ArrayList<ElementPickedListener>();
 		serverRpc = new DiagramBuilderServerRpcImp();
 		registerRpc(serverRpc);
 	}
@@ -121,7 +131,7 @@ public class DiagramBuilder extends AbstractComponent {
 	}
 
 	public void toJson(DiagramBuilderJsonGenerationListener listener) {
-		listeners.add(listener);
+		jsonGenerationListeners.add(listener);
 		getClientRpc().toJsonQuery();
 	}
 
@@ -134,9 +144,29 @@ public class DiagramBuilder extends AbstractComponent {
 	}
 
 	private synchronized void fireAndCleanListeners(String jsonString) {
-		for (DiagramBuilderJsonGenerationListener listener : listeners) {
+		for (DiagramBuilderJsonGenerationListener listener : jsonGenerationListeners) {
 			listener.generatedJsonString(jsonString);
 		}
-		listeners.clear();
+		jsonGenerationListeners.clear();
+	}
+	
+	public void addElementPickedListener(ElementPickedListener listener){
+		elementPickedListeners.add(listener);
+	}
+	
+	public void removeElementPickedListener(ElementPickedListener listener){
+		elementPickedListeners.remove(listener);
+	}
+	
+	private void fireElementPickedListenersPickedNode(String jsonString){
+		for(ElementPickedListener listener: elementPickedListeners){
+			listener.nodePickedListener(jsonString);
+		}
+	}
+	
+	private void fireElementPickedListenersPickedConnection(String jsonString){
+		for(ElementPickedListener listener: elementPickedListeners){
+			listener.connectionPickedListener(jsonString);
+		}
 	}
 }

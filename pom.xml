@@ -9,7 +9,7 @@
 	<name>JointJs Diagram Builder for Vaadin</name>
 
 	<properties>
-		<widget.version>0.0.2</widget.version>
+		<widget.version>0.0.3</widget.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<directory.root>src/main/java</directory.root>
 		<directory.resources>src/main/resources</directory.resources>

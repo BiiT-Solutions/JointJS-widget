@@ -1,6 +1,10 @@
 package com.biit.jointjs.diagram.builder.client;
 
 import com.biit.jointjs.diagram.builder.client.ui.VDiagramBuilder;
+import com.biit.jointjs.diagram.builder.client.ui.events.PickedConnectionEvent;
+import com.biit.jointjs.diagram.builder.client.ui.events.PickedConnectionHandler;
+import com.biit.jointjs.diagram.builder.client.ui.events.PickedNodeEvent;
+import com.biit.jointjs.diagram.builder.client.ui.events.PickedNodeHandler;
 import com.biit.jointjs.diagram.builder.server.DiagramBuilder;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -71,6 +75,16 @@ public class DiagramBuilderConnector extends AbstractComponentConnector {
 		super();
 		serverRpc = RpcProxy.create(DiagramBuilderServerRpc.class, this);
 		registerRpc(DiagramBuilderClientRpc.class, new DiagramBuilderServerRpcImpl());
+		getWidget().addPickedNodeHandler(new PickedNodeHandler() {
+			public void pickedNode(PickedNodeEvent event) {
+				serverRpc.pickedNode(event.getJsonString());
+			}
+		});
+		getWidget().addPickedConnectionHandler(new PickedConnectionHandler() {
+			public void pickedConnection(PickedConnectionEvent event) {
+				serverRpc.pickedConnection(event.getJsonString());
+			}
+		});
 	}
 
 	@Override
