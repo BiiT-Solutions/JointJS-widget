@@ -173,6 +173,23 @@ public class JointJsDiagramBuilderUi extends UI {
 
 			public void connectionPickedListener(String jsonString) {
 				System.out.println("connection: " + jsonString);
+				int indexAttrs = jsonString.indexOf("\"labels\":[");
+				String newJsonString;
+				if(indexAttrs==-1){
+					indexAttrs = jsonString.indexOf("\"attrs\":{");
+					String beg = jsonString.substring(0, indexAttrs);
+					String end = jsonString.substring(indexAttrs);
+					newJsonString = beg
+							+ " \"labels\":[{\"attrs\":{\"text\":{\"text\":\"Kiwiiiiiiiiii\"}},\"position\":\"0.5\"}], "
+							+ end;
+				}else{
+					String beg = jsonString.substring(0, indexAttrs + 10);
+					String end = jsonString.substring(indexAttrs + 10);
+					newJsonString = beg
+							+ "{\"attrs\":{\"text\":{\"text\":\"Kiwiiiiiiiiii\"}},\"position\":\"0.5\"}"
+							+ end;
+				}
+				diagramBuilder.updateLinkJson(newJsonString);
 			}
 		});
 

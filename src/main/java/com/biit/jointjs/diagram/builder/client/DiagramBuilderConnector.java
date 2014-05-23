@@ -73,6 +73,10 @@ public class DiagramBuilderConnector extends AbstractComponentConnector {
 		public void updateCellJson(String jsonString) {
 			getWidget().updateCellAttrs(jsonString);
 		}
+
+		public void updateLinkJson(String jsonString) {
+			getWidget().updateLinkAttrs(jsonString);
+		}
 	}
 
 	public DiagramBuilderConnector() {

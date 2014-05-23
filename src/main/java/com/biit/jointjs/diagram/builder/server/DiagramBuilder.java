@@ -173,4 +173,8 @@ public class DiagramBuilder extends AbstractComponent {
 	public void updateCellJson(String jsonString){
 		getClientRpc().updateCellJson(jsonString);
 	}
+	
+	public void updateLinkJson(String jsonString){
+		getClientRpc().updateLinkJson(jsonString);
+	}
 }
