@@ -23,44 +23,31 @@ import com.biit.jointjs.diagram.builder.client.DiagramBuilderClientRpc;
 import com.biit.jointjs.diagram.builder.client.DiagramBuilderServerRpc;
 import com.vaadin.annotations.JavaScript;
 import com.vaadin.ui.AbstractComponent;
+import com.vaadin.ui.Component;
 
 /**
  * Diagram builder component based on JointJs javascript library and RapidJs
  * framework. Commercial license only.
  * 
  */
-@JavaScript({ "vaadin://dist/joint.js",
-		"vaadin://dist/joint.shapes.devs.js",
-		"vaadin://dist/joint.shapes.fsa.js",
-		"vaadin://dist/joint.shapes.pn.js",
-		"vaadin://dist/joint.shapes.erd.js",
-		"vaadin://dist/joint.shapes.uml.js",
-		"vaadin://dist/joint.shapes.org.js",
-		"vaadin://dist/joint.ui.halo.js",
-		"vaadin://dist/joint.dia.freeTransform.js",
-		"vaadin://dist/joint.ui.freeTransform.js",
-		"vaadin://dist/joint.ui.inspector.js",
-		"vaadin://dist/joint.ui.selectionView.js",
-		"vaadin://dist/joint.ui.clipboard.js",
-		"vaadin://dist/joint.ui.stencil.js",
-		"vaadin://dist/joint.ui.paperScroller.js",
-		"vaadin://dist/joint.ui.tooltip.js",
-		"vaadin://dist/joint.format.svg.js",
-		"vaadin://dist/joint.format.raster.js",
-		"vaadin://dist/joint.format.print.js",
-		"vaadin://dist/joint.dia.command.js",
-		"vaadin://dist/joint.dia.validator.js",
-		"vaadin://dist/joint.layout.ForceDirected.js",
-		"vaadin://dist/joint.layout.GridLayout.js",
-		"vaadin://dist/joint.layout.DirectedGraph.js",
-		"vaadin://lib/keyboard.js",
-		"vaadin://src/dataTypes.js",
-		"vaadin://src/main.js", })
-public class DiagramBuilder extends AbstractComponent {
+@JavaScript({ "vaadin://dist/joint.js", "vaadin://dist/joint.shapes.devs.js", "vaadin://dist/joint.shapes.fsa.js",
+		"vaadin://dist/joint.shapes.pn.js", "vaadin://dist/joint.shapes.erd.js", "vaadin://dist/joint.shapes.uml.js",
+		"vaadin://dist/joint.shapes.org.js", "vaadin://dist/joint.ui.halo.js",
+		"vaadin://dist/joint.dia.freeTransform.js", "vaadin://dist/joint.ui.freeTransform.js",
+		"vaadin://dist/joint.ui.inspector.js", "vaadin://dist/joint.ui.selectionView.js",
+		"vaadin://dist/joint.ui.clipboard.js", "vaadin://dist/joint.ui.stencil.js",
+		"vaadin://dist/joint.ui.paperScroller.js", "vaadin://dist/joint.ui.tooltip.js",
+		"vaadin://dist/joint.format.svg.js", "vaadin://dist/joint.format.raster.js",
+		"vaadin://dist/joint.format.print.js", "vaadin://dist/joint.dia.command.js",
+		"vaadin://dist/joint.dia.validator.js", "vaadin://dist/joint.layout.ForceDirected.js",
+		"vaadin://dist/joint.layout.GridLayout.js", "vaadin://dist/joint.layout.DirectedGraph.js",
+		"vaadin://lib/keyboard.js", "vaadin://src/dataTypes.js", "vaadin://src/main.js", })
+public class DiagramBuilder extends AbstractComponent implements Component.Focusable{
 	private static final long serialVersionUID = -6846503871084162514L;
 	private DiagramBuilderServerRpc serverRpc;
 	private List<DiagramBuilderJsonGenerationListener> jsonGenerationListeners;
 	private List<ElementPickedListener> elementPickedListeners;
+	private int tabIndex;
 
 	private class DiagramBuilderServerRpcImp implements DiagramBuilderServerRpc {
 		private static final long serialVersionUID = 6985050604356040816L;
@@ -75,7 +62,11 @@ public class DiagramBuilder extends AbstractComponent {
 
 		public void pickedConnection(String jsonString) {
 			fireElementPickedListenersPickedConnection(jsonString);
-		}		
+		}
+
+		public void getFocus() {
+			focus();
+		}
 	};
 
 	public DiagramBuilder() {
@@ -84,6 +75,7 @@ public class DiagramBuilder extends AbstractComponent {
 		elementPickedListeners = new ArrayList<ElementPickedListener>();
 		serverRpc = new DiagramBuilderServerRpcImp();
 		registerRpc(serverRpc);
+		tabIndex = 0;
 	}
 
 	private DiagramBuilderClientRpc getClientRpc() {
@@ -149,32 +141,45 @@ public class DiagramBuilder extends AbstractComponent {
 		}
 		jsonGenerationListeners.clear();
 	}
-	
-	public void addElementPickedListener(ElementPickedListener listener){
+
+	public void addElementPickedListener(ElementPickedListener listener) {
 		elementPickedListeners.add(listener);
 	}
-	
-	public void removeElementPickedListener(ElementPickedListener listener){
+
+	public void removeElementPickedListener(ElementPickedListener listener) {
 		elementPickedListeners.remove(listener);
 	}
-	
-	private void fireElementPickedListenersPickedNode(String jsonString){
-		for(ElementPickedListener listener: elementPickedListeners){
+
+	private void fireElementPickedListenersPickedNode(String jsonString) {
+		for (ElementPickedListener listener : elementPickedListeners) {
 			listener.nodePickedListener(jsonString);
 		}
 	}
-	
-	private void fireElementPickedListenersPickedConnection(String jsonString){
-		for(ElementPickedListener listener: elementPickedListeners){
+
+	private void fireElementPickedListenersPickedConnection(String jsonString) {
+		for (ElementPickedListener listener : elementPickedListeners) {
 			listener.connectionPickedListener(jsonString);
 		}
 	}
-	
-	public void updateCellJson(String jsonString){
+
+	public void updateCellJson(String jsonString) {
 		getClientRpc().updateCellJson(jsonString);
 	}
-	
-	public void updateLinkJson(String jsonString){
+
+	public void updateLinkJson(String jsonString) {
 		getClientRpc().updateLinkJson(jsonString);
+	}
+
+	@Override
+	public void focus() {
+		super.focus();
+	}
+
+	public int getTabIndex() {
+		return tabIndex;
+	}
+
+	public void setTabIndex(int tabIndex) {
+		this.tabIndex = tabIndex;
 	}
 }

@@ -7,6 +7,9 @@ import com.biit.jointjs.diagram.builder.client.ui.events.PickedNodeEvent;
 import com.biit.jointjs.diagram.builder.client.ui.events.PickedNodeHandler;
 import com.biit.jointjs.diagram.builder.server.DiagramBuilder;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
 import com.vaadin.client.communication.RpcProxy;
 import com.vaadin.client.ui.AbstractComponentConnector;
@@ -85,14 +88,23 @@ public class DiagramBuilderConnector extends AbstractComponentConnector {
 		registerRpc(DiagramBuilderClientRpc.class, new DiagramBuilderServerRpcImpl());
 		getWidget().addPickedNodeHandler(new PickedNodeHandler() {
 			public void pickedNode(PickedNodeEvent event) {
+				serverRpc.getFocus();
 				serverRpc.pickedNode(event.getJsonString());
 			}
 		});
+		getWidget().sinkEvents(Event.ONCLICK);
+		getWidget().addDomHandler(new ClickHandler() {
+			public void onClick(ClickEvent event) {
+				serverRpc.getFocus();
+			}
+		}, ClickEvent.getType());
 		getWidget().addPickedConnectionHandler(new PickedConnectionHandler() {
 			public void pickedConnection(PickedConnectionEvent event) {
+				serverRpc.getFocus();
 				serverRpc.pickedConnection(event.getJsonString());
 			}
 		});
+
 	}
 
 	@Override

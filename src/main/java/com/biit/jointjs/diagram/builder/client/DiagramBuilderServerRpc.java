@@ -9,4 +9,6 @@ public interface DiagramBuilderServerRpc extends ServerRpc{
 	void pickedNode(String jsonString);
 	
 	void pickedConnection(String jsonString);
+
+	void getFocus();
 }
