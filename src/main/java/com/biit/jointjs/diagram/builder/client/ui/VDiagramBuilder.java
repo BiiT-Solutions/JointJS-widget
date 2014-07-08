@@ -16,10 +16,18 @@
 
 package com.biit.jointjs.diagram.builder.client.ui;
 
+import com.biit.jointjs.diagram.builder.client.ui.events.AddElementEvent;
+import com.biit.jointjs.diagram.builder.client.ui.events.AddElementHandler;
+import com.biit.jointjs.diagram.builder.client.ui.events.DoubleClickNodeEvent;
+import com.biit.jointjs.diagram.builder.client.ui.events.DoubleClickNodeHandler;
 import com.biit.jointjs.diagram.builder.client.ui.events.PickedConnectionEvent;
 import com.biit.jointjs.diagram.builder.client.ui.events.PickedConnectionHandler;
 import com.biit.jointjs.diagram.builder.client.ui.events.PickedNodeEvent;
 import com.biit.jointjs.diagram.builder.client.ui.events.PickedNodeHandler;
+import com.biit.jointjs.diagram.builder.client.ui.events.RemoveElementEvent;
+import com.biit.jointjs.diagram.builder.client.ui.events.RemoveElementHandler;
+import com.biit.jointjs.diagram.builder.client.ui.events.UpdateElementEvent;
+import com.biit.jointjs.diagram.builder.client.ui.events.UpdateElementHandler;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -126,6 +134,18 @@ public class VDiagramBuilder extends ResizeLayoutPanel implements HasHandlers {
 	  	$wnd.firePickedConnectionHandler = function(jsonString) {
 	  		$wnd.javaInstance.@com.biit.jointjs.diagram.builder.client.ui.VDiagramBuilder::firePickedConnectionHandler(Ljava/lang/String;)(jsonString);
 	  	};
+	  	$wnd.fireDoubleClickNodeHandler = function(jsonString) {
+	  		$wnd.javaInstance.@com.biit.jointjs.diagram.builder.client.ui.VDiagramBuilder::fireDoubleClickNodeHandler(Ljava/lang/String;)(jsonString);
+	  	};
+	  	$wnd.fireAddElementHandler = function(jsonString) {
+	  		$wnd.javaInstance.@com.biit.jointjs.diagram.builder.client.ui.VDiagramBuilder::fireAddElementHandler(Ljava/lang/String;)(jsonString);
+	  	};
+	  	$wnd.fireUpdateElementHandler = function(jsonString) {
+	  		$wnd.javaInstance.@com.biit.jointjs.diagram.builder.client.ui.VDiagramBuilder::fireUpdateElementHandler(Ljava/lang/String;)(jsonString);
+	  	};
+	  	$wnd.fireRemoveElementHandler = function(jsonString) {
+	  		$wnd.javaInstance.@com.biit.jointjs.diagram.builder.client.ui.VDiagramBuilder::fireRemoveElementHandler(Ljava/lang/String;)(jsonString);
+	  	};	
 	}-*/
 	;
 
@@ -212,12 +232,12 @@ public class VDiagramBuilder extends ResizeLayoutPanel implements HasHandlers {
 	 	$wnd.app.updateCellAttrs(JSON.parse(jsonString));
 	}-*/
 	;
-	
+
 	public native void updateLinkAttrs(String jsonString)
 	/*-{
 	 	$wnd.app.updateLinkText(JSON.parse(jsonString));
 	}-*/
-	; 
+	;
 
 	public HandlerRegistration addPickedNodeHandler(PickedNodeHandler handler) {
 		return addHandler(handler, PickedNodeEvent.TYPE);
@@ -227,11 +247,43 @@ public class VDiagramBuilder extends ResizeLayoutPanel implements HasHandlers {
 		return addHandler(handler, PickedConnectionEvent.TYPE);
 	}
 
+	public HandlerRegistration addDoubleClickNodeHandler(DoubleClickNodeHandler handler) {
+		return addHandler(handler, DoubleClickNodeEvent.TYPE);
+	}
+
+	public HandlerRegistration addAddElementHandler(AddElementHandler handler) {
+		return addHandler(handler, AddElementEvent.TYPE);
+	}
+
+	public HandlerRegistration addUpdateElementHandler(UpdateElementHandler handler) {
+		return addHandler(handler, UpdateElementEvent.TYPE);
+	}
+
+	public HandlerRegistration addRemoveElementHandler(RemoveElementHandler handler) {
+		return addHandler(handler, RemoveElementEvent.TYPE);
+	}
+
 	protected void firePickedNodeHandler(String jsonString) {
 		fireEvent(new PickedNodeEvent(jsonString));
 	}
 
 	protected void firePickedConnectionHandler(String jsonString) {
 		fireEvent(new PickedConnectionEvent(jsonString));
+	}
+
+	protected void fireDoubleClickNodeHandler(String jsonString) {
+		fireEvent(new DoubleClickNodeEvent(jsonString));
+	}
+
+	protected void fireAddElementHandler(String jsonString) {
+		fireEvent(new AddElementEvent(jsonString));
+	}
+
+	protected void fireUpdateElementHandler(String jsonString) {
+		fireEvent(new UpdateElementEvent(jsonString));
+	}
+
+	protected void fireRemoveElementHandler(String jsonString) {
+		fireEvent(new RemoveElementEvent(jsonString));
 	}
 }

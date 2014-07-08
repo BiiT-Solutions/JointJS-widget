@@ -18,7 +18,9 @@ package com.biit.jointjs.diagram.builder.demoproject;
 
 import com.biit.jointjs.diagram.builder.server.DiagramBuilder;
 import com.biit.jointjs.diagram.builder.server.DiagramBuilder.DiagramBuilderJsonGenerationListener;
-import com.biit.jointjs.diagram.builder.server.ElementPickedListener;
+import com.biit.jointjs.diagram.builder.server.listeners.DoubleClickListener;
+import com.biit.jointjs.diagram.builder.server.listeners.ElementActionListener;
+import com.biit.jointjs.diagram.builder.server.listeners.ElementPickedListener;
 import com.vaadin.annotations.Title;
 import com.vaadin.annotations.Widgetset;
 import com.vaadin.server.VaadinRequest;
@@ -160,8 +162,11 @@ public class JointJsDiagramBuilderUi extends UI {
 		diagramBuilder.addElementPickedListener(new ElementPickedListener() {
 
 			public void nodePickedListener(String jsonString) {
-				System.out.println("node: " + jsonString);
-
+				System.out.println("SingleClickNode: " + jsonString);
+				if(jsonString==null||jsonString.contains(".biitText")){
+					return;
+				}			
+				
 				int indexAttrs = jsonString.indexOf("\"attrs\":{");
 				String beg = jsonString.substring(0, indexAttrs + 9);
 				String end = jsonString.substring(indexAttrs + 9);
@@ -173,6 +178,10 @@ public class JointJsDiagramBuilderUi extends UI {
 
 			public void connectionPickedListener(String jsonString) {
 				System.out.println("connection: " + jsonString);
+				if(jsonString==null){
+					return;
+				}
+								
 				int indexAttrs = jsonString.indexOf("\"labels\":[");
 				String newJsonString;
 				if(indexAttrs==-1){
@@ -190,6 +199,25 @@ public class JointJsDiagramBuilderUi extends UI {
 							+ end;
 				}
 				diagramBuilder.updateLinkJson(newJsonString);
+			}
+		});
+		diagramBuilder.addDoubleClickListener(new DoubleClickListener() {
+			public void doubleClick(String jsonString) {
+				System.out.println("Double click! "+ jsonString);
+			}
+		});
+		
+		diagramBuilder.addElementActionListener(new ElementActionListener() {
+			public void updateElement(String jsonString) {
+				System.out.println("Element Update: "+jsonString);
+			}
+			
+			public void removeElement(String jsonString) {
+				System.out.println("Element Remove: "+jsonString);
+			}
+			
+			public void addElement(String jsonString) {
+				System.out.println("Element Add: "+jsonString);
 			}
 		});
 

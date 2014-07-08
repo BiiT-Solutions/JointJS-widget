@@ -1,10 +1,16 @@
-/*! JointJS v0.9.0 - JavaScript diagramming library  2014-05-13 
+/*! Rappid - the diagramming toolkit
+
+Copyright (c) 2013 client IO
+
+ 2014-05-01 
 
 
-This Source Code Form is subject to the terms of the Mozilla Public
-License, v. 2.0. If a copy of the MPL was not distributed with this
-file, You can obtain one at http://mozilla.org/MPL/2.0/.
- */
+This Source Code Form is subject to the terms of the Rappid License
+, v. 2.0. If a copy of the Rappid License was not distributed with this
+file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
+ or from the Rappid archive as was distributed by client IO. See the LICENSE file.*/
+
+
 /*!
  * jQuery JavaScript Library v2.0.3
  * http://jquery.com/
@@ -16768,1381 +16774,75 @@ if ( typeof window === "object" && typeof window.document === "object" ) {
 
 }).call(this);
 
-// Vectorizer.
-// -----------
-
-// A tiny library for making your live easier when dealing with SVG.
-
-// Copyright © 2012 - 2014 client IO (http://client.io)
-
-(function(root, factory) {
-
-    if (typeof define === 'function' && define.amd) {
-        // AMD. Register as an anonymous module.
-        define([], factory);
-        
-    } else {
-        // Browser globals.
-        root.Vectorizer = root.V = factory();
-    }
-
-}(this, function() {
-
-    // Well, if SVG is not supported, this library is useless.
-    var SVGsupported = !!(window.SVGAngle || document.implementation.hasFeature('http://www.w3.org/TR/SVG11/feature#BasicStructure', '1.1'));
-
-    // XML namespaces.
-    var ns = {
-        xmlns: 'http://www.w3.org/2000/svg',
-        xlink: 'http://www.w3.org/1999/xlink'
-    };
-    // SVG version.
-    var SVGversion = '1.1';
-
-    // A function returning a unique identifier for this client session with every call.
-    var idCounter = 0;
-    function uniqueId() {
-        var id = ++idCounter + '';
-        return 'v-' + id;
-    }
-
-    // Create SVG element.
-    // -------------------
-
-    function createElement(el, attrs, children) {
-
-        if (!el) return undefined;
-        
-        // If `el` is an object, it is probably a native SVG element. Wrap it to VElement.
-        if (typeof el === 'object') {
-            return new VElement(el);
-        }
-        attrs = attrs || {};
-
-        // If `el` is a `'svg'` or `'SVG'` string, create a new SVG canvas.
-        if (el.toLowerCase() === 'svg') {
-            
-            attrs.xmlns = ns.xmlns;
-            attrs['xmlns:xlink'] = ns.xlink;
-            attrs.version = SVGversion;
-            
-        } else if (el[0] === '<') {
-            // Create element from an SVG string.
-            // Allows constructs of type: `document.appendChild(Vectorizer('<rect></rect>').node)`.
-            
-            var svg = '<svg xmlns="' + ns.xmlns + '" xmlns:xlink="' + ns.xlink + '" version="' + SVGversion + '">' + el + '</svg>';
-            var parser = new DOMParser();
-            parser.async = false;
-            var svgDoc = parser.parseFromString(svg, 'text/xml').documentElement;
-
-            // Note that `createElement()` might also return an array should the SVG string passed as
-            // the first argument contain more then one root element.
-            if (svgDoc.childNodes.length > 1) {
-
-                // Map child nodes to `VElement`s.
-                var ret = [];
-                for (var i = 0, len = svgDoc.childNodes.length; i < len; i++) {
-
-                    var childNode = svgDoc.childNodes[i];
-                    ret.push(new VElement(document.importNode(childNode, true)));
-                }
-                return ret;
-            }
-            
-            return new VElement(document.importNode(svgDoc.firstChild, true));
-        }
-        
-        el = document.createElementNS(ns.xmlns, el);
-
-        // Set attributes.
-        for (var key in attrs) {
-
-            setAttribute(el, key, attrs[key]);
-        }
-        
-        // Normalize `children` array.
-        if (Object.prototype.toString.call(children) != '[object Array]') children = [children];
-
-        // Append children if they are specified.
-        var i = 0, len = (children[0] && children.length) || 0, child;
-        for (; i < len; i++) {
-            child = children[i];
-            el.appendChild(child instanceof VElement ? child.node : child);
-        }
-        
-        return new VElement(el);
-    }
-
-    function setAttribute(el, name, value) {
-        
-        if (name.indexOf(':') > -1) {
-            // Attribute names can be namespaced. E.g. `image` elements
-            // have a `xlink:href` attribute to set the source of the image.
-            var combinedKey = name.split(':');
-            el.setAttributeNS(ns[combinedKey[0]], combinedKey[1], value);
-        } else if (name === 'id') {
-            el.id = value;
-        } else {
-            el.setAttribute(name, value);
-        }
-    }
-
-    function parseTransformString(transform) {
-        var translate,
-            rotate,
-            scale;
-        
-        if (transform) {
-            var translateMatch = transform.match(/translate\((.*)\)/);
-            if (translateMatch) {
-                translate = translateMatch[1].split(',');
-            }
-            var rotateMatch = transform.match(/rotate\((.*)\)/);
-            if (rotateMatch) {
-                rotate = rotateMatch[1].split(',');
-            }
-            var scaleMatch = transform.match(/scale\((.*)\)/);
-            if (scaleMatch) {
-                scale = scaleMatch[1].split(',');
-            }
-        }
-
-        var sx = (scale && scale[0]) ? parseFloat(scale[0]) : 1;
-        
-        return {
-            translate: {
-                tx: (translate && translate[0]) ? parseInt(translate[0], 10) : 0,
-                ty: (translate && translate[1]) ? parseInt(translate[1], 10) : 0
-            },
-            rotate: {
-                angle: (rotate && rotate[0]) ? parseInt(rotate[0], 10) : 0,
-                cx: (rotate && rotate[1]) ? parseInt(rotate[1], 10) : undefined,
-                cy: (rotate && rotate[2]) ? parseInt(rotate[2], 10) : undefined
-            },
-            scale: {
-                sx: sx,
-                sy: (scale && scale[1]) ? parseFloat(scale[1]) : sx
-            }
-        };
-    }
-
-
-    // Matrix decomposition.
-    // ---------------------
-
-    function deltaTransformPoint(matrix, point)  {
-        
-	var dx = point.x * matrix.a + point.y * matrix.c + 0;
-	var dy = point.x * matrix.b + point.y * matrix.d + 0;
-	return { x: dx, y: dy };
-    }
-
-    function decomposeMatrix(matrix) {
-
-        // @see https://gist.github.com/2052247
-        
-        // calculate delta transform point
-	var px = deltaTransformPoint(matrix, { x: 0, y: 1 });
-	var py = deltaTransformPoint(matrix, { x: 1, y: 0 });
-        
-	// calculate skew
-	var skewX = ((180 / Math.PI) * Math.atan2(px.y, px.x) - 90);
-	var skewY = ((180 / Math.PI) * Math.atan2(py.y, py.x));
-        
-	return {
-            
-	    translateX: matrix.e,
-	    translateY: matrix.f,
-	    scaleX: Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b),
-	    scaleY: Math.sqrt(matrix.c * matrix.c + matrix.d * matrix.d),
-	    skewX: skewX,
-	    skewY: skewY,
-	    rotation: skewX // rotation is the same as skew x
-	};
-    }
+/**
+ * jQuery.fn.sortElements
+ * --------------
+ * @author James Padolsey (http://james.padolsey.com)
+ * @version 0.11
+ * @updated 18-MAR-2010
+ * --------------
+ * @param Function comparator:
+ *   Exactly the same behaviour as [1,2,3].sort(comparator)
+ *   
+ * @param Function getSortable
+ *   A function that should return the element that is
+ *   to be sorted. The comparator will run on the
+ *   current collection, but you may want the actual
+ *   resulting sort to occur on a parent or another
+ *   associated element.
+ *   
+ *   E.g. $('td').sortElements(comparator, function(){
+ *      return this.parentNode; 
+ *   })
+ *   
+ *   The <td>'s parent (<tr>) will be sorted instead
+ *   of the <td> itself.
+ */
+jQuery.fn.sortElements = (function(){
     
-    // VElement.
-    // ---------
-
-    function VElement(el) {
-        this.node = el;
-        if (!this.node.id) {
-            this.node.id = uniqueId();
-        }
-    }
-
-    // VElement public API.
-    // --------------------
-
-    VElement.prototype = {
+    var sort = [].sort;
+    
+    return function(comparator, getSortable) {
         
-        translate: function(tx, ty) {
-            ty = ty || 0;
+        getSortable = getSortable || function(){return this;};
+        
+        var placements = this.map(function(){
             
-            var transformAttr = this.attr('transform') || '',
-                transform = parseTransformString(transformAttr);
-
-            // Is it a getter?
-            if (typeof tx === 'undefined') {
-                return transform.translate;
-            }
-            
-            transformAttr = transformAttr.replace(/translate\([^\)]*\)/g, '').trim();
-
-            var newTx = transform.translate.tx + tx,
-                newTy = transform.translate.ty + ty;
-
-            // Note that `translate()` is always the first transformation. This is
-            // usually the desired case.
-            this.attr('transform', 'translate(' + newTx + ',' + newTy + ') ' + transformAttr);
-            return this;
-        },
-
-        rotate: function(angle, cx, cy) {
-            var transformAttr = this.attr('transform') || '',
-                transform = parseTransformString(transformAttr);
-
-            // Is it a getter?
-            if (typeof angle === 'undefined') {
-                return transform.rotate;
-            }
-            
-            transformAttr = transformAttr.replace(/rotate\([^\)]*\)/g, '').trim();
-
-            var newAngle = transform.rotate.angle + angle % 360,
-                newOrigin = (cx !== undefined && cy !== undefined) ? ',' + cx + ',' + cy : '';
-            
-            this.attr('transform', transformAttr + ' rotate(' + newAngle + newOrigin + ')');
-            return this;
-        },
-
-        // Note that `scale` as the only transformation does not combine with previous values.
-        scale: function(sx, sy) {
-            sy = (typeof sy === 'undefined') ? sx : sy;
-            
-            var transformAttr = this.attr('transform') || '',
-                transform = parseTransformString(transformAttr);
-
-            // Is it a getter?
-            if (typeof sx === 'undefined') {
-                return transform.scale;
-            }
-            
-            transformAttr = transformAttr.replace(/scale\([^\)]*\)/g, '').trim();
-
-            this.attr('transform', transformAttr + ' scale(' + sx + ',' + sy + ')');
-            return this;
-        },
-
-        // Get SVGRect that contains coordinates and dimension of the real bounding box,
-        // i.e. after transformations are applied.
-        // If `target` is specified, bounding box will be computed relatively to `target` element.
-        bbox: function(withoutTransformations, target) {
-
-            // If the element is not in the live DOM, it does not have a bounding box defined and
-            // so fall back to 'zero' dimension element.
-            if (!this.node.ownerSVGElement) return { x: 0, y: 0, width: 0, height: 0 };
-            
-            var box;
-            try {
-
-                box = this.node.getBBox();
-
-		// Opera returns infinite values in some cases.
-		// Note that Infinity | 0 produces 0 as opposed to Infinity || 0.
-		// We also have to create new object as the standard says that you can't
-		// modify the attributes of a bbox.
-		box = { x: box.x | 0, y: box.y | 0, width: box.width | 0, height: box.height | 0};
-
-            } catch (e) {
-
-                // Fallback for IE.
-                box = {
-                    x: this.node.clientLeft,
-                    y: this.node.clientTop,
-                    width: this.node.clientWidth,
-                    height: this.node.clientHeight
-                };
-            }
-
-            if (withoutTransformations) {
-
-                return box;
-            }
-
-            var matrix = this.node.getTransformToElement(target || this.node.ownerSVGElement);
-            var corners = [];
-            var point = this.node.ownerSVGElement.createSVGPoint();
-
-
-            point.x = box.x;
-            point.y = box.y;
-            corners.push(point.matrixTransform(matrix));
-            
-            point.x = box.x + box.width;
-            point.y = box.y;
-            corners.push(point.matrixTransform(matrix));
-            
-            point.x = box.x + box.width;
-            point.y = box.y + box.height;
-            corners.push(point.matrixTransform(matrix));
-            
-            point.x = box.x;
-            point.y = box.y + box.height;
-            corners.push(point.matrixTransform(matrix));
-
-            var minX = corners[0].x;
-            var maxX = minX;
-            var minY = corners[0].y;
-            var maxY = minY;
-            
-            for (var i = 1, len = corners.length; i < len; i++) {
+            var sortElement = getSortable.call(this),
+                parentNode = sortElement.parentNode,
                 
-                var x = corners[i].x;
-                var y = corners[i].y;
-
-                if (x < minX) {
-                    minX = x;
-                } else if (x > maxX) {
-                    maxX = x;
+                // Since the element itself will change position, we have
+                // to have some way of storing it's original position in
+                // the DOM. The easiest way is to have a 'flag' node:
+                nextSibling = parentNode.insertBefore(
+                    document.createTextNode(''),
+                    sortElement.nextSibling
+                );
+            
+            return function() {
+                
+                if (parentNode === this) {
+                    throw new Error(
+                        "You can't sort elements if any one is a descendant of another."
+                    );
                 }
                 
-                if (y < minY) {
-                    minY = y;
-                } else if (y > maxY) {
-                    maxY = y;
-                }
-            }
-
-            return {
-                x: minX,
-                y: minY,
-                width: maxX - minX,
-                height: maxY - minY
+                // Insert before flag:
+                parentNode.insertBefore(this, nextSibling);
+                // Remove flag:
+                parentNode.removeChild(nextSibling);
+                
             };
-        },
-
-        text: function(content) {
-            var lines = content.split('\n'), i = 0,
-                tspan;
-
-            // `alignment-baseline` does not work in Firefox.
-	    // Setting `dominant-baseline` on the `<text>` element doesn't work in IE9.
-            // In order to have the 0,0 coordinate of the `<text>` element (or the first `<tspan>`)
-	    // in the top left corner we translate the `<text>` element by `0.8em`.
-	    // See `http://www.w3.org/Graphics/SVG/WG/wiki/How_to_determine_dominant_baseline`.
-	    // See also `http://apike.ca/prog_svg_text_style.html`.
-	    this.attr('y', '0.8em');
-
-            // An empty text gets rendered into the DOM in webkit-based browsers.
-            // In order to unify this behaviour across all browsers
-            // we rather hide the text element when it's empty.
-            this.attr('display', content ? null : 'none');
             
-            if (lines.length === 1) {
-                this.node.textContent = content;
-                return this;
-            }
-            // Easy way to erase all `<tspan>` children;
-            this.node.textContent = '';
-            
-            for (; i < lines.length; i++) {
-
-                // Shift all the <tspan> but first by one line (`1em`)
-                tspan = V('tspan', { dy: (i == 0 ? '0em' : '1em'), x: this.attr('x') || 0});
-                tspan.node.textContent = lines[i];
-                
-                this.append(tspan);
-            }
-            return this;
-        },
+        });
+       
+        return sort.call(this, comparator).each(function(i){
+            placements[i].call(getSortable.call(this));
+        });
         
-        attr: function(name, value) {
-            
-            if (typeof name === 'string' && typeof value === 'undefined') {
-                return this.node.getAttribute(name);
-            }
-            
-            if (typeof name === 'object') {
-
-                for (var attrName in name) {
-                    if (name.hasOwnProperty(attrName)) {
-                        setAttribute(this.node, attrName, name[attrName]);
-                    }
-                }
-                
-            } else {
-
-                setAttribute(this.node, name, value);
-            }
-
-            return this;
-        },
-
-        remove: function() {
-            if (this.node.parentNode) {
-                this.node.parentNode.removeChild(this.node);
-            }
-        },
-
-        append: function(el) {
-
-            var els = el;
-            
-            if (Object.prototype.toString.call(el) !== '[object Array]') {
-                
-                els = [el];
-            }
-
-            for (var i = 0, len = els.length; i < len; i++) {
-                el = els[i];
-                this.node.appendChild(el instanceof VElement ? el.node : el);
-            }
-            
-            return this;
-        },
-
-        prepend: function(el) {
-            this.node.insertBefore(el instanceof VElement ? el.node : el, this.node.firstChild);
-        },
-
-        svg: function() {
-
-            return this.node instanceof window.SVGSVGElement ? this : V(this.node.ownerSVGElement);
-        },
-
-        defs: function() {
-
-            var defs = this.svg().node.getElementsByTagName('defs');
-            
-            return (defs && defs.length) ? V(defs[0]) : undefined;
-        },
-
-        clone: function() {
-            var clone = V(this.node.cloneNode(true));
-            // Note that clone inherits also ID. Therefore, we need to change it here.
-            clone.node.id = uniqueId();
-            return clone;
-        },
-
-        findOne: function(selector) {
-
-            var found = this.node.querySelector(selector);
-            return found ? V(found) : undefined;
-        },
-
-        find: function(selector) {
-
-            var nodes = this.node.querySelectorAll(selector);
-
-            // Map DOM elements to `VElement`s.
-            for (var i = 0, len = nodes.length; i < len; i++) {
-                nodes[i] = V(nodes[i]);
-            }
-            return nodes;
-        },
-        
-        // Convert global point into the coordinate space of this element.
-        toLocalPoint: function(x, y) {
-
-            var svg = this.svg().node;
-            
-            var p = svg.createSVGPoint();
-            p.x = x;
-            p.y = y;
-
-	    try {
-
-		var globalPoint = p.matrixTransform(svg.getScreenCTM().inverse());
-		var globalToLocalMatrix = this.node.getTransformToElement(svg).inverse();
-
-	    } catch(e) {
-		// IE9 throws an exception in odd cases. (`Unexpected call to method or property access`)
-		// We have to make do with the original coordianates.
-		return p;
-	    }
-
-            return globalPoint.matrixTransform(globalToLocalMatrix);
-        },
-
-        translateCenterToPoint: function(p) {
-
-            var bbox = this.bbox();
-            var center = g.rect(bbox).center();
-
-            this.translate(p.x - center.x, p.y - center.y);
-        },
-
-        // Efficiently auto-orient an element. This basically implements the orient=auto attribute
-        // of markers. The easiest way of understanding on what this does is to imagine the element is an
-        // arrowhead. Calling this method on the arrowhead makes it point to the `position` point while
-        // being auto-oriented (properly rotated) towards the `reference` point.
-        // `target` is the element relative to which the transformations are applied. Usually a viewport.
-        translateAndAutoOrient: function(position, reference, target) {
-
-            // Clean-up previously set transformations except the scale. If we didn't clean up the
-            // previous transformations then they'd add up with the old ones. Scale is an exception as
-            // it doesn't add up, consider: `this.scale(2).scale(2).scale(2)`. The result is that the
-            // element is scaled by the factor 2, not 8.
-
-            var s = this.scale();
-            this.attr('transform', '');
-            this.scale(s.sx, s.sy);
-
-            var svg = this.svg().node;
-            var bbox = this.bbox(false, target);
-
-            // 1. Translate to origin.
-            var translateToOrigin = svg.createSVGTransform();
-            translateToOrigin.setTranslate(-bbox.x - bbox.width/2, -bbox.y - bbox.height/2);
-
-            // 2. Rotate around origin.
-            var rotateAroundOrigin = svg.createSVGTransform();
-            var angle = g.point(position).changeInAngle(position.x - reference.x, position.y - reference.y, reference);
-            rotateAroundOrigin.setRotate(angle, 0, 0);
-
-            // 3. Translate to the `position` + the offset (half my width) towards the `reference` point.
-            var translateFinal = svg.createSVGTransform();
-            var finalPosition = g.point(position).move(reference, bbox.width/2);
-            translateFinal.setTranslate(position.x + (position.x - finalPosition.x), position.y + (position.y - finalPosition.y));
-
-            // 4. Apply transformations.
-            var ctm = this.node.getTransformToElement(target);
-            var transform = svg.createSVGTransform();
-            transform.setMatrix(
-                translateFinal.matrix.multiply(
-                    rotateAroundOrigin.matrix.multiply(
-                        translateToOrigin.matrix.multiply(
-                            ctm)))
-            );
-
-            // Instead of directly setting the `matrix()` transform on the element, first, decompose
-            // the matrix into separate transforms. This allows us to use normal Vectorizer methods
-            // as they don't work on matrices. An example of this is to retrieve a scale of an element.
-            // this.node.transform.baseVal.initialize(transform);
-
-            var decomposition = decomposeMatrix(transform.matrix);
-
-            this.translate(decomposition.translateX, decomposition.translateY);
-            this.rotate(decomposition.rotation);
-            // Note that scale has been already applied, hence the following line stays commented. (it's here just for reference).
-            //this.scale(decomposition.scaleX, decomposition.scaleY);
-
-            return this;
-        },
-
-        animateAlongPath: function(attrs, path) {
-
-            var animateMotion = V('animateMotion', attrs);
-            var mpath = V('mpath', { 'xlink:href': '#' + V(path).node.id });
-
-            animateMotion.append(mpath);
-
-            this.append(animateMotion);
-            try {
-                animateMotion.node.beginElement();
-            } catch (e) {
-                // Fallback for IE 9.
-		// Run the animation programatically if FakeSmile (`http://leunen.me/fakesmile/`) present 
-		if (document.documentElement.getAttribute('smiling') === 'fake') {
-
-		    // Register the animation. (See `https://answers.launchpad.net/smil/+question/203333`)
-		    var animation = animateMotion.node;
-		    animation.animators = [];
-
-		    var animationID = animation.getAttribute('id');
-		    if (animationID) id2anim[animationID] = animation;
-
-                    var targets = getTargets(animation);
-                    for (var i = 0, len = targets.length; i < len; i++) {
-                        var target = targets[i];
-			var animator = new Animator(animation, target, i);
-			animators.push(animator);
-			animation.animators[i] = animator;
-                        animator.register();
-                    }
-		}
-            }
-        },
-
-        hasClass: function(className) {
-
-            return new RegExp('(\\s|^)' + className + '(\\s|$)').test(this.node.getAttribute('class'));
-        },
-
-        addClass: function(className) {
-
-            if (!this.hasClass(className)) {
-                this.node.setAttribute('class', this.node.getAttribute('class') + ' ' + className);
-            }
-
-            return this;
-        },
-
-        removeClass: function(className) {
-
-            var removedClass = this.node.getAttribute('class').replace(new RegExp('(\\s|^)' + className + '(\\s|$)', 'g'), '$2');
-
-            if (this.hasClass(className)) {
-                this.node.setAttribute('class', removedClass);
-            }
-
-            return this;
-        },
-
-        toggleClass: function(className, toAdd) {
-
-            var toRemove = typeof toAdd === 'undefined' ? this.hasClass(className) : !toAdd;
-
-            if (toRemove) {
-                this.removeClass(className);
-            } else {
-                this.addClass(className);
-            }
-
-            return this;
-        }
     };
-
-    // Convert a rectangle to SVG path commands. `r` is an object of the form:
-    // `{ x: [number], y: [number], width: [number], height: [number], top-ry: [number], top-ry: [number], bottom-rx: [number], bottom-ry: [number] }`,
-    // where `x, y, width, height` are the usual rectangle attributes and [top-/bottom-]rx/ry allows for
-    // specifying radius of the rectangle for all its sides (as opposed to the built-in SVG rectangle
-    // that has only `rx` and `ry` attributes).
-    function rectToPath(r) {
-
-        var topRx = r.rx || r['top-rx'] || 0;
-        var bottomRx = r.rx || r['bottom-rx'] || 0;
-        var topRy = r.ry || r['top-ry'] || 0;
-        var bottomRy = r.ry || r['bottom-ry'] || 0;
-
-        return [
-            'M', r.x, r.y + topRy,
-            'v', r.height - topRy - bottomRy,
-            'a', bottomRx, bottomRy, 0, 0, 0, bottomRx, bottomRy,
-            'h', r.width - 2 * bottomRx,
-            'a', bottomRx, bottomRy, 0, 0, 0, bottomRx, -bottomRy,
-            'v', -(r.height - bottomRy - topRy),
-            'a', topRx, topRy, 0, 0, 0, -topRx, -topRy,
-            'h', -(r.width - 2 * topRx),
-            'a', topRx, topRy, 0, 0, 0, -topRx, topRy
-        ].join(' ');
-    }
-
-    var V = createElement;
-
-    V.decomposeMatrix = decomposeMatrix;
-    V.rectToPath = rectToPath;
-
-    var svgDocument = V('svg').node;
     
-    V.createSVGMatrix = function(m) {
-
-        var svgMatrix = svgDocument.createSVGMatrix();
-        for (var component in m) {
-            svgMatrix[component] = m[component];
-        }
-        
-        return svgMatrix;
-    };
-
-    V.createSVGTransform = function() {
-
-        return svgDocument.createSVGTransform();
-    };
-
-    V.createSVGPoint = function(x, y) {
-
-        var p = svgDocument.createSVGPoint();
-        p.x = x;
-        p.y = y;
-        return p;
-    };
-
-    return V;
-
-}));
-
-
-//      Geometry library.
-//      (c) 2011-2013 client IO
-
-
-(function(root, factory) {
-
-    if (typeof define === 'function' && define.amd) {
-        // AMD. Register as an anonymous module.
-        define([], factory);
-        
-    } else if (typeof exports === 'object') {
-        // Node. Does not work with strict CommonJS, but
-        // only CommonJS-like environments that support module.exports,
-        // like Node.
-        module.exports = factory();
-        
-    } else {
-        // Browser globals.
-        root.g = factory();
-    }
-
-}(this, function() {
-
-
-    // Declare shorthands to the most used math functions.
-    var math = Math;
-    var abs = math.abs;
-    var cos = math.cos;
-    var sin = math.sin;
-    var sqrt = math.sqrt;
-    var mmin = math.min;
-    var mmax = math.max;
-    var atan = math.atan;
-    var atan2 = math.atan2;
-    var acos = math.acos;
-    var round = math.round;
-    var floor = math.floor;
-    var PI = math.PI;
-    var random = math.random;
-    var toDeg = function(rad) { return (180*rad / PI) % 360; };
-    var toRad = function(deg) { return (deg % 360) * PI / 180; };
-    var snapToGrid = function(val, gridSize) { return gridSize * Math.round(val/gridSize); };
-    var normalizeAngle = function(angle) { return (angle % 360) + (angle < 0 ? 360 : 0); };
-
-    // Point
-    // -----
-
-    // Point is the most basic object consisting of x/y coordinate,.
-
-    // Possible instantiations are:
-
-    // * `point(10, 20)`
-    // * `new point(10, 20)`
-    // * `point('10 20')`
-    // * `point(point(10, 20))`
-    function point(x, y) {
-        if (!(this instanceof point))
-            return new point(x, y);
-        var xy;
-        if (y === undefined && Object(x) !== x) {
-            xy = x.split(x.indexOf('@') === -1 ? ' ' : '@');
-            this.x = parseInt(xy[0], 10);
-            this.y = parseInt(xy[1], 10);
-        } else if (Object(x) === x) {
-            this.x = x.x;
-            this.y = x.y;
-        } else {
-            this.x = x;
-            this.y = y;
-        }
-    }
-
-    point.prototype = {
-        toString: function() {
-            return this.x + "@" + this.y;
-        },
-        // If point lies outside rectangle `r`, return the nearest point on the boundary of rect `r`,
-        // otherwise return point itself.
-        // (see Squeak Smalltalk, Point>>adhereTo:)
-        adhereToRect: function(r) {
-	    if (r.containsPoint(this)){
-	        return this;
-	    }
-	    this.x = mmin(mmax(this.x, r.x), r.x + r.width);
-	    this.y = mmin(mmax(this.y, r.y), r.y + r.height);
-	    return this;
-        },
-        // Compute the angle between me and `p` and the x axis.
-        // (cartesian-to-polar coordinates conversion)
-        // Return theta angle in degrees.
-        theta: function(p) {
-            p = point(p);
-            // Invert the y-axis.
-	    var y = -(p.y - this.y);
-	    var x = p.x - this.x;
-            // Makes sure that the comparison with zero takes rounding errors into account.
-            var PRECISION = 10;
-            // Note that `atan2` is not defined for `x`, `y` both equal zero.
-	    var rad = (y.toFixed(PRECISION) == 0 && x.toFixed(PRECISION) == 0) ? 0 : atan2(y, x); 
-
-            // Correction for III. and IV. quadrant.
-	    if (rad < 0) { 
-	        rad = 2*PI + rad;
-	    }
-	    return 180*rad / PI;
-        },
-        // Returns distance between me and point `p`.
-        distance: function(p) {
-	    return line(this, p).length();
-        },
-        // Returns a manhattan (taxi-cab) distance between me and point `p`.
-        manhattanDistance: function(p) {
-            return abs(p.x - this.x) + abs(p.y - this.y);
-        },
-        // Offset me by the specified amount.
-        offset: function(dx, dy) {
-	    this.x += dx || 0;
-	    this.y += dy || 0;
-	    return this;
-        },
-        magnitude: function() {
-            return sqrt((this.x*this.x) + (this.y*this.y)) || 0.01;
-        },
-        update: function(x, y) {
-            this.x = x || 0;
-            this.y = y || 0;
-            return this;
-        },
-        round: function(decimals) {
-            this.x = decimals ? this.x.toFixed(decimals) : round(this.x);
-            this.y = decimals ? this.y.toFixed(decimals) : round(this.y);
-            return this;
-        },
-        // Scale the line segment between (0,0) and me to have a length of len.
-        normalize: function(len) {
-	    var s = (len || 1) / this.magnitude();
-	    this.x = s * this.x;
-	    this.y = s * this.y;
-	    return this;
-        },
-        difference: function(p) {
-            return point(this.x - p.x, this.y - p.y);
-        },
-        // Return the bearing between me and point `p`.
-        bearing: function(p) {
-            return line(this, p).bearing();
-        },        
-        // Converts rectangular to polar coordinates.
-        // An origin can be specified, otherwise it's 0@0.
-        toPolar: function(o) {
-            o = (o && point(o)) || point(0,0);
-            var x = this.x;
-            var y = this.y;
-            this.x = sqrt((x-o.x)*(x-o.x) + (y-o.y)*(y-o.y));   // r
-            this.y = toRad(o.theta(point(x,y)));
-            return this;
-        },
-        // Rotate point by angle around origin o.
-        rotate: function(o, angle) {
-            angle = (angle + 360) % 360;
-            this.toPolar(o);
-            this.y += toRad(angle);
-            var p = point.fromPolar(this.x, this.y, o);
-            this.x = p.x;
-            this.y = p.y;
-            return this;
-        },
-        // Move point on line starting from ref ending at me by
-        // distance distance.
-        move: function(ref, distance) {
-            var theta = toRad(point(ref).theta(this));
-            return this.offset(cos(theta) * distance, -sin(theta) * distance);
-        },
-        // Returns change in angle from my previous position (-dx, -dy) to my new position
-        // relative to ref point.
-        changeInAngle: function(dx, dy, ref) {
-            // Revert the translation and measure the change in angle around x-axis.
-            return point(this).offset(-dx, -dy).theta(ref) - this.theta(ref);
-        },
-        equals: function(p) {
-            return this.x === p.x && this.y === p.y;
-        },
-        snapToGrid: function(gx, gy) {
-            this.x = snapToGrid(this.x, gx)
-            this.y = snapToGrid(this.y, gy || gx)
-            return this;
-        }
-    };
-    // Alternative constructor, from polar coordinates.
-    // @param {number} r Distance.
-    // @param {number} angle Angle in radians.
-    // @param {point} [optional] o Origin.
-    point.fromPolar = function(r, angle, o) {
-        o = (o && point(o)) || point(0,0);
-        var x = abs(r * cos(angle));
-        var y = abs(r * sin(angle));
-        var deg = normalizeAngle(toDeg(angle));
-
-        if (deg < 90) y = -y;
-        else if (deg < 180) { x = -x; y = -y; }
-        else if (deg < 270) x = -x;
-        
-        return point(o.x + x, o.y + y);
-    };
-
-    // Create a point with random coordinates that fall into the range `[x1, x2]` and `[y1, y2]`.
-    point.random = function(x1, x2, y1, y2) {
-        return point(floor(random() * (x2 - x1 + 1) + x1), floor(random() * (y2 - y1 + 1) + y1));
-    };
-
-    // Line.
-    // -----
-    function line(p1, p2) {
-        if (!(this instanceof line))
-            return new line(p1, p2);
-        this.start = point(p1);
-        this.end = point(p2);
-    }
-    
-    line.prototype = {
-        toString: function() {
-	    return this.start.toString() + ' ' + this.end.toString();
-        },
-        // @return {double} length of the line
-        length: function() {
-            return sqrt(this.squaredLength());
-        },
-        // @return {integer} length without sqrt
-        // @note for applications where the exact length is not necessary (e.g. compare only)
-        squaredLength: function() {
-	    var x0 = this.start.x;
-            var y0 = this.start.y;
-	    var x1 = this.end.x;
-            var y1 = this.end.y;
-	    return (x0 -= x1)*x0 + (y0 -= y1)*y0;
-        },
-        // @return {point} my midpoint
-        midpoint: function() {
-	    return point((this.start.x + this.end.x) / 2,
-		         (this.start.y + this.end.y) / 2);
-        },
-        // @return {point} Point where I'm intersecting l.
-        // @see Squeak Smalltalk, LineSegment>>intersectionWith:
-        intersection: function(l) {
-	    var pt1Dir = point(this.end.x - this.start.x, this.end.y - this.start.y);
-	    var pt2Dir = point(l.end.x - l.start.x, l.end.y - l.start.y);
-	    var det = (pt1Dir.x * pt2Dir.y) - (pt1Dir.y * pt2Dir.x);
-	    var deltaPt = point(l.start.x - this.start.x, l.start.y - this.start.y);
-	    var alpha = (deltaPt.x * pt2Dir.y) - (deltaPt.y * pt2Dir.x);
-	    var beta = (deltaPt.x * pt1Dir.y) - (deltaPt.y * pt1Dir.x);
-
-	    if (det === 0 ||
-	        alpha * det < 0 ||
-	        beta * det < 0) {
-                // No intersection found.
-	        return null;	
-	    }
-	    if (det > 0){
-	        if (alpha > det || beta > det){
-		    return null;
-	        }
-	    } else {
-	        if (alpha < det || beta < det){
-		    return null;
-	        }
-	    }
-	    return point(this.start.x + (alpha * pt1Dir.x / det),
-		         this.start.y + (alpha * pt1Dir.y / det));
-        },
-        
-        // @return the bearing (cardinal direction) of the line. For example N, W, or SE.
-        // @returns {String} One of the following bearings : NE, E, SE, S, SW, W, NW, N.
-        bearing: function() {
-            
-            var lat1 = toRad(this.start.y);
-            var lat2 = toRad(this.end.y);
-            var lon1 = this.start.x;
-            var lon2 = this.end.x;
-            var dLon = toRad(lon2 - lon1);
-            var y = sin(dLon) * cos(lat2);
-            var x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dLon);
-            var brng = toDeg(atan2(y, x));
-
-            var bearings = ['NE', 'E', 'SE', 'S', 'SW', 'W', 'NW', 'N'];
-
-            var index = brng - 22.5;
-            if (index < 0)
-                index += 360;
-            index = parseInt(index / 45);
-
-            return bearings[index];
-        }
-    };
-
-    // Rectangle.
-    // ----------
-    function rect(x, y, w, h) {
-        if (!(this instanceof rect))
-            return new rect(x, y, w, h);
-        if (y === undefined) {
-            y = x.y;
-            w = x.width;
-            h = x.height;
-            x = x.x;        
-        }
-        this.x = x;
-        this.y = y;
-        this.width = w;
-        this.height = h;
-    }
-    
-    rect.prototype = {
-        toString: function() {
-	    return this.origin().toString() + ' ' + this.corner().toString();
-        },
-        origin: function() {
-            return point(this.x, this.y);
-        },
-        corner: function() {
-            return point(this.x + this.width, this.y + this.height);
-        },
-        topRight: function() {
-            return point(this.x + this.width, this.y);
-        },
-        bottomLeft: function() {
-            return point(this.x, this.y + this.height);
-        },
-        center: function() {
-            return point(this.x + this.width/2, this.y + this.height/2);
-        },
-        // @return {boolean} true if rectangles intersect
-        intersect: function(r) {
-	    var myOrigin = this.origin();
-	    var myCorner = this.corner();
-	    var rOrigin = r.origin();
-	    var rCorner = r.corner();
-            
-	    if (rCorner.x <= myOrigin.x ||
-	        rCorner.y <= myOrigin.y ||
-	        rOrigin.x >= myCorner.x ||
-	        rOrigin.y >= myCorner.y) return false;
-	    return true;
-        },
-        // @return {string} (left|right|top|bottom) side which is nearest to point
-        // @see Squeak Smalltalk, Rectangle>>sideNearestTo:
-        sideNearestToPoint: function(p) {
-            p = point(p);
-	    var distToLeft = p.x - this.x;
-	    var distToRight = (this.x + this.width) - p.x;
-	    var distToTop = p.y - this.y;
-	    var distToBottom = (this.y + this.height) - p.y;
-	    var closest = distToLeft;
-	    var side = 'left';
-            
-	    if (distToRight < closest) {
-	        closest = distToRight;
-	        side = 'right';
-	    }
-	    if (distToTop < closest) {
-	        closest = distToTop;
-	        side = 'top';
-	    }
-	    if (distToBottom < closest) {
-	        closest = distToBottom;
-	        side = 'bottom';
-	    }
-	    return side;
-        },
-        // @return {bool} true if point p is insight me
-        containsPoint: function(p) {
-            p = point(p);
-	    if (p.x >= this.x && p.x <= this.x + this.width &&
-	        p.y >= this.y && p.y <= this.y + this.height) {
-	        return true;
-	    }
-	    return false;
-        },
-        // Algorithm ported from java.awt.Rectangle from OpenJDK.
-        // @return {bool} true if rectangle `r` is inside me.
-        containsRect: function(r) {
-            var nr = rect(r).normalize();
-            var W = nr.width;
-            var H = nr.height;
-            var X = nr.x;
-            var Y = nr.y;
-            var w = this.width;
-            var h = this.height;
-            if ((w | h | W | H) < 0) {
-                // At least one of the dimensions is negative...
-                return false;
-            }
-            // Note: if any dimension is zero, tests below must return false...
-            var x = this.x;
-            var y = this.y;
-            if (X < x || Y < y) {
-                return false;
-            }
-            w += x;
-            W += X;
-            if (W <= X) {
-                // X+W overflowed or W was zero, return false if...
-                // either original w or W was zero or
-                // x+w did not overflow or
-                // the overflowed x+w is smaller than the overflowed X+W
-                if (w >= x || W > w) return false;
-            } else {
-                // X+W did not overflow and W was not zero, return false if...
-                // original w was zero or
-                // x+w did not overflow and x+w is smaller than X+W
-                if (w >= x && W > w) return false;
-            }
-            h += y;
-            H += Y;
-            if (H <= Y) {
-                if (h >= y || H > h) return false;
-            } else {
-                if (h >= y && H > h) return false;
-            }
-            return true;
-        },        
-        // @return {point} a point on my boundary nearest to p
-        // @see Squeak Smalltalk, Rectangle>>pointNearestTo:
-        pointNearestToPoint: function(p) {
-            p = point(p);
-	    if (this.containsPoint(p)) {
-	        var side = this.sideNearestToPoint(p);
-	        switch (side){
-	          case "right": return point(this.x + this.width, p.y);
-	          case "left": return point(this.x, p.y);
-	          case "bottom": return point(p.x, this.y + this.height);
-	          case "top": return point(p.x, this.y);
-	        }
-	    }
-	    return p.adhereToRect(this);
-        },
-        // Find point on my boundary where line starting
-        // from my center ending in point p intersects me.
-        // @param {number} angle If angle is specified, intersection with rotated rectangle is computed.
-        intersectionWithLineFromCenterToPoint: function(p, angle) {
-            p = point(p);
-	    var center = point(this.x + this.width/2, this.y + this.height/2);
-            var result;
-            if (angle) p.rotate(center, angle);
-            
-	    // (clockwise, starting from the top side)
-	    var sides = [
-	        line(this.origin(), this.topRight()),
-	        line(this.topRight(), this.corner()),
-	        line(this.corner(), this.bottomLeft()),
-	        line(this.bottomLeft(), this.origin())
-	    ];
-	    var connector = line(center, p);
-            
-	    for (var i = sides.length - 1; i >= 0; --i){
-	        var intersection = sides[i].intersection(connector);
-	        if (intersection !== null){
-		    result = intersection;
-                    break;
-	        }
-	    }
-            if (result && angle) result.rotate(center, -angle);
-            return result;
-        },
-        // Move and expand me.
-        // @param r {rectangle} representing deltas
-        moveAndExpand: function(r) {
-	    this.x += r.x;
-	    this.y += r.y;
-	    this.width += r.width;
-	    this.height += r.height;
-	    return this;
-        },
-        round: function(decimals) {
-            this.x = decimals ? this.x.toFixed(decimals) : round(this.x);
-            this.y = decimals ? this.y.toFixed(decimals) : round(this.y);
-            this.width = decimals ? this.width.toFixed(decimals) : round(this.width);
-            this.height = decimals ? this.height.toFixed(decimals) : round(this.height);
-            return this;
-        },
-        // Normalize the rectangle; i.e., make it so that it has a non-negative width and height.
-        // If width < 0 the function swaps the left and right corners,
-        // and it swaps the top and bottom corners if height < 0
-        // like in http://qt-project.org/doc/qt-4.8/qrectf.html#normalized
-        normalize: function() {
-            var newx = this.x;
-            var newy = this.y;
-            var newwidth = this.width;
-            var newheight = this.height;
-            if (this.width < 0) {
-                newx = this.x + this.width;
-                newwidth = -this.width;
-            }
-            if (this.height < 0) {
-                newy = this.y + this.height;
-                newheight = -this.height;
-            }
-            this.x = newx;
-            this.y = newy;
-            this.width = newwidth;
-            this.height = newheight;
-            return this;
-        }        
-    };
-
-    // Ellipse.
-    // --------
-    function ellipse(c, a, b) {
-        if (!(this instanceof ellipse))
-            return new ellipse(c, a, b);
-        c = point(c);
-        this.x = c.x;
-        this.y = c.y;
-        this.a = a;
-        this.b = b;
-    }
-
-    ellipse.prototype = {
-        toString: function() {
-            return point(this.x, this.y).toString() + ' ' + this.a + ' ' + this.b;
-        },
-        bbox: function() {
-	        return rect(this.x - this.a, this.y - this.b, 2*this.a, 2*this.b);
-        },
-        // Find point on me where line from my center to
-        // point p intersects my boundary.
-        // @param {number} angle If angle is specified, intersection with rotated ellipse is computed.
-        intersectionWithLineFromCenterToPoint: function(p, angle) {
-	    p = point(p);
-            if (angle) p.rotate(point(this.x, this.y), angle);
-            var dx = p.x - this.x;
-	    var dy = p.y - this.y;
-            var result;
-	    if (dx === 0) {
-	        result = this.bbox().pointNearestToPoint(p);
-                if (angle) return result.rotate(point(this.x, this.y), -angle);
-                return result;
-	    }
-	    var m = dy / dx;
-	    var mSquared = m * m;
-	    var aSquared = this.a * this.a;
-	    var bSquared = this.b * this.b;
-	    var x = sqrt(1 / ((1 / aSquared) + (mSquared / bSquared)));
-
-            x = dx < 0 ? -x : x;
-	    var y = m * x;
-	    result = point(this.x + x, this.y + y);
-            if (angle) return result.rotate(point(this.x, this.y), -angle);
-            return result;
-        }
-    };
-
-    // Bezier curve.
-    // -------------
-    var bezier = {
-        // Cubic Bezier curve path through points.
-        // Ported from C# implementation by Oleg V. Polikarpotchkin and Peter Lee (http://www.codeproject.com/KB/graphics/BezierSpline.aspx).
-        // @param {array} points Array of points through which the smooth line will go.
-        // @return {array} SVG Path commands as an array
-        curveThroughPoints: function(points) {
-            var controlPoints = this.getCurveControlPoints(points);
-            var path = ['M', points[0].x, points[0].y];
-
-            for (var i = 0; i < controlPoints[0].length; i++) {
-                path.push('C', controlPoints[0][i].x, controlPoints[0][i].y, controlPoints[1][i].x, controlPoints[1][i].y, points[i+1].x, points[i+1].y);        
-            }
-            return path;
-        },
-        
-        // Get open-ended Bezier Spline Control Points.
-        // @param knots Input Knot Bezier spline points (At least two points!).
-        // @param firstControlPoints Output First Control points. Array of knots.length - 1 length.
-        //  @param secondControlPoints Output Second Control points. Array of knots.length - 1 length.
-        getCurveControlPoints: function(knots) {
-            var firstControlPoints = [];
-            var secondControlPoints = [];
-            var n = knots.length - 1;
-            var i;
-
-            // Special case: Bezier curve should be a straight line.
-            if (n == 1) { 
-	        // 3P1 = 2P0 + P3
-	        firstControlPoints[0] = point((2 * knots[0].x + knots[1].x) / 3,
-	                                      (2 * knots[0].y + knots[1].y) / 3);
-	        // P2 = 2P1 – P0
-	        secondControlPoints[0] = point(2 * firstControlPoints[0].x - knots[0].x,
-	                                       2 * firstControlPoints[0].y - knots[0].y);
-	        return [firstControlPoints, secondControlPoints];
-            }
-            
-                // Calculate first Bezier control points.
-            // Right hand side vector.
-            var rhs = [];
-            
-            // Set right hand side X values.
-            for (i = 1; i < n - 1; i++) {
-                rhs[i] = 4 * knots[i].x + 2 * knots[i + 1].x;
-            }
-            rhs[0] = knots[0].x + 2 * knots[1].x;
-            rhs[n - 1] = (8 * knots[n - 1].x + knots[n].x) / 2.0;
-            // Get first control points X-values.
-            var x = this.getFirstControlPoints(rhs);
-            
-            // Set right hand side Y values.
-            for (i = 1; i < n - 1; ++i) {
-	        rhs[i] = 4 * knots[i].y + 2 * knots[i + 1].y;
-            }
-            rhs[0] = knots[0].y + 2 * knots[1].y;
-            rhs[n - 1] = (8 * knots[n - 1].y + knots[n].y) / 2.0;
-            // Get first control points Y-values.
-            var y = this.getFirstControlPoints(rhs);
-            
-            // Fill output arrays.
-            for (i = 0; i < n; i++) {
-	        // First control point.
-	        firstControlPoints.push(point(x[i], y[i]));
-	        // Second control point.
-	        if (i < n - 1) {
-	            secondControlPoints.push(point(2 * knots [i + 1].x - x[i + 1],
-                                                   2 * knots[i + 1].y - y[i + 1]));
-	        } else {
-	            secondControlPoints.push(point((knots[n].x + x[n - 1]) / 2,
-					           (knots[n].y + y[n - 1]) / 2));
-	        }
-            }
-            return [firstControlPoints, secondControlPoints];
-        },
-
-        // Solves a tridiagonal system for one of coordinates (x or y) of first Bezier control points.
-        // @param rhs Right hand side vector.
-        // @return Solution vector.
-        getFirstControlPoints: function(rhs) {
-            var n = rhs.length;
-            // `x` is a solution vector.
-            var x = [];
-            var tmp = [];
-            var b = 2.0;
-            
-            x[0] = rhs[0] / b;
-            // Decomposition and forward substitution.
-            for (var i = 1; i < n; i++) { 
-	        tmp[i] = 1 / b;
-	        b = (i < n - 1 ? 4.0 : 3.5) - tmp[i];
-	        x[i] = (rhs[i] - x[i - 1]) / b;
-            }
-            for (i = 1; i < n; i++) {
-                // Backsubstitution.
-	        x[n - i - 1] -= tmp[n - i] * x[n - i]; 
-            }
-            return x;
-        }
-    };
-
-    // Scale.
-    var scale = {
-
-        // Return the `value` from the `domain` interval scaled to the `range` interval.
-        linear: function(domain, range, value) {
-
-            var domainSpan = domain[1] - domain[0];
-            var rangeSpan = range[1] - range[0];
-            return (((value - domain[0]) / domainSpan) * rangeSpan + range[0]) || 0;
-        }
-    };
-
-    return {
-
-        toDeg: toDeg,
-        toRad: toRad,
-        snapToGrid: snapToGrid,
-	normalizeAngle: normalizeAngle,
-        point: point,
-        line: line,
-        rect: rect,
-        ellipse: ellipse,
-        bezier: bezier,
-        scale: scale
-    }
-}));
-
+})();
 //      JointJS library.
 //      (c) 2011-2013 client IO
 
@@ -18467,7 +17167,6 @@ var joint = {
             var words = text.split(' ');
             var full = [];
             var lines = [];
-            var p;
 
             for (var i = 0, l = 0, len = words.length; i < len; i++) {
 
@@ -18494,7 +17193,7 @@ var joint = {
 
                         var partition = !!p;
 
-                        p = word.length - 1;
+                        var p = word.length - 1;
 
                         if (partition || !p) {
 
@@ -18503,7 +17202,7 @@ var joint = {
 
                                 if (!lines[l]) {
 
-                                    // we won't fit this text within our rect
+                                    // we won't fit this text within out rect
                                     lines = [];
 
                                     break;
@@ -19012,6 +17711,1231 @@ if (typeof exports === 'object') {
 
     module.exports = joint;
 }
+// Vectorizer.
+// -----------
+
+// A tiny library for making your live easier when dealing with SVG.
+
+// Copyright © 2012 - 2013 client IO
+
+(function(root, factory) {
+
+    if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define(['lodash'], factory);
+        
+    } else {
+        // Browser globals.
+        root.Vectorizer = root.V = factory(root._);
+    }
+
+}(this, function(_) {
+
+    // Well, if SVG is not supported, this library is useless.
+    var SVGsupported = !!(window.SVGAngle || document.implementation.hasFeature('http://www.w3.org/TR/SVG11/feature#BasicStructure', '1.1'));
+
+    // XML namespaces.
+    var ns = {
+        xmlns: 'http://www.w3.org/2000/svg',
+        xlink: 'http://www.w3.org/1999/xlink'
+    };
+    // SVG version.
+    var SVGversion = '1.1';
+
+    // Create SVG element.
+    // -------------------
+
+    function createElement(el, attrs, children) {
+
+        if (!el) return undefined;
+        
+        // If `el` is an object, it is probably a native SVG element. Wrap it to VElement.
+        if (typeof el === 'object') {
+            return new VElement(el);
+        }
+        attrs = attrs || {};
+
+        // If `el` is a `'svg'` or `'SVG'` string, create a new SVG canvas.
+        if (el.toLowerCase() === 'svg') {
+            
+            attrs.xmlns = ns.xmlns;
+            attrs['xmlns:xlink'] = ns.xlink;
+            attrs.version = SVGversion;
+            
+        } else if (el[0] === '<') {
+            // Create element from an SVG string.
+            // Allows constructs of type: `document.appendChild(Vectorizer('<rect></rect>').node)`.
+            
+            var svg = '<svg xmlns="' + ns.xmlns + '" xmlns:xlink="' + ns.xlink + '" version="' + SVGversion + '">' + el + '</svg>';
+            var parser = new DOMParser();
+            parser.async = false;
+            var svgDoc = parser.parseFromString(svg, 'text/xml').documentElement;
+
+            // Note that `createElement()` might also return an array should the SVG string passed as
+            // the first argument contain more then one root element.
+            if (svgDoc.childNodes.length > 1) {
+
+                return _.map(svgDoc.childNodes, function(childNode) {
+
+                    return new VElement(document.importNode(childNode, true));
+                });
+            }
+            
+            return new VElement(document.importNode(svgDoc.firstChild, true));
+        }
+        
+        el = document.createElementNS(ns.xmlns, el);
+
+        // Set attributes.
+        for (var key in attrs) {
+
+            setAttribute(el, key, attrs[key]);
+        }
+        
+        // Normalize `children` array.
+        if (Object.prototype.toString.call(children) != '[object Array]') children = [children];
+
+        // Append children if they are specified.
+        var i = 0, len = (children[0] && children.length) || 0, child;
+        for (; i < len; i++) {
+            child = children[i];
+            el.appendChild(child instanceof VElement ? child.node : child);
+        }
+        
+        return new VElement(el);
+    }
+
+    function setAttribute(el, name, value) {
+        
+        if (name.indexOf(':') > -1) {
+            // Attribute names can be namespaced. E.g. `image` elements
+            // have a `xlink:href` attribute to set the source of the image.
+            var combinedKey = name.split(':');
+            el.setAttributeNS(ns[combinedKey[0]], combinedKey[1], value);
+        } else if (name === 'id') {
+            el.id = value;
+        } else {
+        	if(value==" "){
+        		value="";
+        	}
+    		el.setAttribute(name, value);
+        }
+    }
+
+    function parseTransformString(transform) {
+        var translate,
+            rotate,
+            scale;
+        
+        if (transform) {
+            var translateMatch = transform.match(/translate\((.*)\)/);
+            if (translateMatch) {
+                translate = translateMatch[1].split(',');
+            }
+            var rotateMatch = transform.match(/rotate\((.*)\)/);
+            if (rotateMatch) {
+                rotate = rotateMatch[1].split(',');
+            }
+            var scaleMatch = transform.match(/scale\((.*)\)/);
+            if (scaleMatch) {
+                scale = scaleMatch[1].split(',');
+            }
+        }
+
+        var sx = (scale && scale[0]) ? parseFloat(scale[0]) : 1;
+        
+        return {
+            translate: {
+                tx: (translate && translate[0]) ? parseInt(translate[0], 10) : 0,
+                ty: (translate && translate[1]) ? parseInt(translate[1], 10) : 0
+            },
+            rotate: {
+                angle: (rotate && rotate[0]) ? parseInt(rotate[0], 10) : 0,
+                cx: (rotate && rotate[1]) ? parseInt(rotate[1], 10) : undefined,
+                cy: (rotate && rotate[2]) ? parseInt(rotate[2], 10) : undefined
+            },
+            scale: {
+                sx: sx,
+                sy: (scale && scale[1]) ? parseFloat(scale[1]) : sx
+            }
+        };
+    }
+
+
+    // Matrix decomposition.
+    // ---------------------
+
+    function deltaTransformPoint(matrix, point)  {
+        
+	var dx = point.x * matrix.a + point.y * matrix.c + 0;
+	var dy = point.x * matrix.b + point.y * matrix.d + 0;
+	return { x: dx, y: dy };
+    }
+
+    function decomposeMatrix(matrix) {
+
+        // @see https://gist.github.com/2052247
+        
+        // calculate delta transform point
+	var px = deltaTransformPoint(matrix, { x: 0, y: 1 });
+	var py = deltaTransformPoint(matrix, { x: 1, y: 0 });
+        
+	// calculate skew
+	var skewX = ((180 / Math.PI) * Math.atan2(px.y, px.x) - 90);
+	var skewY = ((180 / Math.PI) * Math.atan2(py.y, py.x));
+        
+	return {
+            
+	    translateX: matrix.e,
+	    translateY: matrix.f,
+	    scaleX: Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b),
+	    scaleY: Math.sqrt(matrix.c * matrix.c + matrix.d * matrix.d),
+	    skewX: skewX,
+	    skewY: skewY,
+	    rotation: skewX // rotation is the same as skew x
+	};
+    }
+    
+    // VElement.
+    // ---------
+
+    function VElement(el) {
+        this.node = el;
+        if (!this.node.id) {
+            this.node.id = _.uniqueId('v_');
+        }
+    }
+
+    // VElement public API.
+    // --------------------
+
+    VElement.prototype = {
+        
+        translate: function(tx, ty) {
+            ty = ty || 0;
+            
+            var transformAttr = this.attr('transform') || '',
+                transform = parseTransformString(transformAttr);
+
+            // Is it a getter?
+            if (typeof tx === 'undefined') {
+                return transform.translate;
+            }
+            
+            transformAttr = transformAttr.replace(/translate\([^\)]*\)/g, '').trim();
+
+            var newTx = transform.translate.tx + tx,
+                newTy = transform.translate.ty + ty;
+
+            // Note that `translate()` is always the first transformation. This is
+            // usually the desired case.
+            this.attr('transform', 'translate(' + newTx + ',' + newTy + ') ' + transformAttr);
+            return this;
+        },
+
+        rotate: function(angle, cx, cy) {
+            var transformAttr = this.attr('transform') || '',
+                transform = parseTransformString(transformAttr);
+
+            // Is it a getter?
+            if (typeof angle === 'undefined') {
+                return transform.rotate;
+            }
+            
+            transformAttr = transformAttr.replace(/rotate\([^\)]*\)/g, '').trim();
+
+            var newAngle = transform.rotate.angle + angle % 360,
+                newOrigin = (cx !== undefined && cy !== undefined) ? ',' + cx + ',' + cy : '';
+            
+            this.attr('transform', transformAttr + ' rotate(' + newAngle + newOrigin + ')');
+            return this;
+        },
+
+        // Note that `scale` as the only transformation does not combine with previous values.
+        scale: function(sx, sy) {
+            sy = (typeof sy === 'undefined') ? sx : sy;
+            
+            var transformAttr = this.attr('transform') || '',
+                transform = parseTransformString(transformAttr);
+
+            // Is it a getter?
+            if (typeof sx === 'undefined') {
+                return transform.scale;
+            }
+            
+            transformAttr = transformAttr.replace(/scale\([^\)]*\)/g, '').trim();
+
+            this.attr('transform', transformAttr + ' scale(' + sx + ',' + sy + ')');
+            return this;
+        },
+
+        // Get SVGRect that contains coordinates and dimension of the real bounding box,
+        // i.e. after transformations are applied.
+        // If `target` is specified, bounding box will be computed relatively to `target` element.
+        bbox: function(withoutTransformations, target) {
+
+            // If the element is not in the live DOM, it does not have a bounding box defined and
+            // so fall back to 'zero' dimension element.
+            if (!this.node.ownerSVGElement) return { x: 0, y: 0, width: 0, height: 0 };
+            
+            var box;
+            try {
+
+                box = this.node.getBBox();
+
+		// Opera returns infinite values in some cases.
+		// Note that Infinity | 0 produces 0 as opposed to Infinity || 0.
+		// We also have to create new object as the standard says that you can't
+		// modify the attributes of a bbox.
+		box = { x: box.x | 0, y: box.y | 0, width: box.width | 0, height: box.height | 0};
+
+            } catch (e) {
+
+                // Fallback for IE.
+                box = {
+                    x: this.node.clientLeft,
+                    y: this.node.clientTop,
+                    width: this.node.clientWidth,
+                    height: this.node.clientHeight
+                };
+            }
+
+            if (withoutTransformations) {
+
+                return box;
+            }
+
+            var matrix = this.node.getTransformToElement(target || this.node.ownerSVGElement);
+            var corners = [];
+            var point = this.node.ownerSVGElement.createSVGPoint();
+
+
+            point.x = box.x;
+            point.y = box.y;
+            corners.push(point.matrixTransform(matrix));
+            
+            point.x = box.x + box.width;
+            point.y = box.y;
+            corners.push(point.matrixTransform(matrix));
+            
+            point.x = box.x + box.width;
+            point.y = box.y + box.height;
+            corners.push(point.matrixTransform(matrix));
+            
+            point.x = box.x;
+            point.y = box.y + box.height;
+            corners.push(point.matrixTransform(matrix));
+
+            var minX = corners[0].x;
+            var maxX = minX;
+            var minY = corners[0].y;
+            var maxY = minY;
+            
+            for (var i = 1, len = corners.length; i < len; i++) {
+                
+                var x = corners[i].x;
+                var y = corners[i].y;
+
+                if (x < minX) {
+                    minX = x;
+                } else if (x > maxX) {
+                    maxX = x;
+                }
+                
+                if (y < minY) {
+                    minY = y;
+                } else if (y > maxY) {
+                    maxY = y;
+                }
+            }
+
+            return {
+                x: minX,
+                y: minY,
+                width: maxX - minX,
+                height: maxY - minY
+            };
+        },
+
+        text: function(content) {
+            var lines = content.split('\n'), i = 0,
+                tspan;
+
+            // `alignment-baseline` does not work in Firefox.
+	    // Setting `dominant-baseline` on the `<text>` element doesn't work in IE9.
+            // In order to have the 0,0 coordinate of the `<text>` element (or the first `<tspan>`)
+	    // in the top left corner we translate the `<text>` element by `0.8em`.
+	    // See `http://www.w3.org/Graphics/SVG/WG/wiki/How_to_determine_dominant_baseline`.
+	    // See also `http://apike.ca/prog_svg_text_style.html`.
+	    this.attr('y', '0.8em');
+            
+            if (lines.length === 1) {
+                this.node.textContent = content;
+                return this;
+            }
+            // Easy way to erase all `<tspan>` children;
+            this.node.textContent = '';
+            
+            for (; i < lines.length; i++) {
+
+                // Shift all the <tspan> but first by one line (`1em`)
+                tspan = V('tspan', { dy: (i == 0 ? '0em' : '1em'), x: this.attr('x') || 0});
+                tspan.node.textContent = lines[i];
+                
+                this.append(tspan);
+            }
+            return this;
+        },
+        
+        attr: function(name, value) {
+            
+            if (typeof name === 'string' && typeof value === 'undefined') {
+                return this.node.getAttribute(name);
+            }
+            
+            if (typeof name === 'object') {
+                
+                _.each(name, function(value, name) {
+
+                    setAttribute(this.node, name, value);
+                    
+                }, this);
+                
+            } else {
+
+                setAttribute(this.node, name, value);
+            }
+
+            return this;
+        },
+
+        remove: function() {
+            if (this.node.parentNode) {
+                this.node.parentNode.removeChild(this.node);
+            }
+        },
+
+        append: function(el) {
+
+            var els = el;
+            
+            if (!_.isArray(el)) {
+                
+                els = [el];
+            }
+
+            _.each(els, function(el) {
+
+                this.node.appendChild(el instanceof VElement ? el.node : el);
+                
+            }, this);
+            
+            return this;
+        },
+
+        prepend: function(el) {
+            this.node.insertBefore(el instanceof VElement ? el.node : el, this.node.firstChild);
+        },
+
+        svg: function() {
+
+            return this.node instanceof window.SVGSVGElement ? this : V(this.node.ownerSVGElement);
+        },
+
+        defs: function() {
+
+            var defs = this.svg().node.getElementsByTagName('defs');
+            
+            return (defs && defs.length) ? V(defs[0]) : undefined;
+        },
+
+        clone: function() {
+            var clone = V(this.node.cloneNode(true));
+            // Note that clone inherits also ID. Therefore, we need to change it here.
+            clone.node.id = _.uniqueId('v-');
+            return clone;
+        },
+
+        findOne: function(selector) {
+
+            var found = this.node.querySelector(selector);
+            return found ? V(found) : undefined;
+        },
+
+        find: function(selector) {
+
+            return _.map(this.node.querySelectorAll(selector), function(node) { return V(node) });
+        },
+        
+        // Convert global point into the coordinate space of this element.
+        toLocalPoint: function(x, y) {
+
+            var svg = this.svg().node;
+            
+            var p = svg.createSVGPoint();
+            p.x = x;
+            p.y = y;
+
+	    try {
+
+		var globalPoint = p.matrixTransform(svg.getScreenCTM().inverse());
+		var globalToLocalMatrix = this.node.getTransformToElement(svg).inverse();
+
+	    } catch(e) {
+		// IE9 throws an exception in odd cases. (`Unexpected call to method or property access`)
+		// We have to make do with the original coordianates.
+		return p;
+	    }
+
+            return globalPoint.matrixTransform(globalToLocalMatrix);
+        },
+
+        translateCenterToPoint: function(p) {
+
+            var bbox = this.bbox();
+            var center = g.rect(bbox).center();
+
+            this.translate(p.x - center.x, p.y - center.y);
+        },
+
+        // Efficiently auto-orient an element. This basically implements the orient=auto attribute
+        // of markers. The easiest way of understanding on what this does is to imagine the element is an
+        // arrowhead. Calling this method on the arrowhead makes it point to the `position` point while
+        // being auto-oriented (properly rotated) towards the `reference` point.
+        // `target` is the element relative to which the transformations are applied. Usually a viewport.
+        translateAndAutoOrient: function(position, reference, target) {
+
+            // Clean-up previously set transformations except the scale. If we didn't clean up the
+            // previous transformations then they'd add up with the old ones. Scale is an exception as
+            // it doesn't add up, consider: `this.scale(2).scale(2).scale(2)`. The result is that the
+            // element is scaled by the factor 2, not 8.
+
+            var s = this.scale();
+            this.attr('transform', '');
+            this.scale(s.sx, s.sy);
+
+            var svg = this.svg().node;
+            var bbox = this.bbox(false, target);
+
+            // 1. Translate to origin.
+            var translateToOrigin = svg.createSVGTransform();
+            translateToOrigin.setTranslate(-bbox.x - bbox.width/2, -bbox.y - bbox.height/2);
+
+            // 2. Rotate around origin.
+            var rotateAroundOrigin = svg.createSVGTransform();
+            var angle = g.point(position).changeInAngle(position.x - reference.x, position.y - reference.y, reference);
+            rotateAroundOrigin.setRotate(angle, 0, 0);
+
+            // 3. Translate to the `position` + the offset (half my width) towards the `reference` point.
+            var translateFinal = svg.createSVGTransform();
+            var finalPosition = g.point(position).move(reference, bbox.width/2);
+            translateFinal.setTranslate(position.x + (position.x - finalPosition.x), position.y + (position.y - finalPosition.y));
+
+            // 4. Apply transformations.
+            var ctm = this.node.getTransformToElement(target);
+            var transform = svg.createSVGTransform();
+            transform.setMatrix(
+                translateFinal.matrix.multiply(
+                    rotateAroundOrigin.matrix.multiply(
+                        translateToOrigin.matrix.multiply(
+                            ctm)))
+            );
+
+            // Instead of directly setting the `matrix()` transform on the element, first, decompose
+            // the matrix into separate transforms. This allows us to use normal Vectorizer methods
+            // as they don't work on matrices. An example of this is to retrieve a scale of an element.
+            // this.node.transform.baseVal.initialize(transform);
+
+            var decomposition = decomposeMatrix(transform.matrix);
+
+            this.translate(decomposition.translateX, decomposition.translateY);
+            this.rotate(decomposition.rotation);
+            // Note that scale has been already applied, hence the following line stays commented. (it's here just for reference).
+            //this.scale(decomposition.scaleX, decomposition.scaleY);
+
+            return this;
+        },
+
+        animateAlongPath: function(attrs, path) {
+
+            var animateMotion = V('animateMotion', attrs);
+            var mpath = V('mpath', { 'xlink:href': '#' + V(path).node.id });
+
+            animateMotion.append(mpath);
+
+            this.append(animateMotion);
+            try {
+                animateMotion.node.beginElement();
+            } catch (e) {
+                // Fallback for IE 9.
+		// Run the animation programatically if FakeSmile (`http://leunen.me/fakesmile/`) present 
+		if (document.documentElement.getAttribute('smiling') === 'fake') {
+
+		    // Register the animation. (See `https://answers.launchpad.net/smil/+question/203333`)
+		    var animation = animateMotion.node;
+		    animation.animators = new Array();
+
+		    var animationID = animation.getAttribute('id');
+		    if (animationID) id2anim[animationID] = animation;
+
+		    _.each(getTargets(animation), function(target, index) {
+			var animator = new Animator(animation, target, index);
+			animators.push(animator);
+			animation.animators[index] = animator;
+		    });
+
+		    _.invoke(animation.animators, 'register');
+		}
+            }
+        },
+
+        hasClass: function(className) {
+
+            return new RegExp('(\\s|^)' + className + '(\\s|$)').test(this.node.getAttribute('class'));
+        },
+
+        addClass: function(className) {
+
+            if (!this.hasClass(className)) {
+                this.node.setAttribute('class', this.node.getAttribute('class') + ' ' + className);
+            }
+
+            return this;
+        },
+
+        removeClass: function(className) {
+
+            var removedClass = this.node.getAttribute('class').replace(new RegExp('(\\s|^)' + className + '(\\s|$)', 'g'), '$2');
+
+            if (this.hasClass(className)) {
+                this.node.setAttribute('class', removedClass);
+            }
+
+            return this;
+        },
+
+        toggleClass: function(className, toAdd) {
+
+            var toRemove = typeof toAdd === 'undefined' ? this.hasClass(className) : !toAdd;
+
+            if (toRemove) {
+                this.removeClass(className);
+            } else {
+                this.addClass(className);
+            }
+
+            return this;
+        }
+    };
+
+    var V = createElement;
+
+    V.decomposeMatrix = decomposeMatrix;
+
+    var svgDocument = V('svg').node;
+    
+    V.createSVGMatrix = function(m) {
+        
+        return _.extend(svgDocument.createSVGMatrix(), m);
+    };
+
+    V.createSVGTransform = function() {
+
+        return svgDocument.createSVGTransform();
+    };
+
+    V.createSVGPoint = function(x, y) {
+
+        var p = svgDocument.createSVGPoint();
+        p.x = x;
+        p.y = y;
+        return p;
+    };
+
+    return V;
+
+}));
+
+
+//      Geometry library.
+//      (c) 2011-2013 client IO
+
+
+(function(root, factory) {
+
+    if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define([], factory);
+        
+    } else {
+        // Browser globals.
+        root.g = factory();
+    }
+
+}(this, function() {
+
+
+    // Declare shorthands to the most used math functions.
+    var math = Math;
+    var abs = math.abs;
+    var cos = math.cos;
+    var sin = math.sin;
+    var sqrt = math.sqrt;
+    var mmin = math.min;
+    var mmax = math.max;
+    var atan = math.atan;
+    var atan2 = math.atan2;
+    var acos = math.acos;
+    var round = math.round;
+    var floor = math.floor;
+    var PI = math.PI;
+    var random = math.random;
+    var toDeg = function(rad) { return (180*rad / PI) % 360; };
+    var toRad = function(deg) { return (deg % 360) * PI / 180; };
+    var snapToGrid = function(val, gridSize) { return gridSize * Math.round(val/gridSize); };
+    var normalizeAngle = function(angle) { return (angle % 360) + (angle < 0 ? 360 : 0); };
+
+    // Point
+    // -----
+
+    // Point is the most basic object consisting of x/y coordinate,.
+
+    // Possible instantiations are:
+
+    // * `point(10, 20)`
+    // * `new point(10, 20)`
+    // * `point('10 20')`
+    // * `point(point(10, 20))`
+    function point(x, y) {
+        if (!(this instanceof point))
+            return new point(x, y);
+        var xy;
+        if (y === undefined && Object(x) !== x) {
+            xy = x.split(x.indexOf('@') === -1 ? ' ' : '@');
+            this.x = parseInt(xy[0], 10);
+            this.y = parseInt(xy[1], 10);
+        } else if (Object(x) === x) {
+            this.x = x.x;
+            this.y = x.y;
+        } else {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+    point.prototype = {
+        toString: function() {
+            return this.x + "@" + this.y;
+        },
+        // If point lies outside rectangle `r`, return the nearest point on the boundary of rect `r`,
+        // otherwise return point itself.
+        // (see Squeak Smalltalk, Point>>adhereTo:)
+        adhereToRect: function(r) {
+	    if (r.containsPoint(this)){
+	        return this;
+	    }
+	    this.x = mmin(mmax(this.x, r.x), r.x + r.width);
+	    this.y = mmin(mmax(this.y, r.y), r.y + r.height);
+	    return this;
+        },
+        // Compute the angle between me and `p` and the x axis.
+        // (cartesian-to-polar coordinates conversion)
+        // Return theta angle in degrees.
+        theta: function(p) {
+            p = point(p);
+            // Invert the y-axis.
+	    var y = -(p.y - this.y);
+	    var x = p.x - this.x;
+            // Makes sure that the comparison with zero takes rounding errors into account.
+            var PRECISION = 10;
+            // Note that `atan2` is not defined for `x`, `y` both equal zero.
+	    var rad = (y.toFixed(PRECISION) == 0 && x.toFixed(PRECISION) == 0) ? 0 : atan2(y, x); 
+
+            // Correction for III. and IV. quadrant.
+	    if (rad < 0) { 
+	        rad = 2*PI + rad;
+	    }
+	    return 180*rad / PI;
+        },
+        // Returns distance between me and point `p`.
+        distance: function(p) {
+	    return line(this, p).length();
+        },
+        // Returns a manhattan (taxi-cab) distance between me and point `p`.
+        manhattanDistance: function(p) {
+            return abs(p.x - this.x) + abs(p.y - this.y);
+        },
+        // Offset me by the specified amount.
+        offset: function(dx, dy) {
+	    this.x += dx || 0;
+	    this.y += dy || 0;
+	    return this;
+        },
+        magnitude: function() {
+            return sqrt((this.x*this.x) + (this.y*this.y)) || 0.01;
+        },
+        update: function(x, y) {
+            this.x = x || 0;
+            this.y = y || 0;
+            return this;
+        },
+        round: function(decimals) {
+            this.x = decimals ? this.x.toFixed(decimals) : round(this.x);
+            this.y = decimals ? this.y.toFixed(decimals) : round(this.y);
+            return this;
+        },
+        // Scale the line segment between (0,0) and me to have a length of len.
+        normalize: function(len) {
+	    var s = (len || 1) / this.magnitude();
+	    this.x = s * this.x;
+	    this.y = s * this.y;
+	    return this;
+        },
+        difference: function(p) {
+            return point(this.x - p.x, this.y - p.y);
+        },
+        // Converts rectangular to polar coordinates.
+        // An origin can be specified, otherwise it's 0@0.
+        toPolar: function(o) {
+            o = (o && point(o)) || point(0,0);
+            var x = this.x;
+            var y = this.y;
+            this.x = sqrt((x-o.x)*(x-o.x) + (y-o.y)*(y-o.y));   // r
+            this.y = toRad(o.theta(point(x,y)));
+            return this;
+        },
+        // Rotate point by angle around origin o.
+        rotate: function(o, angle) {
+            angle = (angle + 360) % 360;
+            this.toPolar(o);
+            this.y += toRad(angle);
+            var p = point.fromPolar(this.x, this.y, o);
+            this.x = p.x;
+            this.y = p.y;
+            return this;
+        },
+        // Move point on line starting from ref ending at me by
+        // distance distance.
+        move: function(ref, distance) {
+            var theta = toRad(point(ref).theta(this));
+            return this.offset(cos(theta) * distance, -sin(theta) * distance);
+        },
+        // Returns change in angle from my previous position (-dx, -dy) to my new position
+        // relative to ref point.
+        changeInAngle: function(dx, dy, ref) {
+            // Revert the translation and measure the change in angle around x-axis.
+            return point(this).offset(-dx, -dy).theta(ref) - this.theta(ref);
+        },
+        equals: function(p) {
+            return this.x === p.x && this.y === p.y;
+        },
+        snapToGrid: function(gx, gy) {
+            this.x = snapToGrid(this.x, gx)
+            this.y = snapToGrid(this.y, gy || gx)
+            return this;
+        }
+    };
+    // Alternative constructor, from polar coordinates.
+    // @param {number} r Distance.
+    // @param {number} angle Angle in radians.
+    // @param {point} [optional] o Origin.
+    point.fromPolar = function(r, angle, o) {
+        o = (o && point(o)) || point(0,0);
+        var x = abs(r * cos(angle));
+        var y = abs(r * sin(angle));
+        var deg = normalizeAngle(toDeg(angle));
+
+        if (deg < 90) y = -y;
+        else if (deg < 180) { x = -x; y = -y; }
+        else if (deg < 270) x = -x;
+        
+        return point(o.x + x, o.y + y);
+    };
+
+    // Create a point with random coordinates that fall into the range `[x1, x2]` and `[y1, y2]`.
+    point.random = function(x1, x2, y1, y2) {
+        return point(floor(random() * (x2 - x1 + 1) + x1), floor(random() * (y2 - y1 + 1) + y1));
+    };
+
+    // Line.
+    // -----
+    function line(p1, p2) {
+        if (!(this instanceof line))
+            return new line(p1, p2);
+        this.start = point(p1);
+        this.end = point(p2);
+    }
+    
+    line.prototype = {
+        toString: function() {
+	    return this.start.toString() + ' ' + this.end.toString();
+        },
+        // @return {double} length of the line
+        length: function() {
+            return sqrt(this.squaredLength());
+        },
+        // @return {integer} length without sqrt
+        // @note for applications where the exact length is not necessary (e.g. compare only)
+        squaredLength: function() {
+	    var x0 = this.start.x;
+            var y0 = this.start.y;
+	    var x1 = this.end.x;
+            var y1 = this.end.y;
+	    return (x0 -= x1)*x0 + (y0 -= y1)*y0;
+        },
+        // @return {point} my midpoint
+        midpoint: function() {
+	    return point((this.start.x + this.end.x) / 2,
+		         (this.start.y + this.end.y) / 2);
+        },
+        // @return {point} Point where I'm intersecting l.
+        // @see Squeak Smalltalk, LineSegment>>intersectionWith:
+        intersection: function(l) {
+	    var pt1Dir = point(this.end.x - this.start.x, this.end.y - this.start.y);
+	    var pt2Dir = point(l.end.x - l.start.x, l.end.y - l.start.y);
+	    var det = (pt1Dir.x * pt2Dir.y) - (pt1Dir.y * pt2Dir.x);
+	    var deltaPt = point(l.start.x - this.start.x, l.start.y - this.start.y);
+	    var alpha = (deltaPt.x * pt2Dir.y) - (deltaPt.y * pt2Dir.x);
+	    var beta = (deltaPt.x * pt1Dir.y) - (deltaPt.y * pt1Dir.x);
+
+	    if (det === 0 ||
+	        alpha * det < 0 ||
+	        beta * det < 0) {
+                // No intersection found.
+	        return null;	
+	    }
+	    if (det > 0){
+	        if (alpha > det || beta > det){
+		    return null;
+	        }
+	    } else {
+	        if (alpha < det || beta < det){
+		    return null;
+	        }
+	    }
+	    return point(this.start.x + (alpha * pt1Dir.x / det),
+		         this.start.y + (alpha * pt1Dir.y / det));
+        }
+    };
+
+    // Rectangle.
+    // ----------
+    function rect(x, y, w, h) {
+        if (!(this instanceof rect))
+            return new rect(x, y, w, h);
+        if (y === undefined) {
+            y = x.y;
+            w = x.width;
+            h = x.height;
+            x = x.x;        
+        }
+        this.x = x;
+        this.y = y;
+        this.width = w;
+        this.height = h;
+    }
+    
+    rect.prototype = {
+        toString: function() {
+	    return this.origin().toString() + ' ' + this.corner().toString();
+        },
+        origin: function() {
+            return point(this.x, this.y);
+        },
+        corner: function() {
+            return point(this.x + this.width, this.y + this.height);
+        },
+        topRight: function() {
+            return point(this.x + this.width, this.y);
+        },
+        bottomLeft: function() {
+            return point(this.x, this.y + this.height);
+        },
+        center: function() {
+            return point(this.x + this.width/2, this.y + this.height/2);
+        },
+        // @return {boolean} true if rectangles intersect
+        intersect: function(r) {
+	    var myOrigin = this.origin();
+	    var myCorner = this.corner();
+	    var rOrigin = r.origin();
+	    var rCorner = r.corner();
+            
+	    if (rCorner.x <= myOrigin.x ||
+	        rCorner.y <= myOrigin.y ||
+	        rOrigin.x >= myCorner.x ||
+	        rOrigin.y >= myCorner.y) return false;
+	    return true;
+        },
+        // @return {string} (left|right|top|bottom) side which is nearest to point
+        // @see Squeak Smalltalk, Rectangle>>sideNearestTo:
+        sideNearestToPoint: function(p) {
+            p = point(p);
+	    var distToLeft = p.x - this.x;
+	    var distToRight = (this.x + this.width) - p.x;
+	    var distToTop = p.y - this.y;
+	    var distToBottom = (this.y + this.height) - p.y;
+	    var closest = distToLeft;
+	    var side = 'left';
+            
+	    if (distToRight < closest) {
+	        closest = distToRight;
+	        side = 'right';
+	    }
+	    if (distToTop < closest) {
+	        closest = distToTop;
+	        side = 'top';
+	    }
+	    if (distToBottom < closest) {
+	        closest = distToBottom;
+	        side = 'bottom';
+	    }
+	    return side;
+        },
+        // @return {bool} true if point p is insight me
+        containsPoint: function(p) {
+            p = point(p);
+	    if (p.x >= this.x && p.x <= this.x + this.width &&
+	        p.y >= this.y && p.y <= this.y + this.height) {
+	        return true;
+	    }
+	    return false;
+        },
+        // @return {point} a point on my boundary nearest to p
+        // @see Squeak Smalltalk, Rectangle>>pointNearestTo:
+        pointNearestToPoint: function(p) {
+            p = point(p);
+	    if (this.containsPoint(p)) {
+	        var side = this.sideNearestToPoint(p);
+	        switch (side){
+	          case "right": return point(this.x + this.width, p.y);
+	          case "left": return point(this.x, p.y);
+	          case "bottom": return point(p.x, this.y + this.height);
+	          case "top": return point(p.x, this.y);
+	        }
+	    }
+	    return p.adhereToRect(this);
+        },
+        // Find point on my boundary where line starting
+        // from my center ending in point p intersects me.
+        // @param {number} angle If angle is specified, intersection with rotated rectangle is computed.
+        intersectionWithLineFromCenterToPoint: function(p, angle) {
+            p = point(p);
+	    var center = point(this.x + this.width/2, this.y + this.height/2);
+            var result;
+            if (angle) p.rotate(center, angle);
+            
+	    // (clockwise, starting from the top side)
+	    var sides = [
+	        line(this.origin(), this.topRight()),
+	        line(this.topRight(), this.corner()),
+	        line(this.corner(), this.bottomLeft()),
+	        line(this.bottomLeft(), this.origin())
+	    ];
+	    var connector = line(center, p);
+            
+	    for (var i = sides.length - 1; i >= 0; --i){
+	        var intersection = sides[i].intersection(connector);
+	        if (intersection !== null){
+		    result = intersection;
+                    break;
+	        }
+	    }
+            if (result && angle) result.rotate(center, -angle);
+            return result;
+        },
+        // Move and expand me.
+        // @param r {rectangle} representing deltas
+        moveAndExpand: function(r) {
+	    this.x += r.x;
+	    this.y += r.y;
+	    this.width += r.width;
+	    this.height += r.height;
+	    return this;
+        },
+        round: function(decimals) {
+            this.x = decimals ? this.x.toFixed(decimals) : round(this.x);
+            this.y = decimals ? this.y.toFixed(decimals) : round(this.y);
+            this.width = decimals ? this.width.toFixed(decimals) : round(this.width);
+            this.height = decimals ? this.height.toFixed(decimals) : round(this.height);
+            return this;
+        }
+    };
+
+    // Ellipse.
+    // --------
+    function ellipse(c, a, b) {
+        if (!(this instanceof ellipse))
+            return new ellipse(c, a, b);
+        c = point(c);
+        this.x = c.x;
+        this.y = c.y;
+        this.a = a;
+        this.b = b;
+    }
+
+    ellipse.prototype = {
+        toString: function() {
+            return point(this.x, this.y).toString() + ' ' + this.a + ' ' + this.b;
+        },
+        bbox: function() {
+	        return rect(this.x - this.a, this.y - this.b, 2*this.a, 2*this.b);
+        },
+        // Find point on me where line from my center to
+        // point p intersects my boundary.
+        // @param {number} angle If angle is specified, intersection with rotated ellipse is computed.
+        intersectionWithLineFromCenterToPoint: function(p, angle) {
+	    p = point(p);
+            if (angle) p.rotate(point(this.x, this.y), angle);
+            var dx = p.x - this.x;
+	    var dy = p.y - this.y;
+            var result;
+	    if (dx === 0) {
+	        result = this.bbox().pointNearestToPoint(p);
+                if (angle) return result.rotate(point(this.x, this.y), -angle);
+                return result;
+	    }
+	    var m = dy / dx;
+	    var mSquared = m * m;
+	    var aSquared = this.a * this.a;
+	    var bSquared = this.b * this.b;
+	    var x = sqrt(1 / ((1 / aSquared) + (mSquared / bSquared)));
+
+            x = dx < 0 ? -x : x;
+	    var y = m * x;
+	    result = point(this.x + x, this.y + y);
+            if (angle) return result.rotate(point(this.x, this.y), -angle);
+            return result;
+        }
+    };
+
+    // Bezier curve.
+    // -------------
+    var bezier = {
+        // Cubic Bezier curve path through points.
+        // Ported from C# implementation by Oleg V. Polikarpotchkin and Peter Lee (http://www.codeproject.com/KB/graphics/BezierSpline.aspx).
+        // @param {array} points Array of points through which the smooth line will go.
+        // @return {array} SVG Path commands as an array
+        curveThroughPoints: function(points) {
+            var controlPoints = this.getCurveControlPoints(points);
+            var path = ['M', points[0].x, points[0].y];
+
+            for (var i = 0; i < controlPoints[0].length; i++) {
+                path.push('C', controlPoints[0][i].x, controlPoints[0][i].y, controlPoints[1][i].x, controlPoints[1][i].y, points[i+1].x, points[i+1].y);        
+            }
+            return path;
+        },
+        
+        // Get open-ended Bezier Spline Control Points.
+        // @param knots Input Knot Bezier spline points (At least two points!).
+        // @param firstControlPoints Output First Control points. Array of knots.length - 1 length.
+        //  @param secondControlPoints Output Second Control points. Array of knots.length - 1 length.
+        getCurveControlPoints: function(knots) {
+            var firstControlPoints = [];
+            var secondControlPoints = [];
+            var n = knots.length - 1;
+            var i;
+
+            // Special case: Bezier curve should be a straight line.
+            if (n == 1) { 
+	        // 3P1 = 2P0 + P3
+	        firstControlPoints[0] = point((2 * knots[0].x + knots[1].x) / 3,
+	                                      (2 * knots[0].y + knots[1].y) / 3);
+	        // P2 = 2P1 – P0
+	        secondControlPoints[0] = point(2 * firstControlPoints[0].x - knots[0].x,
+	                                       2 * firstControlPoints[0].y - knots[0].y);
+	        return [firstControlPoints, secondControlPoints];
+            }
+            
+                // Calculate first Bezier control points.
+            // Right hand side vector.
+            var rhs = [];
+            
+            // Set right hand side X values.
+            for (i = 1; i < n - 1; i++) {
+                rhs[i] = 4 * knots[i].x + 2 * knots[i + 1].x;
+            }
+            rhs[0] = knots[0].x + 2 * knots[1].x;
+            rhs[n - 1] = (8 * knots[n - 1].x + knots[n].x) / 2.0;
+            // Get first control points X-values.
+            var x = this.getFirstControlPoints(rhs);
+            
+            // Set right hand side Y values.
+            for (i = 1; i < n - 1; ++i) {
+	        rhs[i] = 4 * knots[i].y + 2 * knots[i + 1].y;
+            }
+            rhs[0] = knots[0].y + 2 * knots[1].y;
+            rhs[n - 1] = (8 * knots[n - 1].y + knots[n].y) / 2.0;
+            // Get first control points Y-values.
+            var y = this.getFirstControlPoints(rhs);
+            
+            // Fill output arrays.
+            for (i = 0; i < n; i++) {
+	        // First control point.
+	        firstControlPoints.push(point(x[i], y[i]));
+	        // Second control point.
+	        if (i < n - 1) {
+	            secondControlPoints.push(point(2 * knots [i + 1].x - x[i + 1],
+                                                   2 * knots[i + 1].y - y[i + 1]));
+	        } else {
+	            secondControlPoints.push(point((knots[n].x + x[n - 1]) / 2,
+					           (knots[n].y + y[n - 1]) / 2));
+	        }
+            }
+            return [firstControlPoints, secondControlPoints];
+        },
+
+        // Solves a tridiagonal system for one of coordinates (x or y) of first Bezier control points.
+        // @param rhs Right hand side vector.
+        // @return Solution vector.
+        getFirstControlPoints: function(rhs) {
+            var n = rhs.length;
+            // `x` is a solution vector.
+            var x = [];
+            var tmp = [];
+            var b = 2.0;
+            
+            x[0] = rhs[0] / b;
+            // Decomposition and forward substitution.
+            for (var i = 1; i < n; i++) { 
+	        tmp[i] = 1 / b;
+	        b = (i < n - 1 ? 4.0 : 3.5) - tmp[i];
+	        x[i] = (rhs[i] - x[i - 1]) / b;
+            }
+            for (i = 1; i < n; i++) {
+                // Backsubstitution.
+	        x[n - i - 1] -= tmp[n - i] * x[n - i]; 
+            }
+            return x;
+        }
+    };
+
+    // Scale.
+    var scale = {
+
+        // Return the `value` from the `domain` interval scaled to the `range` interval.
+        linear: function(domain, range, value) {
+
+            var domainSpan = domain[1] - domain[0];
+            var rangeSpan = range[1] - range[0];
+            return (((value - domain[0]) / domainSpan) * rangeSpan + range[0]) || 0;
+        }
+    };
+
+    return {
+
+        toDeg: toDeg,
+        toRad: toRad,
+        snapToGrid: snapToGrid,
+	normalizeAngle: normalizeAngle,
+        point: point,
+        line: line,
+        rect: rect,
+        ellipse: ellipse,
+        bezier: bezier,
+        scale: scale
+    }
+}));
 
 //      JointJS, the JavaScript diagramming library.
 //      (c) 2011-2013 client IO
@@ -19028,7 +18952,7 @@ if (typeof exports === 'object') {
     };
     var Backbone = require('backbone');
     var _ = require('lodash');
-    var g = require('./geometry');
+    var g = require('./geometry').g;
 }
 
 
@@ -19140,9 +19064,7 @@ joint.dia.Graph = Backbone.Model.extend({
 
     clear: function() {
 
-        this.trigger('batch:start');
         this.get('cells').remove(this.get('cells').models);
-        this.trigger('batch:stop');
     },
 
     _prepareCell: function(cell) {
@@ -20026,11 +19948,6 @@ joint.dia.CellView = Backbone.View.extend({
 
         this.notify('cell:pointerdblclick', evt, x, y);
     },
-
-    pointerclick: function(evt, x, y) {
-
-        this.notify('cell:pointerclick', evt, x, y);
-    },
     
     pointerdown: function(evt, x, y) {
 
@@ -20199,7 +20116,7 @@ joint.dia.ElementView = joint.dia.CellView.extend({
             if ($selected.length === 0) return;
 
             // Special attributes are treated by JointJS, not by SVG.
-            var specialAttributes = ['style', 'text', 'html', 'ref-x', 'ref-y', 'ref-dx', 'ref-dy', 'ref-width', 'ref-height', 'ref', 'x-alignment', 'y-alignment', 'port'];
+            var specialAttributes = ['style', 'text', 'html', 'ref-x', 'ref-y', 'ref-dx', 'ref-dy', 'ref', 'x-alignment', 'y-alignment', 'port'];
 
             // If the `filter` attribute is an object, it is in the special JointJS filter format and so
             // it becomes a special attribute and is treated separately.
@@ -20221,20 +20138,7 @@ joint.dia.ElementView = joint.dia.CellView.extend({
                 specialAttributes.push('stroke');
                 this.applyGradient(selector, 'stroke', attrs.stroke);
             }
-
-            // Make special case for `text` attribute. So that we can set text content of the `<text>` element
-            // via the `attrs` object as well.
-            // Note that it's important to set text before applying the rest of the final attributes.
-            // Vectorizer `text()` method sets on the element its own attributes and it has to be possible
-            // to rewrite them, if needed. (i.e display: 'none')
-            if (!_.isUndefined(attrs.text)) {
-
-                $selected.each(function() {
-
-                    V(this).text(attrs.text + '');
-                });
-            }
-
+            
             // Set regular attributes on the `$selected` subelement. Note that we cannot use the jQuery attr()
             // method as some of the attributes might be namespaced (e.g. xlink:href) which fails with jQuery attr().
             var finalAttributes = _.omit(attrs, specialAttributes);
@@ -20256,6 +20160,16 @@ joint.dia.ElementView = joint.dia.CellView.extend({
                 $selected.css(attrs.style);
             }
             
+            // Make special case for `text` attribute. So that we can set text content of the `<text>` element
+            // via the `attrs` object as well.
+            if (!_.isUndefined(attrs.text)) {
+
+                $selected.each(function() {
+
+                    V(this).text(attrs.text + '');
+                });
+            }
+
             if (!_.isUndefined(attrs.html)) {
 
                 $selected.each(function() {
@@ -20276,12 +20190,7 @@ joint.dia.ElementView = joint.dia.CellView.extend({
                 !_.isUndefined(attrs['ref-height'])
                ) {
 
-                   _.each($selected, function(el, index, list) {
-                       var $el = $(el);
-                       // copy original list selector to the element
-                       $el.selector = list.selector;
-                       relativelyPositioned.push($el);
-                   });
+                relativelyPositioned.push($selected);
             }
             
         }, this);
@@ -20691,7 +20600,7 @@ if (typeof exports === 'object') {
     };
     var Backbone = require('backbone');
     var _ = require('lodash');
-    var g = require('./geometry');
+    var g = require('./geometry').g;
 }
 
 
@@ -20791,9 +20700,7 @@ joint.dia.Link = joint.dia.Cell.extend({
 
 joint.dia.LinkView = joint.dia.CellView.extend({
 
-    className: function() {
-        return _.unique(this.model.get('type').split('.').concat('link')).join(' ');
-    },
+    className: 'link',
 
     options: {
 
@@ -20915,8 +20822,8 @@ joint.dia.LinkView = joint.dia.CellView.extend({
             var $text = $(labelNode).find('text');
             var $rect = $(labelNode).find('rect');
 
-            // Text attributes with the default `text-anchor` and font-size set.
-            var textAttributes = _.extend({ 'text-anchor': 'middle', 'font-size': 14 }, joint.util.getByPath(label, 'attrs/text', '/'));
+            // Text attributes with the default `text-anchor` set.
+            var textAttributes = _.extend({ 'text-anchor': 'middle' }, joint.util.getByPath(label, 'attrs/text', '/'));
             
             $text.attr(_.omit(textAttributes, 'text'));
                 
@@ -21897,7 +21804,6 @@ joint.dia.Paper = Backbone.View.extend({
 
         'mousedown': 'pointerdown',
         'dblclick': 'mousedblclick',
-        'click': 'mouseclick',
         'touchstart': 'pointerdown',
         'mousemove': 'pointermove',
         'touchmove': 'pointermove'
@@ -21926,9 +21832,6 @@ joint.dia.Paper = Backbone.View.extend({
 	this.listenTo(this.model, 'sort', this.sortCells);
 
 	$(document).on('mouseup touchend', this.pointerup);
-
-        // Hold the value when mouse has been moved: when mouse moved, no click event will be triggered.
-        this._mousemoved = false;
     },
 
     remove: function() {
@@ -22048,52 +21951,14 @@ joint.dia.Paper = Backbone.View.extend({
         var $cells = $(this.viewport).children('[model-id]');
         var cells = this.model.get('cells');
 
-        this.sortElements($cells, function(a, b) {
+        // Using the jquery.sortElements plugin by Padolsey.
+        // See http://james.padolsey.com/javascript/sorting-elements-with-jquery/.
+        $cells.sortElements(function(a, b) {
 
             var cellA = cells.get($(a).attr('model-id'));
             var cellB = cells.get($(b).attr('model-id'));
             
             return (cellA.get('z') || 0) > (cellB.get('z') || 0) ? 1 : -1;
-        });
-    },
-
-    // Highly inspired by the jquery.sortElements plugin by Padolsey.
-    // See http://james.padolsey.com/javascript/sorting-elements-with-jquery/.
-    sortElements: function(elements, comparator) {
-
-        var $elements = $(elements);
-        
-        var placements = $elements.map(function() {
-
-            var sortElement = this;
-            var parentNode = sortElement.parentNode;
-
-            // Since the element itself will change position, we have
-            // to have some way of storing it's original position in
-            // the DOM. The easiest way is to have a 'flag' node:
-            var nextSibling = parentNode.insertBefore(
-                document.createTextNode(''),
-                sortElement.nextSibling
-            );
-
-            return function() {
-                
-                if (parentNode === this) {
-                    throw new Error(
-                        "You can't sort elements if any one is a descendant of another."
-                    );
-                }
-                
-                // Insert before flag:
-                parentNode.insertBefore(this, nextSibling);
-                // Remove flag:
-                parentNode.removeChild(nextSibling);
-                
-            };
-        });
-
-        return Array.prototype.sort.call($elements, comparator).each(function(i) {
-            placements[i].call(this);
         });
     },
 
@@ -22239,30 +22104,6 @@ joint.dia.Paper = Backbone.View.extend({
         }
     },
 
-    mouseclick: function(evt) {
-
-        // Trigger event when mouse not moved.
-        if (!this._mousemoved) {
-            
-            evt.preventDefault();
-            evt = joint.util.normalizeEvent(evt);
-
-            var view = this.findView(evt.target);
-            var localPoint = this.snapToGrid({ x: evt.clientX, y: evt.clientY });
-
-            if (view) {
-
-                view.pointerclick(evt, localPoint.x, localPoint.y);
-                
-            } else {
-
-                this.trigger('blank:pointerclick', evt, localPoint.x, localPoint.y);
-            }
-        }
-
-        this._mousemoved = false;
-    },
-
     pointerdown: function(evt) {
 
         evt.preventDefault();
@@ -22290,9 +22131,6 @@ joint.dia.Paper = Backbone.View.extend({
         evt = joint.util.normalizeEvent(evt);
 
         if (this.sourceView) {
-
-            // Mouse moved.
-            this._mousemoved = true;
 
             var localPoint = this.snapToGrid({ x: evt.clientX, y: evt.clientY });
 
@@ -22550,7 +22388,7 @@ joint.shapes.basic.PortsViewInterface = {
     }
 };
 
-joint.shapes.basic.TextBlock = joint.shapes.basic.Generic.extend({
+joint.shapes.basic.TextBlock = joint.shapes.basic.Rect.extend({
 
     markup: ['<g class="rotatable"><g class="scalable"><rect/></g><switch>',
 
@@ -22561,7 +22399,7 @@ joint.shapes.basic.TextBlock = joint.shapes.basic.Generic.extend({
              '</foreignObject>',
 
              // else foreignObject is not supported (fallback for IE)
-             '<text class="content"/>',
+             '<text/>',
 
              '</switch></g>'].join(''),
 
@@ -22569,32 +22407,11 @@ joint.shapes.basic.TextBlock = joint.shapes.basic.Generic.extend({
 
         type: 'basic.TextBlock',
 
-        // see joint.css for more element styles
-        attrs: {
-            rect: {
-                fill: '#ffffff',
-                stroke: '#000000',
-                width: 80,
-                height: 100
-            },
-            text: {
-                fill: '#000000',
-                'font-size': 14,
-                'font-family': 'Arial, helvetica, sans-serif'
-            },
-            '.content': {
-                text: '',
-                ref: 'rect',
-                'ref-x': .5,
-                'ref-y': .5,
-                'y-alignment': 'middle',
-                'x-alignment': 'middle'
-            }
-        },
+        // see joint.css for the element styles
 
         content: ''
 
-    }, joint.shapes.basic.Generic.prototype.defaults),
+    }, joint.shapes.basic.Rect.prototype.defaults),
 
     initialize: function() {
 
@@ -22643,38 +22460,33 @@ joint.shapes.basic.TextBlockView = joint.dia.ElementView.extend({
 
             this.noSVGForeignObjectElement = true;
 
-            this.listenTo(this.model, 'change:content', function(cell) {
-                // avoiding pass of extra paramters
-                this.updateContent(cell);
-            });
+            this.listenTo(this.model, 'change:content', this.updateContent);
         }
     },
 
-    update: function(cell, renderingOnlyAttrs) {
+    update: function() {
 
         if (this.noSVGForeignObjectElement) {
 
             var model = this.model;
 
             // Update everything but the content first.
-            var noTextAttrs = _.omit(renderingOnlyAttrs || model.get('attrs'), '.content');
+            var noTextAttrs = _.omit(model.get('attrs'), 'text');
             joint.dia.ElementView.prototype.update.call(this, model, noTextAttrs);
 
-            if (!renderingOnlyAttrs || _.has(renderingOnlyAttrs, '.content')) {
-                // Update the content itself.
-                this.updateContent(model, renderingOnlyAttrs);
-            }
+            // Update the content itself.
+            this.updateContent(model);
 
         } else {
 
-            joint.dia.ElementView.prototype.update.call(this, model, renderingOnlyAttrs);
+            joint.dia.ElementView.prototype.update.apply(this, arguments);
         }
     },
 
-    updateContent: function(cell, renderingOnlyAttrs) {
+    updateContent: function(cell) {
 
         // Create copy of the text attributes
-        var textAttrs = _.merge({}, (renderingOnlyAttrs || cell.get('attrs'))['.content']);
+        var textAttrs = _.merge({}, cell.get('attrs').text);
 
         delete textAttrs.text;
 
@@ -22686,10 +22498,10 @@ joint.shapes.basic.TextBlockView = joint.dia.ElementView.extend({
         });
 
         // Create a new attrs with same structure as the model attrs { text: { *textAttributes* }}
-        var attrs = joint.util.setByPath({}, '.content', textAttrs,'/');
+        var attrs = joint.util.setByPath({}, 'text', textAttrs);
 
         // Replace text attribute with the one we just processed.
-        attrs['.content'].text = text;
+        attrs.text.text = text;
 
         // Update the view using renderingOnlyAttributes parameter.
         joint.dia.ElementView.prototype.update.call(this, cell, attrs);
@@ -22853,547 +22665,6 @@ joint.routers.orthogonal = function() {
 
 }();
 
-joint.routers.manhattan = (function() {
-
-    'use strict';
-
-    var config = {
-
-        // size of the step to find a route
-        step: 10,
-
-        // use of the perpendicular linkView option to connect center of element with first vertex
-        perpendicular: true,
-
-        // tells how to divide the paper when creating the elements map
-        mapGridSize: 100,
-
-        // should be source or target not to be consider as an obstacle
-        excludeEnds: [], // 'source', 'target'
-
-        // should be any element with a certain type not to be consider as an obstacle
-        excludeTypes: ['basic.Text'],
-
-        // if number of route finding loops exceed the maximum, stops searching and returns
-        // fallback route
-        maximumLoops: 500,
-
-        // possible starting directions from an element
-        startDirections: ['left','right','top','bottom'],
-
-        // possible ending directions to an element
-        endDirections: ['left','right','top','bottom'],
-
-        // specify directions above
-        directionMap: {
-            right: { x: 1, y: 0 },
-            bottom: { x: 0, y: 1 },
-            left: { x: -1, y: 0 },
-            top: { x: 0, y: -1 }
-        },
-
-        // maximum change of the direction
-        maxAllowedDirectionChange: 1,
-
-        // padding applied on the element bounding boxes
-        paddingBox: function() {
-
-            var step = this.step;
-
-            return {
-                x: -step,
-                y: -step,
-                width: 2*step,
-                height: 2*step
-            }
-        },
-
-        // an array of directions to find next points on the route
-        directions: function() {
-
-            var step = this.step;
-
-            return [
-                { offsetX: step  , offsetY: 0     , cost: step },
-                { offsetX: 0     , offsetY: step  , cost: step },
-                { offsetX: -step , offsetY: 0     , cost: step },
-                { offsetX: 0     , offsetY: -step , cost: step }
-            ];
-        },
-
-        // a penalty received for direction change
-        penalties: function() {
-
-            return [0, this.step / 2, this.step];
-        },
-
-        // heurestic method to determine the distance between two points
-        estimateCost: function(from, to) {
-
-            return from.manhattanDistance(to);
-        },
-
-        // a simple route used in situations, when main routing method fails
-        // (exceed loops, inaccessible).
-        fallbackRoute: function(from, to, opts) {
-
-            // Find an orthogonal route ignoring obstacles.
-
-            var prevDirIndexes = opts.prevDirIndexes || {};
-
-            var point = (prevDirIndexes[from] || 0) % 2
-                    ? g.point(from.x, to.y)
-                    : g.point(to.x, from.y);
-
-            return [point, to];
-        },
-
-        // if a function is provided, it's used to route the link while dragging an end
-        // i.e. function(from, to, opts) { return []; }
-        draggingRoute: null
-    };
-
-    // reconstructs a route by concating points with their parents
-    function reconstructRoute(parents, point) {
-
-        var route = [];
-        var prevDiff = { x: 0, y: 0 };
-        var current = point;
-        var parent;
-
-        while ((parent = parents[current])) {
-
-            var diff = parent.difference(current);
-
-            if (!diff.equals(prevDiff)) {
-
-                route.unshift(current);
-                prevDiff = diff;
-            }
-
-            current = parent;
-        }
-
-        route.unshift(current);
-
-        return route;
-    };
-
-    // find points around the rectangle taking given directions in the account
-    function getRectPoints(bbox, directionList, opts) {
-
-        var step = opts.step;
-
-        var center = bbox.center();
-
-        var startPoints = _.chain(opts.directionMap).pick(directionList).map(function(direction) {
-
-            var x = direction.x * bbox.width / 2;
-            var y = direction.y * bbox.height / 2;
-
-            var point = g.point(center).offset(x,y).snapToGrid(step);
-
-            if (bbox.containsPoint(point)) {
-
-                point.offset(direction.x * step, direction.y * step);
-            }
-
-            return point;
-
-        }).value();
-
-        return startPoints;
-    };
-
-    // returns a direction index from start point to end point
-    function getDirection(start, end, dirLen) {
-
-        var dirAngle = 360 / dirLen;
-
-        var q = Math.floor(start.theta(end) / dirAngle);
-
-        return dirLen - q;
-    }
-
-    // finds the route between to points/rectangles implementing A* alghoritm
-    function findRoute(start, end, map, opt) {
-
-        var startDirections = opt.reversed ? opt.endDirections : opt.startDirections;
-        var endDirections = opt.reversed ? opt.startDirections : opt.endDirections;
-
-        // set of points we start pathfinding from
-        var startSet = start instanceof g.rect
-                ? getRectPoints(start, startDirections, opt)
-                : [start];
-
-        // set of points we want the pathfinding to finish at
-        var endSet = end instanceof g.rect
-                ? getRectPoints(end, endDirections, opt)
-                : [end];
-
-        var startCenter = startSet.length > 1 ? start.center() : startSet[0];
-        var endCenter = endSet.length > 1 ? end.center() : endSet[0];
-
-        // take into account  only accessible end points
-        var endPoints = _.filter(endSet, function(point) {
-
-            var mapKey = g.point(point).snapToGrid(opt.mapGridSize).toString();
-
-            var accesible = _.every(map[mapKey], function(obstacle) {
-                return !obstacle.containsPoint(point);
-            });
-
-            return accesible;
-        });
-
-
-        if (endPoints.length) {
-
-            var step = opt.step;
-            var penalties = opt.penalties;
-
-            // choose the end point with the shortest estimated path cost
-            var endPoint = _.chain(endPoints).invoke('snapToGrid', step).min(function(point) {
-
-                return opt.estimateCost(startCenter, point);
-
-            }).value();
-
-            var parents = {};
-            var costFromStart = {};
-            var totalCost = {};
-
-            // directions
-            var dirs = opt.directions;
-            var dirLen = dirs.length;
-            var dirHalfLen = dirLen / 2;
-            var dirIndexes = opt.previousDirIndexes || {};
-
-            // The set of point already evaluated.
-            var closeHash = {}; // keeps only information whether a point was evaluated'
-
-            // The set of tentative points to be evaluated, initially containing the start points
-            var openHash = {}; // keeps only information whether a point is to be evaluated'
-            var openSet = _.chain(startSet).invoke('snapToGrid', step).each(function(point) {
-
-                var key = point.toString();
-
-                costFromStart[key] = 0; // Cost from start along best known path.
-                totalCost[key] = opt.estimateCost(point, endPoint);
-                dirIndexes[key] = dirIndexes[key] || getDirection(startCenter, point, dirLen);
-                openHash[key] = true;
-
-            }).map(function(point) {
-
-                return point.toString();
-
-            }).sortBy(function(pointKey) {
-
-                return totalCost[pointKey];
-
-            }).value();
-
-            var loopCounter = opt.maximumLoops;
-
-            var maxAllowedDirectionChange = opt.maxAllowedDirectionChange;
-
-            // main route finding loop
-            while (openSet.length && loopCounter--) {
-
-                var currentKey = openSet[0];
-                var currentPoint = g.point(currentKey);
-
-                if (endPoint.equals(currentPoint)) {
-
-                    opt.previousDirIndexes = _.pick(dirIndexes, currentKey);
-                    return reconstructRoute(parents, currentPoint);
-                }
-
-                // remove current from the open list
-                openSet.splice(0, 1);
-                openHash[neighborKey] = null;
-
-                // add current to the close list
-                closeHash[neighborKey] = true;
-
-                var currentDirIndex = dirIndexes[currentKey];
-                var currentDist = costFromStart[currentKey];
-
-                for (var dirIndex = 0; dirIndex < dirLen; dirIndex++) {
-
-                    var dirChange = Math.abs(dirIndex - currentDirIndex);
-
-                    if (dirChange > dirHalfLen) {
-
-                        dirChange = dirLen - dirChange;
-                    }
-
-                    // if the direction changed rapidly don't use this point
-                    if (dirChange > maxAllowedDirectionChange) {
-
-                        continue;
-                    }
-
-                    var dir = dirs[dirIndex];
-
-                    var neighborPoint = g.point(currentPoint).offset(dir.offsetX, dir.offsetY);
-                    var neighborKey = neighborPoint.toString();
-
-                    if (closeHash[neighborKey]) {
-
-                        continue;
-                    }
-
-                    // is point accesible - no obstacle in the way
-
-                    var mapKey = g.point(neighborPoint).snapToGrid(opt.mapGridSize).toString();
-
-                    var isAccesible = _.every(map[mapKey], function(obstacle) {
-                        return !obstacle.containsPoint(neighborPoint);
-                    });
-
-                    if (!isAccesible) {
-
-                        continue;
-                    }
-
-                    var inOpenSet = _.has(openHash, neighborKey);
-
-                    var costToNeighbor = currentDist + dir.cost;
-
-                    if (!inOpenSet || costToNeighbor < costFromStart[neighborKey]) {
-
-                        parents[neighborKey] = currentPoint;
-                        dirIndexes[neighborKey] = dirIndex;
-                        costFromStart[neighborKey] = costToNeighbor;
-
-                        totalCost[neighborKey] = costToNeighbor +
-                            opt.estimateCost(neighborPoint, endPoint) +
-                            penalties[dirChange];
-
-                        if (!inOpenSet) {
-
-                            var openIndex = _.sortedIndex(openSet, neighborKey, function(openKey) {
-
-                                return totalCost[openKey];
-                            });
-
-                            openSet.splice(openIndex, 0, neighborKey);
-                            openHash[neighborKey] = true;
-                        }
-                    };
-                };
-            }
-        }
-
-        // no route found ('to' point wasn't either accessible or finding route took
-        // way to much calculations)
-        return opt.fallbackRoute(startCenter, endCenter, opt);
-    };
-
-    // initiation of the route finding
-    function router(oldVertices, opt) {
-
-        // resolve some of the options
-        opt.directions = _.result(opt, 'directions');
-        opt.penalties = _.result(opt, 'penalties');
-        opt.paddingBox = _.result(opt, 'paddingBox');
-
-        // enable/disable linkView perpendicular option
-        this.options.perpendicular = !!opt.perpendicular;
-
-        // As route changes its shape rapidly when we start finding route from different point
-        // it's necessary to start from the element that was not interacted with
-        // (the position was changed) at very last.
-        var reverseRouting = opt.reversed = (this.lastEndChange === 'source');
-
-        var sourceBBox = reverseRouting ? g.rect(this.targetBBox) : g.rect(this.sourceBBox);
-        var targetBBox = reverseRouting ? g.rect(this.sourceBBox) : g.rect(this.targetBBox);
-
-        // expand boxes by specific padding
-        sourceBBox.moveAndExpand(opt.paddingBox);
-        targetBBox.moveAndExpand(opt.paddingBox);
-
-        // building an elements map
-
-        var link = this.model;
-        var graph = this.paper.model;
-
-        // source or target element could be excluded from set of obstacles
-        var excludedEnds = _.chain(opt.excludeEnds)
-                .map(link.get, link)
-                .pluck('id')
-                .map(graph.getCell, graph).value();
-
-        var mapGridSize = opt.mapGridSize;
-
-        // builds a map of all elements for quicker obstacle queries (i.e. is a point contained
-        // in any obstacle?) (a simplified grid search)
-        // The paper is divided to smaller cells, where each of them holds an information which
-        // elements belong to it. When we query whether a point is in an obstacle we don't need
-        // to go through all obstacles, we check only those in a particular cell.
-        var map = _.chain(graph.getElements())
-            // remove source and target element if required
-            .difference(excludedEnds)
-            // remove all elements whose type is listed in excludedTypes array
-            .reject(function(element) {
-                return _.contains(opt.excludeTypes, element.get('type'));
-            })
-            // change elements (models) to their bounding boxes
-            .invoke('getBBox')
-            // expand their boxes by specific padding
-            .invoke('moveAndExpand', opt.paddingBox)
-            // build the map
-            .foldl(function(res, bbox) {
-
-                var origin = bbox.origin().snapToGrid(mapGridSize);
-                var corner = bbox.corner().snapToGrid(mapGridSize);
-
-                for (var x = origin.x; x <= corner.x; x += mapGridSize) {
-                    for (var y = origin.y; y <= corner.y; y += mapGridSize) {
-
-                        var gridKey = x + '@' + y;
-
-                        res[gridKey] = res[gridKey] || [];
-                        res[gridKey].push(bbox);
-                    }
-                }
-
-                return res;
-
-            }, {}).value();
-
-        // pathfinding
-
-        var newVertices = [];
-
-        var points = _.map(oldVertices, g.point);
-
-        var tailPoint = sourceBBox.center();
-
-        // find a route by concating all partial routes (routes need to go through the vertices)
-        // startElement -> vertex[1] -> ... -> vertex[n] -> endElement
-        for (var i = 0, len = points.length; i <= len; i++) {
-
-            var partialRoute = null;
-
-            var from = to || sourceBBox;
-            var to = points[i];
-
-            if (!to) {
-
-                to = targetBBox;
-
-                // 'to' is not a vertex. If the target is a point (i.e. it's not an element), we
-                // might use dragging route instead of main routing method if that is enabled.
-                var endingAtPoint = !this.model.get('source').id || !this.model.get('target').id;
-
-                if (endingAtPoint && _.isFunction(opt.draggingRoute)) {
-                    // Make sure we passing points only (not rects).
-                    var dragFrom = from instanceof g.rect ? from.center() : from;
-                    partialRoute = opt.draggingRoute(dragFrom, to.origin(), opt);
-                }
-            }
-
-            // if partial route has not been calculated yet use the main routing method to find one
-            partialRoute = partialRoute || findRoute(from, to, map, opt);
-
-            var leadPoint = _.first(partialRoute);
-
-            if (leadPoint && leadPoint.equals(tailPoint)) {
-
-                // remove the first point if the previous partial route had the same point as last
-                partialRoute.shift();
-            }
-
-            tailPoint = _.last(partialRoute) || tailPoint;
-
-            newVertices = newVertices.concat(partialRoute);
-        };
-
-        // we might have to reverse the result if we swapped source and target at the beginning
-        return reverseRouting ? newVertices.reverse() : newVertices;
-    };
-
-    // public function
-    return function(vertices, opt, linkView) {
-
-        return router.call(linkView, vertices, _.extend({}, config, opt));
-    };
-
-})();
-
-joint.routers.metro = (function() {
-
-    if (!_.isFunction(joint.routers.manhattan)) {
-
-        throw('Metro requires the manhattan router.');
-    }
-
-    var config = {
-
-        // cost of a diagonal step (calculated if not defined).
-        diagonalCost: null,
-
-        // an array of directions to find next points on the route
-        directions: function() {
-
-            var step = this.step;
-            var diagonalCost = this.diagonalCost || Math.ceil(Math.sqrt(step * step << 1));
-
-            return [
-                { offsetX: step  , offsetY: 0     , cost: step         },
-                { offsetX: step  , offsetY: step  , cost: diagonalCost },
-                { offsetX: 0     , offsetY: step  , cost: step         },
-                { offsetX: -step , offsetY: step  , cost: diagonalCost },
-                { offsetX: -step , offsetY: 0     , cost: step         },
-                { offsetX: -step , offsetY: -step , cost: diagonalCost },
-                { offsetX: 0     , offsetY: -step , cost: step         },
-                { offsetX: step  , offsetY: -step , cost: diagonalCost }
-            ];
-        },
-
-        // a simple route used in situations, when main routing method fails
-        // (exceed loops, inaccessible).
-        fallbackRoute: function(from, to, opts) {
-
-            // Find a route which breaks by 45 degrees ignoring all obstacles.
-
-            var theta = from.theta(to);
-
-            var a = { x: to.x, y: from.y };
-            var b = { x: from.x, y: to.y };
-
-            if (theta % 180 > 90) {
-                var t = a;
-                a = b;
-                b = t;
-            }
-
-            var p1 = (theta % 90) < 45 ? a : b;
-
-            var l1 = g.line(from, p1);
-
-            var alpha = 90 * Math.ceil(theta / 90);
-
-            var p2 = g.point.fromPolar(l1.squaredLength(), g.toRad(alpha + 135), p1);
-
-            var l2 = g.line(to, p2);
-
-            var point = l1.intersection(l2);
-
-            return point ? [point.round(), to] : [to];
-        }
-    };
-
-    // public function
-    return function(vertices, opts, linkView) {
-
-        return joint.routers.manhattan(vertices, _.extend({}, config, opts), linkView);
-    };
-
-})();
-
 joint.connectors.normal = function(sourcePoint, targetPoint, vertices) {
 
     // Construct the `d` attribute of the `<path>` element.
@@ -23424,9 +22695,9 @@ joint.connectors.rounded = function(sourcePoint, targetPoint, vertices, opts) {
         prev = vertices[index-1] || sourcePoint;
         next = vertices[index+1] || targetPoint;
 
-        // a half distance to the closest vertex
-        d1 = d2 || g.point(vertex).distance(prev) / 2;
-        d2 = g.point(vertex).distance(next) / 2;
+        // distance to the closest vertex
+        d1 = d2 || g.point(vertex).distance(prev);
+        d2 = g.point(vertex).distance(next);
 
         // control points
         c1 = g.point(vertex).move(prev, -Math.min(offset, d1)).round();

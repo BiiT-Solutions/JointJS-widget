@@ -1,9 +1,14 @@
 // Namespace for our global values.
 DiagramBuilder = {};
 
-var Rappid = Backbone.Router
-		.extend({
+var globalCellUpdate = function ( id ){
+	var cell = globalGraph.getCell(id);
+	fireUpdateElementHandler(JSON.stringify(cell.toJSON()));
+};
 
+var globalGraph;
+
+var Rappid = Backbone.Router.extend({
 			routes : {
 				'*path' : 'home'
 			},
@@ -25,6 +30,7 @@ var Rappid = Backbone.Router
 				this.initializePaper();
 				this.initializeStencil(120, 1, 'Tools');
 				this.initializeSelection();
+				this.initializeUpdateCallbacks();
 				this.initializeHaloAndInspector();
 				this.initializeClipboard();
 				this.initializeCommandManager();
@@ -38,54 +44,54 @@ var Rappid = Backbone.Router
 			initializePaper : function() {
 
 				this.graph = new joint.dia.Graph;
+				globalGraph = this.graph;
 
 				// Paper Scroller with autoResize enabled.
 				this.paperScroller = new joint.ui.PaperScroller({
 					autoResizePaper : true
 				});
 
-				this.paper = new joint.dia.Paper(
-						{
-							el : this.paperScroller.el,
-							width : 1000,
-							height : 1000,
-							gridSize : 2,
-							perpendicularLinks : true,
-							model : this.graph,
-							validateConnection : function(cellViewS, magnetS,
-									cellViewT, magnetT, end, linkView) {
-								// Prevent linking from input ports.
-								if (magnetS
-										&& magnetS.getAttribute('type') === 'input') {
-									return false;
-								}
-								// Prevent linking from output ports to input
-								// ports within one element.
-								if (cellViewS === cellViewT) {
-									return false;
-								}
-								// Prevent linking to output ports.
-								return magnetT
-										&& magnetT.getAttribute('type') === 'input';
+				this.paper = new joint.dia.Paper({
+					el : this.paperScroller.el,
+					width : 1000,
+					height : 1000,
+					gridSize : 2,
+					perpendicularLinks : true,
+					model : this.graph,
+					validateConnection : function(cellViewS, magnetS,
+							cellViewT, magnetT, end, linkView) {
+						// Prevent linking from input ports.
+						if (magnetS
+								&& magnetS.getAttribute('type') === 'input') {
+							return false;
+						}
+						// Prevent linking from output ports to input
+						// ports within one element.
+						if (cellViewS === cellViewT) {
+							return false;
+						}
+						// Prevent linking to output ports.
+						return magnetT
+								&& magnetT.getAttribute('type') === 'input';
+					},
+					defaultLink : new joint.dia.Link({
+						attrs : {
+							// @TODO: scale(0) fails in Firefox
+							'.marker-source' : {
+								d : 'M 10 0 L 0 5 L 10 10 z',
+								transform : 'scale(0.001)'
 							},
-							defaultLink : new joint.dia.Link({
-								attrs : {
-									// @TODO: scale(0) fails in Firefox
-									'.marker-source' : {
-										d : 'M 10 0 L 0 5 L 10 10 z',
-										transform : 'scale(0.001)'
-									},
-									'.marker-target' : {
-										d : 'M 10 0 L 0 5 L 10 10 z'
-									},
-									'.connection' : {
-										stroke : 'black'
-									// filter: { name: 'dropShadow', args: { dx:
-									// 1, dy: 1, blur: 2 } }
-									}
-								}
-							})
-						});
+							'.marker-target' : {
+								d : 'M 10 0 L 0 5 L 10 10 z'
+							},
+							'.connection' : {
+								stroke : 'black'
+							// filter: { name: 'dropShadow', args: { dx:
+							// 1, dy: 1, blur: 2 } }
+							}
+						}
+					})
+				});
 				this.paperScroller.options.paper = this.paper;
 
 				$('.paper-container').append(this.paperScroller.render().el);
@@ -180,15 +186,15 @@ var Rappid = Backbone.Router
 				} else {
 					this.stencil.load(Stencil.shapes.basic, name);
 					joint.layout.GridLayout.layout(this.stencil.getGraph(name),
-							{
-								columnWidth : this.stencil.options.width
-										/ this.stencilColumns - 10,
-								columns : this.stencilColumns,
-								rowHeight : 60,
-								resizeToFit : true,
-								dy : 10,
-								dx : 10
-							});
+					{
+						columnWidth : this.stencil.options.width
+								/ this.stencilColumns - 10,
+						columns : this.stencilColumns,
+						rowHeight : 60,
+						resizeToFit : true,
+						dy : 10,
+						dx : 10
+					});
 				}
 			},
 
@@ -262,7 +268,6 @@ var Rappid = Backbone.Router
 				};
 
 				KeyboardJS.on('delete, backspace', _.bind(function(evt) {
-
 					if (!$.contains(evt.target, this.paper.el)) {
 						// remove selected elements from the paper only if the
 						// target is the paper
@@ -276,15 +281,53 @@ var Rappid = Backbone.Router
 				}, this));
 			},
 
+			initializeUpdateCallbacks : function() {
+				this.graph.on('add', function(cell) {
+					fireAddElementHandler(JSON.stringify(cell.toJSON()));
+				});
+
+				//Too many events.
+//				this.graph.on('change:source change:target', function(link) {
+//					var sourceId = link.get('source').id;
+//					var targetId = link.get('target').id;
+//
+//					console.error("Change:! idS: " + sourceId + " idT: "
+//							+ targetId);
+//
+//					if ((!sourceId) || (!targetId)) {
+//						// link.remove();
+//					}
+//
+//				});
+
+				this.paper.on('cell:pointerup', function(cellView, evt, x, y) {
+					if(cellView.model instanceof joint.dia.Link){
+						var sourceId = cellView.model.get('source').id;
+						var targetId = cellView.model.get('target').id;
+						if(!sourceId || !targetId ){
+							return;
+						}						
+					}
+					fireUpdateElementHandler(JSON.stringify(cellView.model.toJSON()));
+				});
+
+				this.graph.on('remove', function(cell) {
+					fireRemoveElementHandler(JSON.stringify(cell.toJSON()));
+				});
+			},
+
 			initializeHaloAndInspector : function() {
-
-				this.paper.on('cell:pointerup', function(cellView, evt) {
-					if (cellView.model instanceof joint.dia.Link
-							|| this.selection.contains(cellView.model))
+				this.paper.on('cell:pointerdown',function(cellView, evt, x, y) {
+					if (cellView.model instanceof joint.dia.Link || this.selection.contains(cellView.model)) {
+						if (this.selection.length == 1) {
+							this.selectionView
+									.cancelSelection();
+							this.paperScroller.startPanning(
+									evt, x, y);
+						}
 						return;
-
-					firePickedNodeHandler(JSON.stringify(cellView.model
-							.toJSON()));
+					}
+					firePickedNodeHandler(JSON.stringify(cellView.model.toJSON()));
 
 					var halo = new joint.ui.Halo({
 						graph : this.graph,
@@ -298,17 +341,20 @@ var Rappid = Backbone.Router
 
 					this.selectionView.cancelSelection();
 					this.selection.reset([ cellView.model ]);
+				},this);
 
+				this.paper.on('cell:pointerdblclick', function(cellView, evt) {
+					if (cellView.model instanceof joint.dia.Link)
+						return;
+					fireDoubleClickNodeHandler(JSON.stringify(cellView.model.toJSON()));
 				}, this);
 
 				this.paper.on('link:options', function(evt, cellView, x, y) {
-					firePickedConnectionHandler(JSON.stringify(cellView.model
-							.toJSON()));
+					firePickedConnectionHandler(JSON.stringify(cellView.model.toJSON()));
 				}, this);
 			},
 
 			initializeHaloTooltips : function(halo) {
-
 				new joint.ui.Tooltip({
 					className : 'tooltip small',
 					target : halo.$('.remove'),
@@ -317,15 +363,14 @@ var Rappid = Backbone.Router
 					right : halo.$('.remove'),
 					padding : 15
 				});
-				new joint.ui.Tooltip(
-						{
-							className : 'tooltip small',
-							target : halo.$('.fork'),
-							content : 'Click and drag to clone and connect the object in one go',
-							direction : 'left',
-							left : halo.$('.fork'),
-							padding : 15
-						});
+				new joint.ui.Tooltip({
+					className : 'tooltip small',
+					target : halo.$('.fork'),
+					content : 'Click and drag to clone and connect the object in one go',
+					direction : 'left',
+					left : halo.$('.fork'),
+					padding : 15
+				});
 				new joint.ui.Tooltip({
 					className : 'tooltip small',
 					target : halo.$('.clone'),
@@ -334,15 +379,14 @@ var Rappid = Backbone.Router
 					left : halo.$('.clone'),
 					padding : 15
 				});
-				new joint.ui.Tooltip(
-						{
-							className : 'tooltip small',
-							target : halo.$('.unlink'),
-							content : 'Click to break all connections to other objects',
-							direction : 'right',
-							right : halo.$('.unlink'),
-							padding : 15
-						});
+				new joint.ui.Tooltip({
+					className : 'tooltip small',
+					target : halo.$('.unlink'),
+					content : 'Click to break all connections to other objects',
+					direction : 'right',
+					right : halo.$('.unlink'),
+					padding : 15
+				});
 				new joint.ui.Tooltip({
 					className : 'tooltip small',
 					target : halo.$('.link'),
@@ -423,11 +467,57 @@ var Rappid = Backbone.Router
 				}, this));
 			},
 
-			initializeCommandManager : function() {
+			// Check if cell in command is a link. Continue validating if yes,
+			// otherwise stop.
+			isLink : function(err, command, next) {
+				if (command.data.type === 'link')
+					return next(err);
+				// otherwise stop validating (don't call next validation function)
+			},
 
+			// check whether the link can be connected to the ceratin cell or
+			// pinned to the paper
+			connectivityTarget : function(err, command, next) {
+				// The cell in Parameter "command" is meant to be a link.
+				var targetId = command.data.next.target.id;
+				// source and target are both cells
+				if (targetId) {
+					// All is valid
+					globalCellUpdate(command.data.id);
+					return next(err);
+				} else {
+					// One or both of them are not cells
+					return next("Links can't be pinned to the paper");
+				}
+			},
+			
+			connectivitySource : function(err, command, next) {
+				// The cell in Parameter "command" is meant to be a link.
+				var sourceId = command.data.next.source.id;
+				// source and target are both cells
+				if (sourceId) {
+					// All is valid
+					globalCellUpdate(command.data.id);
+					return next(err);
+				} else {
+					// One or both of them are not cells
+					return next("Links can't be pinned to the paper");
+				}
+			},
+			
+			initializeCommandManager : function() {
+				
 				this.commandManager = new joint.dia.CommandManager({
 					graph : this.graph
 				});
+
+				this.validator = new joint.dia.Validator({
+					commandManager : this.commandManager
+				});
+
+				// register validation functions
+				this.validator.validate('change:target', this.isLink, this.connectivityTarget);
+				this.validator.validate('change:source', this.isLink, this.connectivitySource);
 
 				KeyboardJS.on('ctrl + z', _.bind(function() {
 
@@ -458,14 +548,10 @@ var Rappid = Backbone.Router
 							if (command.action === 'add' && command.batch)
 								return next();
 
-							var cell = command.data.attributes
-									|| this.graph.getCell(command.data.id)
-											.toJSON();
-							var area = g.rect(cell.position.x, cell.position.y,
-									cell.size.width, cell.size.height);
+							var cell = command.data.attributes || this.graph.getCell(command.data.id).toJSON();
+							var area = g.rect(cell.position.x, cell.position.y, cell.size.width, cell.size.height);
 
 							if (_.find(this.graph.getElements(), function(e) {
-
 								var position = e.get('position');
 								var size = e.get('size');
 								return (e.id !== cell.id && area.intersect(g
@@ -542,9 +628,9 @@ var Rappid = Backbone.Router
 				// attribute with the desired value.
 				this.graph.getCell(cellData.id).attr(cellData.attrs);
 			},
-			
-			updateLinkText : function(cellData){
+
+			updateLinkText : function(cellData) {
 				var link = this.graph.getCell(cellData.id);
-				link.label(0, cellData.labels[0] );
+				link.label(0, cellData.labels[0]);
 			}
 		});

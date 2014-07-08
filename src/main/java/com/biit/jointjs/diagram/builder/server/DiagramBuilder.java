@@ -21,6 +21,9 @@ import java.util.List;
 
 import com.biit.jointjs.diagram.builder.client.DiagramBuilderClientRpc;
 import com.biit.jointjs.diagram.builder.client.DiagramBuilderServerRpc;
+import com.biit.jointjs.diagram.builder.server.listeners.DoubleClickListener;
+import com.biit.jointjs.diagram.builder.server.listeners.ElementActionListener;
+import com.biit.jointjs.diagram.builder.server.listeners.ElementPickedListener;
 import com.vaadin.annotations.JavaScript;
 import com.vaadin.ui.AbstractComponent;
 import com.vaadin.ui.Component;
@@ -42,11 +45,13 @@ import com.vaadin.ui.Component;
 		"vaadin://dist/joint.dia.validator.js", "vaadin://dist/joint.layout.ForceDirected.js",
 		"vaadin://dist/joint.layout.GridLayout.js", "vaadin://dist/joint.layout.DirectedGraph.js",
 		"vaadin://lib/keyboard.js", "vaadin://src/dataTypes.js", "vaadin://src/main.js", })
-public class DiagramBuilder extends AbstractComponent implements Component.Focusable{
+public class DiagramBuilder extends AbstractComponent implements Component.Focusable {
 	private static final long serialVersionUID = -6846503871084162514L;
 	private DiagramBuilderServerRpc serverRpc;
 	private List<DiagramBuilderJsonGenerationListener> jsonGenerationListeners;
 	private List<ElementPickedListener> elementPickedListeners;
+	private List<DoubleClickListener> doubleClickListeners;
+	private List<ElementActionListener> elementActionListeners;
 	private int tabIndex;
 
 	private class DiagramBuilderServerRpcImp implements DiagramBuilderServerRpc {
@@ -64,6 +69,22 @@ public class DiagramBuilder extends AbstractComponent implements Component.Focus
 			fireElementPickedListenersPickedConnection(jsonString);
 		}
 
+		public void doubleClickNode(String jsonString) {
+			fireDoubleClickListeners(jsonString);
+		}
+		
+		public void addElement(String jsonString) {
+			fireElementActionAddListeners(jsonString);
+		}
+
+		public void updateElement(String jsonString) {
+			fireElementActionUpdateListeners(jsonString);
+		}
+
+		public void removeElement(String jsonString) {
+			fireElementActionRemoveListeners(jsonString);
+		} 
+
 		public void getFocus() {
 			focus();
 		}
@@ -73,6 +94,9 @@ public class DiagramBuilder extends AbstractComponent implements Component.Focus
 		super();
 		jsonGenerationListeners = new ArrayList<DiagramBuilderJsonGenerationListener>();
 		elementPickedListeners = new ArrayList<ElementPickedListener>();
+		doubleClickListeners = new ArrayList<DoubleClickListener>();
+		elementActionListeners = new ArrayList<ElementActionListener>();
+		
 		serverRpc = new DiagramBuilderServerRpcImp();
 		registerRpc(serverRpc);
 		tabIndex = 0;
@@ -149,16 +173,56 @@ public class DiagramBuilder extends AbstractComponent implements Component.Focus
 	public void removeElementPickedListener(ElementPickedListener listener) {
 		elementPickedListeners.remove(listener);
 	}
+	
+	public void addDoubleClickListener(DoubleClickListener listener) {
+		doubleClickListeners.add(listener);
+	}
 
-	private void fireElementPickedListenersPickedNode(String jsonString) {
+	public void removeDoubleClickListener(DoubleClickListener listener) {
+		doubleClickListeners.remove(listener);
+	}
+	
+	public void addElementActionListener(ElementActionListener listener) {
+		elementActionListeners.add(listener);
+	}
+	
+	public void removeElementActionListener(ElementActionListener listener) {
+		elementActionListeners.remove(listener);
+	}
+
+	protected void fireElementPickedListenersPickedNode(String jsonString) {
 		for (ElementPickedListener listener : elementPickedListeners) {
 			listener.nodePickedListener(jsonString);
 		}
 	}
 
-	private void fireElementPickedListenersPickedConnection(String jsonString) {
+	protected void fireElementPickedListenersPickedConnection(String jsonString) {
 		for (ElementPickedListener listener : elementPickedListeners) {
 			listener.connectionPickedListener(jsonString);
+		}
+	}
+
+	protected void fireDoubleClickListeners(String jsonString) {
+		for (DoubleClickListener listener : doubleClickListeners) {
+			listener.doubleClick(jsonString);
+		}
+	}
+	
+	protected void fireElementActionAddListeners(String jsonString){
+		for (ElementActionListener listener : elementActionListeners) {
+			listener.addElement(jsonString);
+		}
+	}
+	
+	protected void fireElementActionUpdateListeners(String jsonString){
+		for (ElementActionListener listener : elementActionListeners) {
+			listener.updateElement(jsonString);
+		}
+	}
+	
+	protected void fireElementActionRemoveListeners(String jsonString){
+		for (ElementActionListener listener : elementActionListeners) {
+			listener.removeElement(jsonString);
 		}
 	}
 

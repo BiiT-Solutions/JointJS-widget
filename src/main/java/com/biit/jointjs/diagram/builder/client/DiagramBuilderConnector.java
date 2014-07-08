@@ -1,10 +1,18 @@
 package com.biit.jointjs.diagram.builder.client;
 
 import com.biit.jointjs.diagram.builder.client.ui.VDiagramBuilder;
+import com.biit.jointjs.diagram.builder.client.ui.events.AddElementEvent;
+import com.biit.jointjs.diagram.builder.client.ui.events.AddElementHandler;
+import com.biit.jointjs.diagram.builder.client.ui.events.DoubleClickNodeEvent;
+import com.biit.jointjs.diagram.builder.client.ui.events.DoubleClickNodeHandler;
 import com.biit.jointjs.diagram.builder.client.ui.events.PickedConnectionEvent;
 import com.biit.jointjs.diagram.builder.client.ui.events.PickedConnectionHandler;
 import com.biit.jointjs.diagram.builder.client.ui.events.PickedNodeEvent;
 import com.biit.jointjs.diagram.builder.client.ui.events.PickedNodeHandler;
+import com.biit.jointjs.diagram.builder.client.ui.events.RemoveElementEvent;
+import com.biit.jointjs.diagram.builder.client.ui.events.RemoveElementHandler;
+import com.biit.jointjs.diagram.builder.client.ui.events.UpdateElementEvent;
+import com.biit.jointjs.diagram.builder.client.ui.events.UpdateElementHandler;
 import com.biit.jointjs.diagram.builder.server.DiagramBuilder;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -104,7 +112,30 @@ public class DiagramBuilderConnector extends AbstractComponentConnector {
 				serverRpc.pickedConnection(event.getJsonString());
 			}
 		});
-
+		getWidget().addDoubleClickNodeHandler(new DoubleClickNodeHandler() {
+			public void doubleClickNode(DoubleClickNodeEvent event) {
+				serverRpc.getFocus();
+				serverRpc.doubleClickNode(event.getJsonString());
+			}
+		});
+		getWidget().addAddElementHandler(new AddElementHandler() {
+			public void addElement(AddElementEvent event) {
+				serverRpc.getFocus();
+				serverRpc.addElement(event.getJsonString());
+			}
+		});
+		getWidget().addUpdateElementHandler(new UpdateElementHandler() {
+			public void updateElement(UpdateElementEvent event) {
+				serverRpc.getFocus();
+				serverRpc.updateElement(event.getJsonString());
+			}
+		});
+		getWidget().addRemoveElementHandler(new RemoveElementHandler() {
+			public void removeElement(RemoveElementEvent event) {
+				serverRpc.getFocus();
+				serverRpc.removeElement(event.getJsonString());
+			}
+		});
 	}
 
 	@Override

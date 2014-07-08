@@ -1,4 +1,4 @@
-package com.biit.jointjs.diagram.builder.server;
+package com.biit.jointjs.diagram.builder.server.listeners;
 
 public interface ElementPickedListener {
 
