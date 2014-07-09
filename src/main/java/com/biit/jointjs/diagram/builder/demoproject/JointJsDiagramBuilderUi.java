@@ -158,6 +158,14 @@ public class JointJsDiagramBuilderUi extends UI {
 			}
 		});
 		buttons.addComponent(loadButton);
+		Button enableButton = new Button("Enable", new ClickListener() {
+			private static final long serialVersionUID = -6266207671920614850L;
+
+			public void buttonClick(ClickEvent event) {
+				diagramBuilder.setEnabled(!diagramBuilder.isEnabled());
+			}
+		});
+		buttons.addComponent(enableButton);
 
 		diagramBuilder.addElementPickedListener(new ElementPickedListener() {
 

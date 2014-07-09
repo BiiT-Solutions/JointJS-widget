@@ -96,44 +96,64 @@ public class DiagramBuilderConnector extends AbstractComponentConnector {
 		registerRpc(DiagramBuilderClientRpc.class, new DiagramBuilderServerRpcImpl());
 		getWidget().addPickedNodeHandler(new PickedNodeHandler() {
 			public void pickedNode(PickedNodeEvent event) {
-				serverRpc.getFocus();
-				serverRpc.pickedNode(event.getJsonString());
+				if (isEnabled()) {
+					serverRpc.getFocus();
+					serverRpc.pickedNode(event.getJsonString());
+				}
 			}
 		});
 		getWidget().sinkEvents(Event.ONCLICK);
 		getWidget().addDomHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
-				serverRpc.getFocus();
+				if (isEnabled()) {
+					serverRpc.getFocus();
+				}
 			}
 		}, ClickEvent.getType());
 		getWidget().addPickedConnectionHandler(new PickedConnectionHandler() {
 			public void pickedConnection(PickedConnectionEvent event) {
-				serverRpc.getFocus();
-				serverRpc.pickedConnection(event.getJsonString());
+				if (isEnabled()) {
+					serverRpc.getFocus();
+					serverRpc.pickedConnection(event.getJsonString());
+				}
 			}
 		});
 		getWidget().addDoubleClickNodeHandler(new DoubleClickNodeHandler() {
 			public void doubleClickNode(DoubleClickNodeEvent event) {
-				serverRpc.getFocus();
-				serverRpc.doubleClickNode(event.getJsonString());
+				if (isEnabled()) {
+					serverRpc.getFocus();
+					serverRpc.doubleClickNode(event.getJsonString());
+				}
 			}
 		});
 		getWidget().addAddElementHandler(new AddElementHandler() {
 			public void addElement(AddElementEvent event) {
-				serverRpc.getFocus();
-				serverRpc.addElement(event.getJsonString());
+				if (isEnabled()) {
+					serverRpc.getFocus();
+					serverRpc.addElement(event.getJsonString());
+				}else{
+					getWidget().clear();
+				}
 			}
 		});
 		getWidget().addUpdateElementHandler(new UpdateElementHandler() {
 			public void updateElement(UpdateElementEvent event) {
-				serverRpc.getFocus();
-				serverRpc.updateElement(event.getJsonString());
+				if (isEnabled()) {
+					serverRpc.getFocus();
+					serverRpc.updateElement(event.getJsonString());
+				}else{
+					getWidget().clear();
+				}
 			}
 		});
 		getWidget().addRemoveElementHandler(new RemoveElementHandler() {
 			public void removeElement(RemoveElementEvent event) {
-				serverRpc.getFocus();
-				serverRpc.removeElement(event.getJsonString());
+				if (isEnabled()) {
+					serverRpc.getFocus();
+					serverRpc.removeElement(event.getJsonString());
+				}else{
+					getWidget().clear();
+				}
 			}
 		});
 	}

@@ -2,9 +2,7 @@ function initializeDataTypes(){
 	joint.shapes.biit = {}
 	
 	joint.shapes.biit.BaseNode = joint.shapes.basic.Generic.extend({
-	
 	    defaults: joint.util.deepSupplement({
-	
 	        type: 'biit.BaseNode',
 	        size: { width: 76, height: 76 },
 	        attrs: {
@@ -29,7 +27,6 @@ function initializeDataTypes(){
 	            },
 	            circle: { r: 7, stroke: 'black', 'stroke-width': 2 }
 	        }
-	
 	    }, joint.shapes.basic.Generic.prototype.defaults),
 	});
 	
@@ -165,11 +162,22 @@ function initializeDataTypes(){
 		}, joint.shapes.biit.BaseIONode.prototype.defaults)
 	});
 	
+	joint.shapes.biit.Diagram = joint.shapes.biit.BaseIONode.extend({
+		defaults: joint.util.deepSupplement({
+			type: 'biit.Diagram',
+			tooltip: 'Diagram Tooltip',
+			attrs:{
+				'.biitText': {text: 'Diagram'},
+				'.body': { 'd': "M 7.21875 -0.03125 L 7.21875 63.6875 L 52.0625 63.6875 L 48.3125 58.78125 L 12.09375 58.78125 L 12.09375 4.875 L 36.59375 4.875 L 36.59375 24.46875 L 56.1875 24.46875 L 56.1875 26.03125 L 61.09375 26.09375 L 61.09375 18.34375 L 42.71875 -0.03125 L 7.21875 -0.03125 z M 41.5 6.09375 L 54.96875 19.59375 L 41.5 19.59375 L 41.5 6.09375 z M 63.21875 24.34375 L 63.21875 28.375 C 60.978872 28.935034 58.758328 29.491807 56.40625 31.84375 C 54.051121 34.199007 51.555578 38.34597 49.3125 41.09375 C 47.069422 43.84153 43.050076 45.185406 41.03125 46.53125 L 39 46.53125 L 39 42.5 L 26.90625 42.5 L 26.90625 54.625 L 39 54.625 L 39 50.59375 L 41.03125 50.59375 C 43.050076 51.939595 47.069422 53.28347 49.3125 56.03125 C 51.555578 58.779031 54.051121 62.925993 56.40625 65.28125 C 58.761509 67.636509 61.006932 68.189201 63.25 68.75 L 63.25 72.78125 L 75.34375 72.78125 L 75.34375 60.6875 L 63.25 60.6875 L 63.25 64.71875 C 61.053843 64.158078 58.841108 63.605259 56.5 61.25 C 54.158772 58.894742 51.672778 54.716403 49.40625 51.96875 C 48.982997 51.455502 48.565603 51.01827 48.15625 50.59375 L 63.25 50.59375 L 63.25 54.625 L 75.34375 54.625 L 75.34375 42.5 L 63.25 42.5 L 63.25 46.53125 L 48.15625 46.53125 L 49.40625 45.15625 C 51.672778 42.408469 54.158772 38.230258 56.5 35.875 C 58.837788 33.523057 61.025663 32.966284 63.21875 32.40625 L 63.21875 36.4375 L 75.34375 36.4375 L 75.34375 24.34375 L 63.21875 24.34375 z"}
+			}
+		}, joint.shapes.biit.BaseIONode.prototype.defaults)
+	});
+	
 	DiagramBuilder.shapes = [
-			
 			new joint.shapes.biit.SourceNode(),
 			new joint.shapes.biit.SinkNode(),
 			new joint.shapes.biit.ForkNode(),
+			new joint.shapes.biit.Diagram(),
 			new joint.shapes.biit.RuleNode(),
 			new joint.shapes.biit.TableNode(),
 			new joint.shapes.biit.CalculationNode(),
