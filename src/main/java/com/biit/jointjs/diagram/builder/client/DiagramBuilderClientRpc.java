@@ -9,6 +9,8 @@ public interface DiagramBuilderClientRpc extends ClientRpc {
 	void redo();
 
 	void clear();
+	
+	void clearSilently();
 
 	void openAsSvg();
 

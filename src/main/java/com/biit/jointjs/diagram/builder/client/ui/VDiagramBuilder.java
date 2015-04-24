@@ -128,23 +128,36 @@ public class VDiagramBuilder extends ResizeLayoutPanel implements HasHandlers {
 	 	$wnd.app = new $wnd.Rappid;
 	    $wnd.Backbone.history.start();
 	    $wnd.javaInstance = this;
+	    $wnd.enabledListeners = true;
 	  	$wnd.firePickedNodeHandler = function(jsonString) {
-	  		$wnd.javaInstance.@com.biit.jointjs.diagram.builder.client.ui.VDiagramBuilder::firePickedNodeHandler(Ljava/lang/String;)(jsonString);
+	  		if($wnd.enabledListeners){
+	  			$wnd.javaInstance.@com.biit.jointjs.diagram.builder.client.ui.VDiagramBuilder::firePickedNodeHandler(Ljava/lang/String;)(jsonString);
+	  		}
 	  	};
 	  	$wnd.firePickedConnectionHandler = function(jsonString) {
-	  		$wnd.javaInstance.@com.biit.jointjs.diagram.builder.client.ui.VDiagramBuilder::firePickedConnectionHandler(Ljava/lang/String;)(jsonString);
+	  		if($wnd.enabledListeners){
+	  			$wnd.javaInstance.@com.biit.jointjs.diagram.builder.client.ui.VDiagramBuilder::firePickedConnectionHandler(Ljava/lang/String;)(jsonString);
+	  		}
 	  	};
 	  	$wnd.fireDoubleClickNodeHandler = function(jsonString) {
-	  		$wnd.javaInstance.@com.biit.jointjs.diagram.builder.client.ui.VDiagramBuilder::fireDoubleClickNodeHandler(Ljava/lang/String;)(jsonString);
+	  		if($wnd.enabledListeners){
+	  			$wnd.javaInstance.@com.biit.jointjs.diagram.builder.client.ui.VDiagramBuilder::fireDoubleClickNodeHandler(Ljava/lang/String;)(jsonString);
+	  		}
 	  	};
 	  	$wnd.fireAddElementHandler = function(jsonString) {
-	  		$wnd.javaInstance.@com.biit.jointjs.diagram.builder.client.ui.VDiagramBuilder::fireAddElementHandler(Ljava/lang/String;)(jsonString);
+	  		if($wnd.enabledListeners){
+	  			$wnd.javaInstance.@com.biit.jointjs.diagram.builder.client.ui.VDiagramBuilder::fireAddElementHandler(Ljava/lang/String;)(jsonString);
+	  		}
 	  	};
 	  	$wnd.fireUpdateElementHandler = function(jsonString) {
-	  		$wnd.javaInstance.@com.biit.jointjs.diagram.builder.client.ui.VDiagramBuilder::fireUpdateElementHandler(Ljava/lang/String;)(jsonString);
+	  		if($wnd.enabledListeners){
+	  			$wnd.javaInstance.@com.biit.jointjs.diagram.builder.client.ui.VDiagramBuilder::fireUpdateElementHandler(Ljava/lang/String;)(jsonString);
+	  		}
 	  	};
 	  	$wnd.fireRemoveElementHandler = function(jsonString) {
-	  		$wnd.javaInstance.@com.biit.jointjs.diagram.builder.client.ui.VDiagramBuilder::fireRemoveElementHandler(Ljava/lang/String;)(jsonString);
+	  		if($wnd.enabledListeners){
+	  			$wnd.javaInstance.@com.biit.jointjs.diagram.builder.client.ui.VDiagramBuilder::fireRemoveElementHandler(Ljava/lang/String;)(jsonString);
+	  		}
 	  	};	
 	}-*/
 	;
@@ -223,19 +236,33 @@ public class VDiagramBuilder extends ResizeLayoutPanel implements HasHandlers {
 
 	public native void fromJson(String jsonString)
 	/*-{
+	 	$wnd.enabledListeners = false;
 		$wnd.app.graph.fromJSON(JSON.parse(jsonString));
+		$wnd.enabledListeners = true;
 	}-*/
 	;
 
 	public native void updateCellAttrs(String jsonString)
 	/*-{
+	 	$wnd.enabledListeners = false;
 	 	$wnd.app.updateCellAttrs(JSON.parse(jsonString));
+	 	$wnd.enabledListeners = true;
 	}-*/
 	;
 
 	public native void updateLinkAttrs(String jsonString)
 	/*-{
+		$wnd.enabledListeners = false;
 	 	$wnd.app.updateLinkText(JSON.parse(jsonString));
+	 	$wnd.enabledListeners = true;
+	}-*/
+	;
+	
+	public native void clearSilently()
+	/*-{
+		$wnd.enabledListeners = false;
+	 	$wnd.app.graph.clear();
+	 	$wnd.enabledListeners = true;
 	}-*/
 	;
 

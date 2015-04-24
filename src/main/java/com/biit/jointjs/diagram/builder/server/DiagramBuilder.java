@@ -117,6 +117,14 @@ public class DiagramBuilder extends AbstractComponent implements Component.Focus
 	public void clear() {
 		getClientRpc().clear();
 	}
+	
+	/**
+	 * This clear function disables all communication listeners until the
+	 * operation has been finished.
+	 */
+	public void clearSilently() {
+		getClientRpc().clearSilently();
+	}
 
 	public void openAsSvg() {
 		getClientRpc().openAsSvg();

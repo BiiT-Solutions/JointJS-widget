@@ -88,6 +88,10 @@ public class DiagramBuilderConnector extends AbstractComponentConnector {
 		public void updateLinkJson(String jsonString) {
 			getWidget().updateLinkAttrs(jsonString);
 		}
+
+		public void clearSilently() {
+			getWidget().clearSilently();
+		}
 	}
 
 	public DiagramBuilderConnector() {
