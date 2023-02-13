@@ -4,7 +4,7 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class DoubleClickNodeEvent extends GwtEvent<DoubleClickNodeHandler> {
 
-	public static Type<DoubleClickNodeHandler> TYPE = new Type<DoubleClickNodeHandler>();
+	public static final Type<DoubleClickNodeHandler> TYPE = new Type<>();
 
 	private String jsonString;
 

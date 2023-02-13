@@ -4,7 +4,7 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class PickedConnectionEvent extends GwtEvent<PickedConnectionHandler>{
 
-	public static Type<PickedConnectionHandler> TYPE = new Type<PickedConnectionHandler>();
+	public static final Type<PickedConnectionHandler> TYPE = new Type<>();
 	
 	private String jsonString;
 	

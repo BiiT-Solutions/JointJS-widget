@@ -4,7 +4,7 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class RemoveElementEvent extends GwtEvent<RemoveElementHandler> {
 
-	public static Type<RemoveElementHandler> TYPE = new Type<RemoveElementHandler>();
+	public static final Type<RemoveElementHandler> TYPE = new Type<>();
 
 	private String jsonString;
 
