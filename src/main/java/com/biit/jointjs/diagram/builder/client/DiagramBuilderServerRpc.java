@@ -2,21 +2,21 @@ package com.biit.jointjs.diagram.builder.client;
 
 import com.vaadin.shared.communication.ServerRpc;
 
-public interface DiagramBuilderServerRpc extends ServerRpc{
+public interface DiagramBuilderServerRpc extends ServerRpc {
 
-	void toJsonAnswer(String jsonString);
+    void toJsonAnswer(String jsonString);
 
-	void pickedNode(String jsonString);
-	
-	void pickedConnection(String jsonString);
+    void pickedNode(String jsonString);
 
-	void getFocus();
+    void pickedConnection(String jsonString);
 
-	void doubleClickNode(String jsonString);
-	
-	void addElement(String jsonString);
-	
-	void updateElement(String jsonString);
-	
-	void removeElement(String jsonString);
+    void getFocus();
+
+    void doubleClickNode(String jsonString);
+
+    void addElement(String jsonString);
+
+    void updateElement(String jsonString);
+
+    void removeElement(String jsonString);
 }
