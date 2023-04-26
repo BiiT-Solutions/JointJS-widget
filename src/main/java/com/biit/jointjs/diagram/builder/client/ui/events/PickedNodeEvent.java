@@ -3,8 +3,8 @@ package com.biit.jointjs.diagram.builder.client.ui.events;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class PickedNodeEvent extends GwtEvent<PickedNodeHandler>{
-	
-	public static final Type<PickedNodeHandler> TYPE = new Type<>();
+
+	public static final Type<PickedNodeHandler> TYPE = new Type<PickedNodeHandler>();
 
 	private String jsonString;
 	
