@@ -4,7 +4,7 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class AddElementEvent extends GwtEvent<AddElementHandler> {
 
-    public static Type<AddElementHandler> TYPE = new Type<AddElementHandler>();
+    public static final Type<AddElementHandler> TYPE = new Type<AddElementHandler>();
 
     private String jsonString;
 
