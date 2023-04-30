@@ -3844,7 +3844,6 @@ joint.dia.Paper.prototype.toDataURL = function (callback, options) {
 	// A canvas doesn't like width and height to be defined as percentage for some reason. We need to replace it
 	// with desired width and height instead.
 	svg = svg.replace('width="100%"', 'width="' + contentWidth + '"').replace('height="100%"', 'height="' + contentHeight + '"');
-	// console.log('svg: ', svg);
 
 	// An image starts loading when we assign its source.
 	img.src = 'data:image/svg+xml;base64,' + btoa(svg);
