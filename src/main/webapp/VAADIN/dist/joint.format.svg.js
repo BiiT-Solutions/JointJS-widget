@@ -188,11 +188,12 @@ joint.dia.Paper.prototype.toSVG = function (opt) {
 joint.dia.Paper.prototype.openAsSVG = function () {
 
     var svg = this.toSVG();
+    svg = svg.replace('ns1:xmlns:xlink="http://www.w3.org/1999/xlink"', "");
 
     var windowFeatures = 'menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes';
     var windowName = _.uniqueId('svg_output');
 
-    var dataImageUri = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+    var dataImageUri = 'data:image/svg+xml;base64,' + btoa(decodeURIComponent(encodeURIComponent(svg)));
 
     var imageWindow = window.open('', windowName, windowFeatures);
 

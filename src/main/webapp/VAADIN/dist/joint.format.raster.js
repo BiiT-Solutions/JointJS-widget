@@ -3839,6 +3839,7 @@ joint.dia.Paper.prototype.toDataURL = function (callback, options) {
 
 
 	var svg = this.toSVG();
+	svg = svg.replace('ns1:xmlns:xlink="http://www.w3.org/1999/xlink"', "");
 
 	// A canvas doesn't like width and height to be defined as percentage for some reason. We need to replace it
 	// with desired width and height instead.
