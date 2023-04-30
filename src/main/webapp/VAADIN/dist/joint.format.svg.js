@@ -11,7 +11,7 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
  or from the Rappid archive as was distributed by client IO. See the LICENSE file.*/
 
 
-joint.dia.Paper.prototype.toSVG = function(opt) {
+joint.dia.Paper.prototype.toSVG = function (opt) {
 
     opt = opt || {};
 
@@ -57,7 +57,7 @@ joint.dia.Paper.prototype.toSVG = function(opt) {
     // Now the fun part. The code below has one purpuse and i.e. store all the CSS declarations
     // from external stylesheets to the `style` attribute of the SVG document nodes.
     // This is achieved in three steps.
-    
+
     // 1. Disabling all the stylesheets in the page and therefore collecting only default style values.
     //    This, together with the step 2, makes it possible to discard default CSS property values
     //    and store only those that differ.
@@ -77,64 +77,64 @@ joint.dia.Paper.prototype.toSVG = function(opt) {
     // 1. 
     for (var i = styleSheetsCount - 1; i >= 0; i--) {
 
-	// There is a bug (bugSS) in Chrome 14 and Safari. When you set stylesheet.disable = true it will
-	// also remove it from document.styleSheets. So we need to store all stylesheets before
-	// we disable them. Later on we put them back to document.styleSheets if needed.
-	// See the bug `https://code.google.com/p/chromium/issues/detail?id=88310`.
-	styleSheetsCopy[i] = document.styleSheets[i];
+        // There is a bug (bugSS) in Chrome 14 and Safari. When you set stylesheet.disable = true it will
+        // also remove it from document.styleSheets. So we need to store all stylesheets before
+        // we disable them. Later on we put them back to document.styleSheets if needed.
+        // See the bug `https://code.google.com/p/chromium/issues/detail?id=88310`.
+        styleSheetsCopy[i] = document.styleSheets[i];
 
-	document.styleSheets[i].disabled = true;
+        document.styleSheets[i].disabled = true;
     }
-    
+
     var defaultComputedStyles = {};
-    $(this.svg).find('*').each(function(idx) {
+    $(this.svg).find('*').each(function (idx) {
 
         var computedStyle = window.getComputedStyle(this, null);
         // We're making a deep copy of the `computedStyle` so that it's not affected
         // by that next step when all the stylesheets are re-enabled again.
         var defaultComputedStyle = {};
-        _.each(computedStyle, function(property) { defaultComputedStyle[property] = computedStyle.getPropertyValue(property); });
-        
+        _.each(computedStyle, function (property) { defaultComputedStyle[property] = computedStyle.getPropertyValue(property); });
+
         defaultComputedStyles[idx] = defaultComputedStyle;
     });
 
 
     // bugSS: Check whether the stylesheets have been removed from document.styleSheets
     if (styleSheetsCount != document.styleSheets.length) {
-	// bugSS: Copy all stylesheets back
-	_.each(styleSheetsCopy, function(copy, i) { document.styleSheets[i] = copy; });
+        // bugSS: Copy all stylesheets back
+        _.each(styleSheetsCopy, function (copy, i) { document.styleSheets[i] = copy; });
     }
 
     // 2.
 
     // bugSS: Note that if stylesheet bug happen the document.styleSheets.length is still 0.
     for (var i = 0; i < styleSheetsCount; i++) {
-	document.styleSheets[i].disabled = false;
+        document.styleSheets[i].disabled = false;
     }
     // bugSS: Now is document.styleSheets.length = number of stylesheets again.
 
     var customStyles = {};
-    $(this.svg).find('*').each(function(idx) {
+    $(this.svg).find('*').each(function (idx) {
 
         var computedStyle = window.getComputedStyle(this, null);
         var defaultComputedStyle = defaultComputedStyles[idx];
         var customStyle = {};
 
-        _.each(computedStyle, function(property) {
+        _.each(computedStyle, function (property) {
 
             // Store only those that differ from the default styles applied by the browser.
-                // TODO: Problem will arise with browser specific properties (browser prefixed ones).
+            // TODO: Problem will arise with browser specific properties (browser prefixed ones).
             if (computedStyle.getPropertyValue(property) !== defaultComputedStyle[property]) {
 
                 customStyle[property] = computedStyle.getPropertyValue(property);
             }
         });
-        
+
         customStyles[idx] = customStyle;
     });
 
     // 3.
-    $(svgClone).find('*').each(function(idx) {
+    $(svgClone).find('*').each(function (idx) {
 
         $(this).css(customStyles[idx]);
     });
@@ -145,10 +145,10 @@ joint.dia.Paper.prototype.toSVG = function(opt) {
     // Now, when our `svgClone` is ready, serialize it to a string and return it.
     var svgString;
     try {
-        
+
         var serializer = new XMLSerializer();
         svgString = serializer.serializeToString(svgClone);
-        
+
     } catch (err) {
 
         console.error('Error serializing paper to SVG:', err);
@@ -166,16 +166,16 @@ joint.dia.Paper.prototype.toSVG = function(opt) {
     }
 
     if (isIE) {
-	// IE for some reason adds to SVG an extra `xmnls` attribute.
-	// As it is not allowed to have namespace redefined the second occurence needs to be removed.
-	var xmlns = 'xmlns="' + this.svg.namespaceURI + '"';
-	var matches = svgString.match(new RegExp(xmlns,'g'));
-	if (matches && matches.length >= 2) svgString = svgString.replace(new RegExp(xmlns), '');
+        // IE for some reason adds to SVG an extra `xmnls` attribute.
+        // As it is not allowed to have namespace redefined the second occurence needs to be removed.
+        var xmlns = 'xmlns="' + this.svg.namespaceURI + '"';
+        var matches = svgString.match(new RegExp(xmlns, 'g'));
+        if (matches && matches.length >= 2) svgString = svgString.replace(new RegExp(xmlns), '');
     }
 
     if (isSafari) {
 
-	// Safari requires that all image references need to be namespaced. See similar Chrome case.
+        // Safari requires that all image references need to be namespaced. See similar Chrome case.
         svgString = svgString.replace('xlink="', 'xmlns:xlink="');
         svgString = svgString.replace(/href="/g, 'xlink:href="');
     }
@@ -185,10 +185,10 @@ joint.dia.Paper.prototype.toSVG = function(opt) {
 
 
 // Just a little helper for quick-opening the paper as data-uri SVG in a new browser window.
-joint.dia.Paper.prototype.openAsSVG = function() {
+joint.dia.Paper.prototype.openAsSVG = function () {
 
     var svg = this.toSVG();
-    
+
     var windowFeatures = 'menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes';
     var windowName = _.uniqueId('svg_output');
 

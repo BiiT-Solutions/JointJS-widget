@@ -19,7 +19,7 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
  *
  * Requires: rgbcolor.js - http://www.phpied.com/rgb-color-parser-in-javascript/
  */
-(function(){
+(function () {
 	// canvg(target, s)
 	// empty parameters: replace all 'svg' elements on page with 'canvas' elements
 	// target: canvas element or the id of a canvas element
@@ -39,7 +39,7 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 		// no parameters
 		if (target == null && s == null && opts == null) {
 			var svgTags = document.getElementsByTagName('svg');
-			for (var i=0; i<svgTags.length; i++) {
+			for (var i = 0; i < svgTags.length; i++) {
 				var svgTag = svgTags[i];
 				var c = document.createElement('canvas');
 				c.width = svgTag.clientWidth;
@@ -51,26 +51,26 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 				canvg(c, div.innerHTML);
 			}
 			return;
-		}	
+		}
 		opts = opts || {};
-	
+
 		if (typeof target == 'string') {
 			target = document.getElementById(target);
 		}
-		
+
 		// store class on canvas
 		if (target.svg != null) target.svg.stop();
 		var svg = build();
 		// on i.e. 8 for flash canvas, we can't assign the property so check for it
 		if (!(target.childNodes.length == 1 && target.childNodes[0].nodeName == 'OBJECT')) target.svg = svg;
 		svg.opts = opts;
-		
+
 		var ctx = target.getContext('2d');
-		if (typeof(s.documentElement) != 'undefined') {
+		if (typeof (s.documentElement) != 'undefined') {
 			// load from xml doc
 			svg.loadXmlDoc(ctx, s);
 		}
-		else if (s.substr(0,1) == '<') {
+		else if (s.substr(0, 1) == '<') {
 			// load from xml string
 			svg.loadXml(ctx, s);
 		}
@@ -81,15 +81,15 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 	}
 
 	function build() {
-		var svg = { };
-		
+		var svg = {};
+
 		svg.FRAMERATE = 30;
 		svg.MAX_VIRTUAL_PIXELS = 30000;
-		
+
 		// globals
-		svg.init = function(ctx) {
+		svg.init = function (ctx) {
 			var uniqueId = 0;
-			svg.UniqueId = function () { uniqueId++; return 'canvg' + uniqueId;	};
+			svg.UniqueId = function () { uniqueId++; return 'canvg' + uniqueId; };
 			svg.Definitions = {};
 			svg.Styles = {};
 			svg.Animations = [];
@@ -97,288 +97,286 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 			svg.ctx = ctx;
 			svg.ViewPort = new (function () {
 				this.viewPorts = [];
-				this.Clear = function() { this.viewPorts = []; }
-				this.SetCurrent = function(width, height) { this.viewPorts.push({ width: width, height: height }); }
-				this.RemoveCurrent = function() { this.viewPorts.pop(); }
-				this.Current = function() { return this.viewPorts[this.viewPorts.length - 1]; }
-				this.width = function() { return this.Current().width; }
-				this.height = function() { return this.Current().height; }
-				this.ComputeSize = function(d) {
-					if (d != null && typeof(d) == 'number') return d;
+				this.Clear = function () { this.viewPorts = []; }
+				this.SetCurrent = function (width, height) { this.viewPorts.push({ width: width, height: height }); }
+				this.RemoveCurrent = function () { this.viewPorts.pop(); }
+				this.Current = function () { return this.viewPorts[this.viewPorts.length - 1]; }
+				this.width = function () { return this.Current().width; }
+				this.height = function () { return this.Current().height; }
+				this.ComputeSize = function (d) {
+					if (d != null && typeof (d) == 'number') return d;
 					if (d == 'x') return this.width();
 					if (d == 'y') return this.height();
-					return Math.sqrt(Math.pow(this.width(), 2) + Math.pow(this.height(), 2)) / Math.sqrt(2);			
+					return Math.sqrt(Math.pow(this.width(), 2) + Math.pow(this.height(), 2)) / Math.sqrt(2);
 				}
 			});
 		}
 		svg.init();
-		
+
 		// images loaded
-		svg.ImagesLoaded = function() { 
-			for (var i=0; i<svg.Images.length; i++) {
+		svg.ImagesLoaded = function () {
+			for (var i = 0; i < svg.Images.length; i++) {
 				if (!svg.Images[i].loaded) return false;
 			}
 			return true;
 		}
 
 		// trim
-		svg.trim = function(s) { return s.replace(/^\s+|\s+$/g, ''); }
-		
+		svg.trim = function (s) { return s.replace(/^\s+|\s+$/g, ''); }
+
 		// compress spaces
-		svg.compressSpaces = function(s) { return s.replace(/[\s\r\t\n]+/gm,' '); }
-		
+		svg.compressSpaces = function (s) { return s.replace(/[\s\r\t\n]+/gm, ' '); }
+
 		// ajax
-		svg.ajax = function(url) {
+		svg.ajax = function (url) {
 			var AJAX;
-			if(window.XMLHttpRequest){AJAX=new XMLHttpRequest();}
-			else{AJAX=new ActiveXObject('Microsoft.XMLHTTP');}
-			if(AJAX){
-			   AJAX.open('GET',url,false);
-			   AJAX.send(null);
-			   return AJAX.responseText;
+			if (window.XMLHttpRequest) { AJAX = new XMLHttpRequest(); }
+			else { AJAX = new ActiveXObject('Microsoft.XMLHTTP'); }
+			if (AJAX) {
+				AJAX.open('GET', url, false);
+				AJAX.send(null);
+				return AJAX.responseText;
 			}
 			return null;
-		} 
-		
+		}
+
 		// parse xml
-		svg.parseXml = function(xml) {
-			if (window.DOMParser)
-			{
+		svg.parseXml = function (xml) {
+			if (window.DOMParser) {
 				var parser = new DOMParser();
 				return parser.parseFromString(xml, 'text/xml');
 			}
-			else 
-			{
+			else {
 				xml = xml.replace(/<!DOCTYPE svg[^>]*>/, '');
 				var xmlDoc = new ActiveXObject('Microsoft.XMLDOM');
 				xmlDoc.async = 'false';
-				xmlDoc.loadXML(xml); 
+				xmlDoc.loadXML(xml);
 				return xmlDoc;
-			}		
+			}
 		}
-		
-		svg.Property = function(name, value) {
+
+		svg.Property = function (name, value) {
 			this.name = name;
 			this.value = value;
-		}	
-			svg.Property.prototype.getValue = function() {
-				return this.value;
-			}
-		
-			svg.Property.prototype.hasValue = function() {
-				return (this.value != null && this.value !== '');
-			}
-							
-			// return the numerical value of the property
-			svg.Property.prototype.numValue = function() {
-				if (!this.hasValue()) return 0;
-				
-				var n = parseFloat(this.value);
-				if ((this.value + '').match(/%$/)) {
-					n = n / 100.0;
-				}
-				return n;
-			}
-			
-			svg.Property.prototype.valueOrDefault = function(def) {
-				if (this.hasValue()) return this.value;
-				return def;
-			}
-			
-			svg.Property.prototype.numValueOrDefault = function(def) {
-				if (this.hasValue()) return this.numValue();
-				return def;
-			}
-			
-			// color extensions
-				// augment the current color value with the opacity
-				svg.Property.prototype.addOpacity = function(opacity) {
-					var newValue = this.value;
-					if (opacity != null && opacity != '' && typeof(this.value)=='string') { // can only add opacity to colors, not patterns
-						var color = new RGBColor(this.value);
-						if (color.ok) {
-							newValue = 'rgba(' + color.r + ', ' + color.g + ', ' + color.b + ', ' + opacity + ')';
-						}
-					}
-					return new svg.Property(this.name, newValue);
-				}
-			
-			// definition extensions
-				// get the definition from the definitions table
-				svg.Property.prototype.getDefinition = function() {
-					var name = this.value.match(/#([^\)'"]+)/);
-					if (name) { name = name[1]; }
-					if (!name) { name = this.value; }
-					return svg.Definitions[name];
-				}
-				
-				svg.Property.prototype.isUrlDefinition = function() {
-					return this.value.indexOf('url(') == 0
-				}
-				
-				svg.Property.prototype.getFillStyleDefinition = function(e, opacityProp) {
-					var def = this.getDefinition();
-					
-					// gradient
-					if (def != null && def.createGradient) {
-						return def.createGradient(svg.ctx, e, opacityProp);
-					}
-					
-					// pattern
-					if (def != null && def.createPattern) {
-						if (def.getHrefAttribute().hasValue()) {
-							var pt = def.attribute('patternTransform');
-							def = def.getHrefAttribute().getDefinition();
-							if (pt.hasValue()) { def.attribute('patternTransform', true).value = pt.value; }
-						}
-						return def.createPattern(svg.ctx, e);
-					}
-					
-					return null;
-				}
-			
-			// length extensions
-				svg.Property.prototype.getDPI = function(viewPort) {
-					return 96.0; // TODO: compute?
-				}
-				
-				svg.Property.prototype.getEM = function(viewPort) {
-					var em = 12;
-					
-					var fontSize = new svg.Property('fontSize', svg.Font.Parse(svg.ctx.font).fontSize);
-					if (fontSize.hasValue()) em = fontSize.toPixels(viewPort);
-					
-					return em;
-				}
-				
-				svg.Property.prototype.getUnits = function() {
-					var s = this.value+'';
-					return s.replace(/[0-9\.\-]/g,'');
-				}
-			
-				// get the length as pixels
-				svg.Property.prototype.toPixels = function(viewPort, processPercent) {
-					if (!this.hasValue()) return 0;
-					var s = this.value+'';
-					if (s.match(/em$/)) return this.numValue() * this.getEM(viewPort);
-					if (s.match(/ex$/)) return this.numValue() * this.getEM(viewPort) / 2.0;
-					if (s.match(/px$/)) return this.numValue();
-					if (s.match(/pt$/)) return this.numValue() * this.getDPI(viewPort) * (1.0 / 72.0);
-					if (s.match(/pc$/)) return this.numValue() * 15;
-					if (s.match(/cm$/)) return this.numValue() * this.getDPI(viewPort) / 2.54;
-					if (s.match(/mm$/)) return this.numValue() * this.getDPI(viewPort) / 25.4;
-					if (s.match(/in$/)) return this.numValue() * this.getDPI(viewPort);
-					if (s.match(/%$/)) return this.numValue() * svg.ViewPort.ComputeSize(viewPort);
-					var n = this.numValue();
-					if (processPercent && n < 1.0) return n * svg.ViewPort.ComputeSize(viewPort);
-					return n;
-				}
+		}
+		svg.Property.prototype.getValue = function () {
+			return this.value;
+		}
 
-			// time extensions
-				// get the time as milliseconds
-				svg.Property.prototype.toMilliseconds = function() {
-					if (!this.hasValue()) return 0;
-					var s = this.value+'';
-					if (s.match(/s$/)) return this.numValue() * 1000;
-					if (s.match(/ms$/)) return this.numValue();
-					return this.numValue();
+		svg.Property.prototype.hasValue = function () {
+			return (this.value != null && this.value !== '');
+		}
+
+		// return the numerical value of the property
+		svg.Property.prototype.numValue = function () {
+			if (!this.hasValue()) return 0;
+
+			var n = parseFloat(this.value);
+			if ((this.value + '').match(/%$/)) {
+				n = n / 100.0;
+			}
+			return n;
+		}
+
+		svg.Property.prototype.valueOrDefault = function (def) {
+			if (this.hasValue()) return this.value;
+			return def;
+		}
+
+		svg.Property.prototype.numValueOrDefault = function (def) {
+			if (this.hasValue()) return this.numValue();
+			return def;
+		}
+
+		// color extensions
+		// augment the current color value with the opacity
+		svg.Property.prototype.addOpacity = function (opacity) {
+			var newValue = this.value;
+			if (opacity != null && opacity != '' && typeof (this.value) == 'string') { // can only add opacity to colors, not patterns
+				var color = new RGBColor(this.value);
+				if (color.ok) {
+					newValue = 'rgba(' + color.r + ', ' + color.g + ', ' + color.b + ', ' + opacity + ')';
 				}
-			
-			// angle extensions
-				// get the angle as radians
-				svg.Property.prototype.toRadians = function() {
-					if (!this.hasValue()) return 0;
-					var s = this.value+'';
-					if (s.match(/deg$/)) return this.numValue() * (Math.PI / 180.0);
-					if (s.match(/grad$/)) return this.numValue() * (Math.PI / 200.0);
-					if (s.match(/rad$/)) return this.numValue();
-					return this.numValue() * (Math.PI / 180.0);
+			}
+			return new svg.Property(this.name, newValue);
+		}
+
+		// definition extensions
+		// get the definition from the definitions table
+		svg.Property.prototype.getDefinition = function () {
+			var name = this.value.match(/#([^\)'"]+)/);
+			if (name) { name = name[1]; }
+			if (!name) { name = this.value; }
+			return svg.Definitions[name];
+		}
+
+		svg.Property.prototype.isUrlDefinition = function () {
+			return this.value.indexOf('url(') == 0
+		}
+
+		svg.Property.prototype.getFillStyleDefinition = function (e, opacityProp) {
+			var def = this.getDefinition();
+
+			// gradient
+			if (def != null && def.createGradient) {
+				return def.createGradient(svg.ctx, e, opacityProp);
+			}
+
+			// pattern
+			if (def != null && def.createPattern) {
+				if (def.getHrefAttribute().hasValue()) {
+					var pt = def.attribute('patternTransform');
+					def = def.getHrefAttribute().getDefinition();
+					if (pt.hasValue()) { def.attribute('patternTransform', true).value = pt.value; }
 				}
-		
+				return def.createPattern(svg.ctx, e);
+			}
+
+			return null;
+		}
+
+		// length extensions
+		svg.Property.prototype.getDPI = function (viewPort) {
+			return 96.0; // TODO: compute?
+		}
+
+		svg.Property.prototype.getEM = function (viewPort) {
+			var em = 12;
+
+			var fontSize = new svg.Property('fontSize', svg.Font.Parse(svg.ctx.font).fontSize);
+			if (fontSize.hasValue()) em = fontSize.toPixels(viewPort);
+
+			return em;
+		}
+
+		svg.Property.prototype.getUnits = function () {
+			var s = this.value + '';
+			return s.replace(/[0-9\.\-]/g, '');
+		}
+
+		// get the length as pixels
+		svg.Property.prototype.toPixels = function (viewPort, processPercent) {
+			if (!this.hasValue()) return 0;
+			var s = this.value + '';
+			if (s.match(/em$/)) return this.numValue() * this.getEM(viewPort);
+			if (s.match(/ex$/)) return this.numValue() * this.getEM(viewPort) / 2.0;
+			if (s.match(/px$/)) return this.numValue();
+			if (s.match(/pt$/)) return this.numValue() * this.getDPI(viewPort) * (1.0 / 72.0);
+			if (s.match(/pc$/)) return this.numValue() * 15;
+			if (s.match(/cm$/)) return this.numValue() * this.getDPI(viewPort) / 2.54;
+			if (s.match(/mm$/)) return this.numValue() * this.getDPI(viewPort) / 25.4;
+			if (s.match(/in$/)) return this.numValue() * this.getDPI(viewPort);
+			if (s.match(/%$/)) return this.numValue() * svg.ViewPort.ComputeSize(viewPort);
+			var n = this.numValue();
+			if (processPercent && n < 1.0) return n * svg.ViewPort.ComputeSize(viewPort);
+			return n;
+		}
+
+		// time extensions
+		// get the time as milliseconds
+		svg.Property.prototype.toMilliseconds = function () {
+			if (!this.hasValue()) return 0;
+			var s = this.value + '';
+			if (s.match(/s$/)) return this.numValue() * 1000;
+			if (s.match(/ms$/)) return this.numValue();
+			return this.numValue();
+		}
+
+		// angle extensions
+		// get the angle as radians
+		svg.Property.prototype.toRadians = function () {
+			if (!this.hasValue()) return 0;
+			var s = this.value + '';
+			if (s.match(/deg$/)) return this.numValue() * (Math.PI / 180.0);
+			if (s.match(/grad$/)) return this.numValue() * (Math.PI / 200.0);
+			if (s.match(/rad$/)) return this.numValue();
+			return this.numValue() * (Math.PI / 180.0);
+		}
+
 		// fonts
-		svg.Font = new (function() {
+		svg.Font = new (function () {
 			this.Styles = 'normal|italic|oblique|inherit';
 			this.Variants = 'normal|small-caps|inherit';
 			this.Weights = 'normal|bold|bolder|lighter|100|200|300|400|500|600|700|800|900|inherit';
-			
-			this.CreateFont = function(fontStyle, fontVariant, fontWeight, fontSize, fontFamily, inherit) { 
+
+			this.CreateFont = function (fontStyle, fontVariant, fontWeight, fontSize, fontFamily, inherit) {
 				var f = inherit != null ? this.Parse(inherit) : this.CreateFont('', '', '', '', '', svg.ctx.font);
-				return { 
-					fontFamily: fontFamily || f.fontFamily, 
-					fontSize: fontSize || f.fontSize, 
-					fontStyle: fontStyle || f.fontStyle, 
-					fontWeight: fontWeight || f.fontWeight, 
+				return {
+					fontFamily: fontFamily || f.fontFamily,
+					fontSize: fontSize || f.fontSize,
+					fontStyle: fontStyle || f.fontStyle,
+					fontWeight: fontWeight || f.fontWeight,
 					fontVariant: fontVariant || f.fontVariant,
-					toString: function () { return [this.fontStyle, this.fontVariant, this.fontWeight, this.fontSize, this.fontFamily].join(' ') } 
-				} 
+					toString: function () { return [this.fontStyle, this.fontVariant, this.fontWeight, this.fontSize, this.fontFamily].join(' ') }
+				}
 			}
-			
+
 			var that = this;
-			this.Parse = function(s) {
+			this.Parse = function (s) {
 				var f = {};
 				var d = svg.trim(svg.compressSpaces(s || '')).split(' ');
 				var set = { fontSize: false, fontStyle: false, fontWeight: false, fontVariant: false }
 				var ff = '';
-				for (var i=0; i<d.length; i++) {
+				for (var i = 0; i < d.length; i++) {
 					if (!set.fontStyle && that.Styles.indexOf(d[i]) != -1) { if (d[i] != 'inherit') f.fontStyle = d[i]; set.fontStyle = true; }
-					else if (!set.fontVariant && that.Variants.indexOf(d[i]) != -1) { if (d[i] != 'inherit') f.fontVariant = d[i]; set.fontStyle = set.fontVariant = true;	}
-					else if (!set.fontWeight && that.Weights.indexOf(d[i]) != -1) {	if (d[i] != 'inherit') f.fontWeight = d[i]; set.fontStyle = set.fontVariant = set.fontWeight = true; }
+					else if (!set.fontVariant && that.Variants.indexOf(d[i]) != -1) { if (d[i] != 'inherit') f.fontVariant = d[i]; set.fontStyle = set.fontVariant = true; }
+					else if (!set.fontWeight && that.Weights.indexOf(d[i]) != -1) { if (d[i] != 'inherit') f.fontWeight = d[i]; set.fontStyle = set.fontVariant = set.fontWeight = true; }
 					else if (!set.fontSize) { if (d[i] != 'inherit') f.fontSize = d[i].split('/')[0]; set.fontStyle = set.fontVariant = set.fontWeight = set.fontSize = true; }
 					else { if (d[i] != 'inherit') ff += d[i]; }
 				} if (ff != '') f.fontFamily = ff;
 				return f;
 			}
 		});
-		
+
 		// points and paths
-		svg.ToNumberArray = function(s) {
+		svg.ToNumberArray = function (s) {
 			var a = svg.trim(svg.compressSpaces((s || '').replace(/,/g, ' '))).split(' ');
-			for (var i=0; i<a.length; i++) {
+			for (var i = 0; i < a.length; i++) {
 				a[i] = parseFloat(a[i]);
 			}
 			return a;
-		}		
-		svg.Point = function(x, y) {
+		}
+		svg.Point = function (x, y) {
 			this.x = x;
 			this.y = y;
-		}	
-			svg.Point.prototype.angleTo = function(p) {
-				return Math.atan2(p.y - this.y, p.x - this.x);
-			}
-			
-			svg.Point.prototype.applyTransform = function(v) {
-				var xp = this.x * v[0] + this.y * v[2] + v[4];
-				var yp = this.x * v[1] + this.y * v[3] + v[5];
-				this.x = xp;
-				this.y = yp;
-			}
+		}
+		svg.Point.prototype.angleTo = function (p) {
+			return Math.atan2(p.y - this.y, p.x - this.x);
+		}
 
-		svg.CreatePoint = function(s) {
+		svg.Point.prototype.applyTransform = function (v) {
+			var xp = this.x * v[0] + this.y * v[2] + v[4];
+			var yp = this.x * v[1] + this.y * v[3] + v[5];
+			this.x = xp;
+			this.y = yp;
+		}
+
+		svg.CreatePoint = function (s) {
 			var a = svg.ToNumberArray(s);
 			return new svg.Point(a[0], a[1]);
 		}
-		svg.CreatePath = function(s) {
+		svg.CreatePath = function (s) {
 			var a = svg.ToNumberArray(s);
 			var path = [];
-			for (var i=0; i<a.length; i+=2) {
-				path.push(new svg.Point(a[i], a[i+1]));
+			for (var i = 0; i < a.length; i += 2) {
+				path.push(new svg.Point(a[i], a[i + 1]));
 			}
 			return path;
 		}
-		
+
 		// bounding box
-		svg.BoundingBox = function(x1, y1, x2, y2) { // pass in initial points if you want
+		svg.BoundingBox = function (x1, y1, x2, y2) { // pass in initial points if you want
 			this.x1 = Number.NaN;
 			this.y1 = Number.NaN;
 			this.x2 = Number.NaN;
 			this.y2 = Number.NaN;
-			
-			this.x = function() { return this.x1; }
-			this.y = function() { return this.y1; }
-			this.width = function() { return this.x2 - this.x1; }
-			this.height = function() { return this.y2 - this.y1; }
-			
-			this.addPoint = function(x, y) {	
+
+			this.x = function () { return this.x1; }
+			this.y = function () { return this.y1; }
+			this.width = function () { return this.x2 - this.x1; }
+			this.height = function () { return this.y2 - this.y1; }
+
+			this.addPoint = function (x, y) {
 				if (x != null) {
 					if (isNaN(this.x1) || isNaN(this.x2)) {
 						this.x1 = x;
@@ -387,7 +385,7 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					if (x < this.x1) this.x1 = x;
 					if (x > this.x2) this.x2 = x;
 				}
-			
+
 				if (y != null) {
 					if (isNaN(this.y1) || isNaN(this.y2)) {
 						this.y1 = y;
@@ -396,41 +394,41 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					if (y < this.y1) this.y1 = y;
 					if (y > this.y2) this.y2 = y;
 				}
-			}			
-			this.addX = function(x) { this.addPoint(x, null); }
-			this.addY = function(y) { this.addPoint(null, y); }
-			
-			this.addBoundingBox = function(bb) {
+			}
+			this.addX = function (x) { this.addPoint(x, null); }
+			this.addY = function (y) { this.addPoint(null, y); }
+
+			this.addBoundingBox = function (bb) {
 				this.addPoint(bb.x1, bb.y1);
 				this.addPoint(bb.x2, bb.y2);
 			}
-			
-			this.addQuadraticCurve = function(p0x, p0y, p1x, p1y, p2x, p2y) {
-				var cp1x = p0x + 2/3 * (p1x - p0x); // CP1 = QP0 + 2/3 *(QP1-QP0)
-				var cp1y = p0y + 2/3 * (p1y - p0y); // CP1 = QP0 + 2/3 *(QP1-QP0)
-				var cp2x = cp1x + 1/3 * (p2x - p0x); // CP2 = CP1 + 1/3 *(QP2-QP0)
-				var cp2y = cp1y + 1/3 * (p2y - p0y); // CP2 = CP1 + 1/3 *(QP2-QP0)
-				this.addBezierCurve(p0x, p0y, cp1x, cp2x, cp1y,	cp2y, p2x, p2y);
+
+			this.addQuadraticCurve = function (p0x, p0y, p1x, p1y, p2x, p2y) {
+				var cp1x = p0x + 2 / 3 * (p1x - p0x); // CP1 = QP0 + 2/3 *(QP1-QP0)
+				var cp1y = p0y + 2 / 3 * (p1y - p0y); // CP1 = QP0 + 2/3 *(QP1-QP0)
+				var cp2x = cp1x + 1 / 3 * (p2x - p0x); // CP2 = CP1 + 1/3 *(QP2-QP0)
+				var cp2y = cp1y + 1 / 3 * (p2y - p0y); // CP2 = CP1 + 1/3 *(QP2-QP0)
+				this.addBezierCurve(p0x, p0y, cp1x, cp2x, cp1y, cp2y, p2x, p2y);
 			}
-			
-			this.addBezierCurve = function(p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y) {
+
+			this.addBezierCurve = function (p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y) {
 				// from http://blog.hackers-cafe.net/2009/06/how-to-calculate-bezier-curves-bounding.html
 				var p0 = [p0x, p0y], p1 = [p1x, p1y], p2 = [p2x, p2y], p3 = [p3x, p3y];
 				this.addPoint(p0[0], p0[1]);
 				this.addPoint(p3[0], p3[1]);
-				
-				for (i=0; i<=1; i++) {
-					var f = function(t) { 
-						return Math.pow(1-t, 3) * p0[i]
-						+ 3 * Math.pow(1-t, 2) * t * p1[i]
-						+ 3 * (1-t) * Math.pow(t, 2) * p2[i]
-						+ Math.pow(t, 3) * p3[i];
+
+				for (i = 0; i <= 1; i++) {
+					var f = function (t) {
+						return Math.pow(1 - t, 3) * p0[i]
+							+ 3 * Math.pow(1 - t, 2) * t * p1[i]
+							+ 3 * (1 - t) * Math.pow(t, 2) * p2[i]
+							+ Math.pow(t, 3) * p3[i];
 					}
-					
+
 					var b = 6 * p0[i] - 12 * p1[i] + 6 * p2[i];
 					var a = -3 * p0[i] + 9 * p1[i] - 9 * p2[i] + 3 * p3[i];
 					var c = 3 * p1[i] - 3 * p0[i];
-					
+
 					if (a == 0) {
 						if (b == 0) continue;
 						var t = -c / b;
@@ -440,7 +438,7 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 						}
 						continue;
 					}
-					
+
 					var b2ac = Math.pow(b, 2) - 4 * c * a;
 					if (b2ac < 0) continue;
 					var t1 = (-b + Math.sqrt(b2ac)) / (2 * a);
@@ -455,209 +453,209 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					}
 				}
 			}
-			
-			this.isPointInBox = function(x, y) {
+
+			this.isPointInBox = function (x, y) {
 				return (this.x1 <= x && x <= this.x2 && this.y1 <= y && y <= this.y2);
 			}
-			
+
 			this.addPoint(x1, y1);
 			this.addPoint(x2, y2);
 		}
-		
+
 		// transforms
-		svg.Transform = function(v) {	
+		svg.Transform = function (v) {
 			var that = this;
 			this.Type = {}
-		
+
 			// translate
-			this.Type.translate = function(s) {
-				this.p = svg.CreatePoint(s);			
-				this.apply = function(ctx) {
+			this.Type.translate = function (s) {
+				this.p = svg.CreatePoint(s);
+				this.apply = function (ctx) {
 					ctx.translate(this.p.x || 0.0, this.p.y || 0.0);
 				}
-				this.unapply = function(ctx) {
+				this.unapply = function (ctx) {
 					ctx.translate(-1.0 * this.p.x || 0.0, -1.0 * this.p.y || 0.0);
 				}
-				this.applyToPoint = function(p) {
+				this.applyToPoint = function (p) {
 					p.applyTransform([1, 0, 0, 1, this.p.x || 0.0, this.p.y || 0.0]);
 				}
 			}
-			
+
 			// rotate
-			this.Type.rotate = function(s) {
+			this.Type.rotate = function (s) {
 				var a = svg.ToNumberArray(s);
 				this.angle = new svg.Property('angle', a[0]);
 				this.cx = a[1] || 0;
 				this.cy = a[2] || 0;
-				this.apply = function(ctx) {
+				this.apply = function (ctx) {
 					ctx.translate(this.cx, this.cy);
 					ctx.rotate(this.angle.toRadians());
 					ctx.translate(-this.cx, -this.cy);
 				}
-				this.unapply = function(ctx) {
+				this.unapply = function (ctx) {
 					ctx.translate(this.cx, this.cy);
 					ctx.rotate(-1.0 * this.angle.toRadians());
 					ctx.translate(-this.cx, -this.cy);
 				}
-				this.applyToPoint = function(p) {
+				this.applyToPoint = function (p) {
 					var a = this.angle.toRadians();
 					p.applyTransform([1, 0, 0, 1, this.p.x || 0.0, this.p.y || 0.0]);
 					p.applyTransform([Math.cos(a), Math.sin(a), -Math.sin(a), Math.cos(a), 0, 0]);
 					p.applyTransform([1, 0, 0, 1, -this.p.x || 0.0, -this.p.y || 0.0]);
-				}			
+				}
 			}
-			
-			this.Type.scale = function(s) {
+
+			this.Type.scale = function (s) {
 				this.p = svg.CreatePoint(s);
-				this.apply = function(ctx) {
+				this.apply = function (ctx) {
 					ctx.scale(this.p.x || 1.0, this.p.y || this.p.x || 1.0);
 				}
-				this.unapply = function(ctx) {
+				this.unapply = function (ctx) {
 					ctx.scale(1.0 / this.p.x || 1.0, 1.0 / this.p.y || this.p.x || 1.0);
 				}
-				this.applyToPoint = function(p) {
+				this.applyToPoint = function (p) {
 					p.applyTransform([this.p.x || 0.0, 0, 0, this.p.y || 0.0, 0, 0]);
-				}				
+				}
 			}
-			
-			this.Type.matrix = function(s) {
+
+			this.Type.matrix = function (s) {
 				this.m = svg.ToNumberArray(s);
-				this.apply = function(ctx) {
+				this.apply = function (ctx) {
 					ctx.transform(this.m[0], this.m[1], this.m[2], this.m[3], this.m[4], this.m[5]);
 				}
-				this.applyToPoint = function(p) {
+				this.applyToPoint = function (p) {
 					p.applyTransform(this.m);
-				}					
+				}
 			}
-			
-			this.Type.SkewBase = function(s) {
+
+			this.Type.SkewBase = function (s) {
 				this.base = that.Type.matrix;
 				this.base(s);
 				this.angle = new svg.Property('angle', s);
 			}
 			this.Type.SkewBase.prototype = new this.Type.matrix;
-			
-			this.Type.skewX = function(s) {
+
+			this.Type.skewX = function (s) {
 				this.base = that.Type.SkewBase;
 				this.base(s);
 				this.m = [1, 0, Math.tan(this.angle.toRadians()), 1, 0, 0];
 			}
 			this.Type.skewX.prototype = new this.Type.SkewBase;
-			
-			this.Type.skewY = function(s) {
+
+			this.Type.skewY = function (s) {
 				this.base = that.Type.SkewBase;
 				this.base(s);
 				this.m = [1, Math.tan(this.angle.toRadians()), 0, 1, 0, 0];
 			}
 			this.Type.skewY.prototype = new this.Type.SkewBase;
-		
+
 			this.transforms = [];
-			
-			this.apply = function(ctx) {
-				for (var i=0; i<this.transforms.length; i++) {
+
+			this.apply = function (ctx) {
+				for (var i = 0; i < this.transforms.length; i++) {
 					this.transforms[i].apply(ctx);
 				}
 			}
-			
-			this.unapply = function(ctx) {
-				for (var i=this.transforms.length-1; i>=0; i--) {
+
+			this.unapply = function (ctx) {
+				for (var i = this.transforms.length - 1; i >= 0; i--) {
 					this.transforms[i].unapply(ctx);
 				}
 			}
-			
-			this.applyToPoint = function(p) {
-				for (var i=0; i<this.transforms.length; i++) {
+
+			this.applyToPoint = function (p) {
+				for (var i = 0; i < this.transforms.length; i++) {
 					this.transforms[i].applyToPoint(p);
 				}
 			}
-			
-			var data = svg.trim(svg.compressSpaces(v)).replace(/\)(\s?,\s?)/g,') ').split(/\s(?=[a-z])/);
-			for (var i=0; i<data.length; i++) {
+
+			var data = svg.trim(svg.compressSpaces(v)).replace(/\)(\s?,\s?)/g, ') ').split(/\s(?=[a-z])/);
+			for (var i = 0; i < data.length; i++) {
 				var type = svg.trim(data[i].split('(')[0]);
-				var s = data[i].split('(')[1].replace(')','');
+				var s = data[i].split('(')[1].replace(')', '');
 				var transform = new this.Type[type](s);
 				transform.type = type;
 				this.transforms.push(transform);
 			}
 		}
-		
+
 		// aspect ratio
-		svg.AspectRatio = function(ctx, aspectRatio, width, desiredWidth, height, desiredHeight, minX, minY, refX, refY) {
+		svg.AspectRatio = function (ctx, aspectRatio, width, desiredWidth, height, desiredHeight, minX, minY, refX, refY) {
 			// aspect ratio - http://www.w3.org/TR/SVG/coords.html#PreserveAspectRatioAttribute
 			aspectRatio = svg.compressSpaces(aspectRatio);
-			aspectRatio = aspectRatio.replace(/^defer\s/,''); // ignore defer
+			aspectRatio = aspectRatio.replace(/^defer\s/, ''); // ignore defer
 			var align = aspectRatio.split(' ')[0] || 'xMidYMid';
-			var meetOrSlice = aspectRatio.split(' ')[1] || 'meet';					
-	
+			var meetOrSlice = aspectRatio.split(' ')[1] || 'meet';
+
 			// calculate scale
 			var scaleX = width / desiredWidth;
 			var scaleY = height / desiredHeight;
 			var scaleMin = Math.min(scaleX, scaleY);
 			var scaleMax = Math.max(scaleX, scaleY);
 			if (meetOrSlice == 'meet') { desiredWidth *= scaleMin; desiredHeight *= scaleMin; }
-			if (meetOrSlice == 'slice') { desiredWidth *= scaleMax; desiredHeight *= scaleMax; }	
-			
+			if (meetOrSlice == 'slice') { desiredWidth *= scaleMax; desiredHeight *= scaleMax; }
+
 			refX = new svg.Property('refX', refX);
 			refY = new svg.Property('refY', refY);
-			if (refX.hasValue() && refY.hasValue()) {				
+			if (refX.hasValue() && refY.hasValue()) {
 				ctx.translate(-scaleMin * refX.toPixels('x'), -scaleMin * refY.toPixels('y'));
-			} 
-			else {					
-				// align
-				if (align.match(/^xMid/) && ((meetOrSlice == 'meet' && scaleMin == scaleY) || (meetOrSlice == 'slice' && scaleMax == scaleY))) ctx.translate(width / 2.0 - desiredWidth / 2.0, 0); 
-				if (align.match(/YMid$/) && ((meetOrSlice == 'meet' && scaleMin == scaleX) || (meetOrSlice == 'slice' && scaleMax == scaleX))) ctx.translate(0, height / 2.0 - desiredHeight / 2.0); 
-				if (align.match(/^xMax/) && ((meetOrSlice == 'meet' && scaleMin == scaleY) || (meetOrSlice == 'slice' && scaleMax == scaleY))) ctx.translate(width - desiredWidth, 0); 
-				if (align.match(/YMax$/) && ((meetOrSlice == 'meet' && scaleMin == scaleX) || (meetOrSlice == 'slice' && scaleMax == scaleX))) ctx.translate(0, height - desiredHeight); 
 			}
-			
+			else {
+				// align
+				if (align.match(/^xMid/) && ((meetOrSlice == 'meet' && scaleMin == scaleY) || (meetOrSlice == 'slice' && scaleMax == scaleY))) ctx.translate(width / 2.0 - desiredWidth / 2.0, 0);
+				if (align.match(/YMid$/) && ((meetOrSlice == 'meet' && scaleMin == scaleX) || (meetOrSlice == 'slice' && scaleMax == scaleX))) ctx.translate(0, height / 2.0 - desiredHeight / 2.0);
+				if (align.match(/^xMax/) && ((meetOrSlice == 'meet' && scaleMin == scaleY) || (meetOrSlice == 'slice' && scaleMax == scaleY))) ctx.translate(width - desiredWidth, 0);
+				if (align.match(/YMax$/) && ((meetOrSlice == 'meet' && scaleMin == scaleX) || (meetOrSlice == 'slice' && scaleMax == scaleX))) ctx.translate(0, height - desiredHeight);
+			}
+
 			// scale
 			if (align == 'none') ctx.scale(scaleX, scaleY);
-			else if (meetOrSlice == 'meet') ctx.scale(scaleMin, scaleMin); 
-			else if (meetOrSlice == 'slice') ctx.scale(scaleMax, scaleMax); 	
-			
+			else if (meetOrSlice == 'meet') ctx.scale(scaleMin, scaleMin);
+			else if (meetOrSlice == 'slice') ctx.scale(scaleMax, scaleMax);
+
 			// translate
-			ctx.translate(minX == null ? 0 : -minX, minY == null ? 0 : -minY);			
+			ctx.translate(minX == null ? 0 : -minX, minY == null ? 0 : -minY);
 		}
-		
+
 		// elements
 		svg.Element = {}
-		
+
 		svg.EmptyProperty = new svg.Property('EMPTY', '');
-		
-		svg.Element.ElementBase = function(node) {	
+
+		svg.Element.ElementBase = function (node) {
 			this.attributes = {};
 			this.styles = {};
 			this.children = [];
-			
+
 			// get or create attribute
-			this.attribute = function(name, createIfNotExists) {
+			this.attribute = function (name, createIfNotExists) {
 				var a = this.attributes[name];
 				if (a != null) return a;
-							
+
 				if (createIfNotExists == true) { a = new svg.Property(name, ''); this.attributes[name] = a; }
 				return a || svg.EmptyProperty;
 			}
-			
-			this.getHrefAttribute = function() {
-				for (var a in this.attributes) { 
-					if (a.match(/:href$/)) { 
-						return this.attributes[a]; 
-					} 
+
+			this.getHrefAttribute = function () {
+				for (var a in this.attributes) {
+					if (a.match(/:href$/)) {
+						return this.attributes[a];
+					}
 				}
 				return svg.EmptyProperty;
 			}
-			
+
 			// get or create style, crawls up node tree
-			this.style = function(name, createIfNotExists) {
+			this.style = function (name, createIfNotExists) {
 				var s = this.styles[name];
 				if (s != null) return s;
-				
+
 				var a = this.attribute(name);
 				if (a != null && a.hasValue()) {
 					this.styles[name] = a; // move up to me to cache
 					return a;
 				}
-				
+
 				var p = this.parent;
 				if (p != null) {
 					var ps = p.style(name);
@@ -665,19 +663,19 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 						return ps;
 					}
 				}
-					
+
 				if (createIfNotExists == true) { s = new svg.Property(name, ''); this.styles[name] = s; }
 				return s || svg.EmptyProperty;
 			}
-			
+
 			// base render
-			this.render = function(ctx) {
+			this.render = function (ctx) {
 				// don't render display=none
 				if (this.style('display').value == 'none') return;
-				
+
 				// don't render visibility=hidden
 				if (this.attribute('visibility').value == 'hidden') return;
-			
+
 				ctx.save();
 				if (this.attribute('mask').hasValue()) { // mask
 					var mask = this.attribute('mask').getDefinition();
@@ -687,41 +685,41 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					var filter = this.style('filter').getDefinition();
 					if (filter != null) filter.apply(ctx, this);
 				}
-				else {	
+				else {
 					this.setContext(ctx);
-					this.renderChildren(ctx);	
-					this.clearContext(ctx);							
+					this.renderChildren(ctx);
+					this.clearContext(ctx);
 				}
 				ctx.restore();
 			}
-			
+
 			// base set context
-			this.setContext = function(ctx) {
+			this.setContext = function (ctx) {
 				// OVERRIDE ME!
 			}
-			
+
 			// base clear context
-			this.clearContext = function(ctx) {
+			this.clearContext = function (ctx) {
 				// OVERRIDE ME!
-			}			
-			
+			}
+
 			// base render children
-			this.renderChildren = function(ctx) {
-				for (var i=0; i<this.children.length; i++) {
+			this.renderChildren = function (ctx) {
+				for (var i = 0; i < this.children.length; i++) {
 					this.children[i].render(ctx);
 				}
 			}
-			
-			this.addChild = function(childNode, create) {
+
+			this.addChild = function (childNode, create) {
 				var child = childNode;
 				if (create) child = svg.CreateElement(childNode);
 				child.parent = this;
-				this.children.push(child);			
+				this.children.push(child);
 			}
-				
+
 			if (node != null && node.nodeType == 1) { //ELEMENT_NODE
 				// add children
-				for (var i=0; i<node.childNodes.length; i++) {
+				for (var i = 0; i < node.childNodes.length; i++) {
 					var childNode = node.childNodes[i];
 					if (childNode.nodeType == 1) this.addChild(childNode, true); //ELEMENT_NODE
 					if (this.captureTextNodes && childNode.nodeType == 3) {
@@ -731,32 +729,32 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 						}
 					}
 				}
-				
+
 				// add attributes
-				for (var i=0; i<node.attributes.length; i++) {
+				for (var i = 0; i < node.attributes.length; i++) {
 					var attribute = node.attributes[i];
 					this.attributes[attribute.nodeName] = new svg.Property(attribute.nodeName, attribute.nodeValue);
 				}
-										
+
 				// add tag styles
 				var styles = svg.Styles[node.nodeName];
 				if (styles != null) {
 					for (var name in styles) {
 						this.styles[name] = styles[name];
 					}
-				}					
-				
+				}
+
 				// add class styles
 				if (this.attribute('class').hasValue()) {
 					var classes = svg.compressSpaces(this.attribute('class').value).split(' ');
-					for (var j=0; j<classes.length; j++) {
-						styles = svg.Styles['.'+classes[j]];
+					for (var j = 0; j < classes.length; j++) {
+						styles = svg.Styles['.' + classes[j]];
 						if (styles != null) {
 							for (var name in styles) {
 								this.styles[name] = styles[name];
 							}
 						}
-						styles = svg.Styles[node.nodeName+'.'+classes[j]];
+						styles = svg.Styles[node.nodeName + '.' + classes[j]];
 						if (styles != null) {
 							for (var name in styles) {
 								this.styles[name] = styles[name];
@@ -764,7 +762,7 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 						}
 					}
 				}
-				
+
 				// add id styles
 				if (this.attribute('id').hasValue()) {
 					var styles = svg.Styles['#' + this.attribute('id').value];
@@ -774,11 +772,11 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 						}
 					}
 				}
-				
+
 				// add inline styles
 				if (this.attribute('style').hasValue()) {
 					var styles = this.attribute('style').value.split(';');
-					for (var i=0; i<styles.length; i++) {
+					for (var i = 0; i < styles.length; i++) {
 						if (svg.trim(styles[i]) != '') {
 							var style = styles[i].split(':');
 							var name = svg.trim(style[0]);
@@ -786,7 +784,7 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 							this.styles[name] = new svg.Property(name, value);
 						}
 					}
-				}	
+				}
 
 				// add id
 				if (this.attribute('id').hasValue()) {
@@ -796,12 +794,12 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 				}
 			}
 		}
-		
-		svg.Element.RenderedElementBase = function(node) {
+
+		svg.Element.RenderedElementBase = function (node) {
 			this.base = svg.Element.ElementBase;
 			this.base(node);
-			
-			this.setContext = function(ctx) {
+
+			this.setContext = function (ctx) {
 				// fill
 				if (this.style('fill').isUrlDefinition()) {
 					var fs = this.style('fill').getFillStyleDefinition(this, this.style('fill-opacity'));
@@ -817,7 +815,7 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					fillStyle = fillStyle.addOpacity(this.style('fill-opacity').value);
 					ctx.fillStyle = fillStyle.value;
 				}
-									
+
 				// stroke
 				if (this.style('stroke').isUrlDefinition()) {
 					var fs = this.style('stroke').getFillStyleDefinition(this, this.style('stroke-opacity'));
@@ -836,62 +834,62 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 				if (this.style('stroke-width').hasValue()) {
 					var newLineWidth = this.style('stroke-width').toPixels();
 					ctx.lineWidth = newLineWidth == 0 ? 0.001 : newLineWidth; // browsers don't respect 0
-			    }
+				}
 				if (this.style('stroke-linecap').hasValue()) ctx.lineCap = this.style('stroke-linecap').value;
 				if (this.style('stroke-linejoin').hasValue()) ctx.lineJoin = this.style('stroke-linejoin').value;
 				if (this.style('stroke-miterlimit').hasValue()) ctx.miterLimit = this.style('stroke-miterlimit').value;
 				if (this.style('stroke-dasharray').hasValue()) {
 					var gaps = svg.ToNumberArray(this.style('stroke-dasharray').value);
-					if (typeof(ctx.setLineDash) != 'undefined') { ctx.setLineDash(gaps); }
-					else if (typeof(ctx.webkitLineDash) != 'undefined') { ctx.webkitLineDash = gaps; }
-					else if (typeof(ctx.mozDash ) != 'undefined') { ctx.mozDash  = gaps; }
-					
+					if (typeof (ctx.setLineDash) != 'undefined') { ctx.setLineDash(gaps); }
+					else if (typeof (ctx.webkitLineDash) != 'undefined') { ctx.webkitLineDash = gaps; }
+					else if (typeof (ctx.mozDash) != 'undefined') { ctx.mozDash = gaps; }
+
 					var offset = this.style('stroke-dashoffset').numValueOrDefault(1);
-					if (typeof(ctx.lineDashOffset) != 'undefined') { ctx.lineDashOffset = offset; }
-					else if (typeof(ctx.webkitLineDashOffset) != 'undefined') { ctx.webkitLineDashOffset = offset; }
-					else if (typeof(ctx.mozDashOffset) != 'undefined') { ctx.mozDashOffset = offset; }
+					if (typeof (ctx.lineDashOffset) != 'undefined') { ctx.lineDashOffset = offset; }
+					else if (typeof (ctx.webkitLineDashOffset) != 'undefined') { ctx.webkitLineDashOffset = offset; }
+					else if (typeof (ctx.mozDashOffset) != 'undefined') { ctx.mozDashOffset = offset; }
 				}
 
 				// font
-				if (typeof(ctx.font) != 'undefined') {
-					ctx.font = svg.Font.CreateFont( 
-						this.style('font-style').value, 
-						this.style('font-variant').value, 
-						this.style('font-weight').value, 
-						this.style('font-size').hasValue() ? this.style('font-size').toPixels() + 'px' : '', 
+				if (typeof (ctx.font) != 'undefined') {
+					ctx.font = svg.Font.CreateFont(
+						this.style('font-style').value,
+						this.style('font-variant').value,
+						this.style('font-weight').value,
+						this.style('font-size').hasValue() ? this.style('font-size').toPixels() + 'px' : '',
 						this.style('font-family').value).toString();
 				}
-				
+
 				// transform
-				if (this.attribute('transform').hasValue()) { 
+				if (this.attribute('transform').hasValue()) {
 					var transform = new svg.Transform(this.attribute('transform').value);
 					transform.apply(ctx);
 				}
-				
+
 				// clip
 				if (this.style('clip-path').hasValue()) {
 					var clip = this.style('clip-path').getDefinition();
 					if (clip != null) clip.apply(ctx);
 				}
-				
+
 				// opacity
 				if (this.style('opacity').hasValue()) {
 					ctx.globalAlpha = this.style('opacity').numValue();
 				}
-			}		
+			}
 		}
 		svg.Element.RenderedElementBase.prototype = new svg.Element.ElementBase;
-		
-		svg.Element.PathElementBase = function(node) {
+
+		svg.Element.PathElementBase = function (node) {
 			this.base = svg.Element.RenderedElementBase;
 			this.base(node);
-			
-			this.path = function(ctx) {
+
+			this.path = function (ctx) {
 				if (ctx != null) ctx.beginPath();
 				return new svg.BoundingBox();
 			}
-			
-			this.renderChildren = function(ctx) {
+
+			this.renderChildren = function (ctx) {
 				this.path(ctx);
 				svg.Mouse.checkPath(this, ctx);
 				if (ctx.fillStyle != '') {
@@ -899,7 +897,7 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					else { ctx.fill(); }
 				}
 				if (ctx.strokeStyle != '') ctx.stroke();
-				
+
 				var markers = this.getMarkers();
 				if (markers != null) {
 					if (this.style('marker-start').isUrlDefinition()) {
@@ -908,69 +906,69 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					}
 					if (this.style('marker-mid').isUrlDefinition()) {
 						var marker = this.style('marker-mid').getDefinition();
-						for (var i=1;i<markers.length-1;i++) {
+						for (var i = 1; i < markers.length - 1; i++) {
 							marker.render(ctx, markers[i][0], markers[i][1]);
 						}
 					}
 					if (this.style('marker-end').isUrlDefinition()) {
 						var marker = this.style('marker-end').getDefinition();
-						marker.render(ctx, markers[markers.length-1][0], markers[markers.length-1][1]);
+						marker.render(ctx, markers[markers.length - 1][0], markers[markers.length - 1][1]);
 					}
-				}					
+				}
 			}
-			
-			this.getBoundingBox = function() {
+
+			this.getBoundingBox = function () {
 				return this.path();
 			}
-			
-			this.getMarkers = function() {
+
+			this.getMarkers = function () {
 				return null;
 			}
 		}
 		svg.Element.PathElementBase.prototype = new svg.Element.RenderedElementBase;
-		
+
 		// svg element
-		svg.Element.svg = function(node) {
+		svg.Element.svg = function (node) {
 			this.base = svg.Element.RenderedElementBase;
 			this.base(node);
-			
+
 			this.baseClearContext = this.clearContext;
-			this.clearContext = function(ctx) {
+			this.clearContext = function (ctx) {
 				this.baseClearContext(ctx);
 				svg.ViewPort.RemoveCurrent();
 			}
-			
+
 			this.baseSetContext = this.setContext;
-			this.setContext = function(ctx) {
+			this.setContext = function (ctx) {
 				// initial values
 				ctx.strokeStyle = 'rgba(0,0,0,0)';
 				ctx.lineCap = 'butt';
 				ctx.lineJoin = 'miter';
-				ctx.miterLimit = 4;			
-			
+				ctx.miterLimit = 4;
+
 				this.baseSetContext(ctx);
-				
+
 				// create new view port
 				if (!this.attribute('x').hasValue()) this.attribute('x', true).value = 0;
 				if (!this.attribute('y').hasValue()) this.attribute('y', true).value = 0;
 				ctx.translate(this.attribute('x').toPixels('x'), this.attribute('y').toPixels('y'));
-				
+
 				var width = svg.ViewPort.width();
 				var height = svg.ViewPort.height();
-				
+
 				if (!this.attribute('width').hasValue()) this.attribute('width', true).value = '100%';
 				if (!this.attribute('height').hasValue()) this.attribute('height', true).value = '100%';
-				if (typeof(this.root) == 'undefined') {
+				if (typeof (this.root) == 'undefined') {
 					width = this.attribute('width').toPixels('x');
 					height = this.attribute('height').toPixels('y');
-					
+
 					var x = 0;
 					var y = 0;
 					if (this.attribute('refX').hasValue() && this.attribute('refY').hasValue()) {
 						x = -this.attribute('refX').toPixels('x');
 						y = -this.attribute('refY').toPixels('y');
 					}
-					
+
 					ctx.beginPath();
 					ctx.moveTo(x, y);
 					ctx.lineTo(width, y);
@@ -979,40 +977,40 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					ctx.closePath();
 					ctx.clip();
 				}
-				svg.ViewPort.SetCurrent(width, height);	
-						
+				svg.ViewPort.SetCurrent(width, height);
+
 				// viewbox
-				if (this.attribute('viewBox').hasValue()) {				
+				if (this.attribute('viewBox').hasValue()) {
 					var viewBox = svg.ToNumberArray(this.attribute('viewBox').value);
 					var minX = viewBox[0];
 					var minY = viewBox[1];
 					width = viewBox[2];
 					height = viewBox[3];
-					
+
 					svg.AspectRatio(ctx,
-									this.attribute('preserveAspectRatio').value, 
-									svg.ViewPort.width(), 
-									width,
-									svg.ViewPort.height(),
-									height,
-									minX,
-									minY,
-									this.attribute('refX').value,
-									this.attribute('refY').value);
-										
-					svg.ViewPort.RemoveCurrent();	
-					svg.ViewPort.SetCurrent(viewBox[2], viewBox[3]);						
-				}				
+						this.attribute('preserveAspectRatio').value,
+						svg.ViewPort.width(),
+						width,
+						svg.ViewPort.height(),
+						height,
+						minX,
+						minY,
+						this.attribute('refX').value,
+						this.attribute('refY').value);
+
+					svg.ViewPort.RemoveCurrent();
+					svg.ViewPort.SetCurrent(viewBox[2], viewBox[3]);
+				}
 			}
 		}
 		svg.Element.svg.prototype = new svg.Element.RenderedElementBase;
 
 		// rect element
-		svg.Element.rect = function(node) {
+		svg.Element.rect = function (node) {
 			this.base = svg.Element.PathElementBase;
 			this.base(node);
-			
-			this.path = function(ctx) {
+
+			this.path = function (ctx) {
 				var x = this.attribute('x').toPixels('x');
 				var y = this.attribute('y').toPixels('y');
 				var width = this.attribute('width').toPixels('x');
@@ -1036,128 +1034,128 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					ctx.quadraticCurveTo(x, y, x + rx, y)
 					ctx.closePath();
 				}
-				
+
 				return new svg.BoundingBox(x, y, x + width, y + height);
 			}
 		}
 		svg.Element.rect.prototype = new svg.Element.PathElementBase;
-		
+
 		// circle element
-		svg.Element.circle = function(node) {
+		svg.Element.circle = function (node) {
 			this.base = svg.Element.PathElementBase;
 			this.base(node);
-			
-			this.path = function(ctx) {
+
+			this.path = function (ctx) {
 				var cx = this.attribute('cx').toPixels('x');
 				var cy = this.attribute('cy').toPixels('y');
 				var r = this.attribute('r').toPixels();
-			
+
 				if (ctx != null) {
 					ctx.beginPath();
-					ctx.arc(cx, cy, r, 0, Math.PI * 2, true); 
+					ctx.arc(cx, cy, r, 0, Math.PI * 2, true);
 					ctx.closePath();
 				}
-				
+
 				return new svg.BoundingBox(cx - r, cy - r, cx + r, cy + r);
 			}
 		}
-		svg.Element.circle.prototype = new svg.Element.PathElementBase;	
+		svg.Element.circle.prototype = new svg.Element.PathElementBase;
 
 		// ellipse element
-		svg.Element.ellipse = function(node) {
+		svg.Element.ellipse = function (node) {
 			this.base = svg.Element.PathElementBase;
 			this.base(node);
-			
-			this.path = function(ctx) {
+
+			this.path = function (ctx) {
 				var KAPPA = 4 * ((Math.sqrt(2) - 1) / 3);
 				var rx = this.attribute('rx').toPixels('x');
 				var ry = this.attribute('ry').toPixels('y');
 				var cx = this.attribute('cx').toPixels('x');
 				var cy = this.attribute('cy').toPixels('y');
-				
+
 				if (ctx != null) {
 					ctx.beginPath();
 					ctx.moveTo(cx, cy - ry);
-					ctx.bezierCurveTo(cx + (KAPPA * rx), cy - ry,  cx + rx, cy - (KAPPA * ry), cx + rx, cy);
+					ctx.bezierCurveTo(cx + (KAPPA * rx), cy - ry, cx + rx, cy - (KAPPA * ry), cx + rx, cy);
 					ctx.bezierCurveTo(cx + rx, cy + (KAPPA * ry), cx + (KAPPA * rx), cy + ry, cx, cy + ry);
 					ctx.bezierCurveTo(cx - (KAPPA * rx), cy + ry, cx - rx, cy + (KAPPA * ry), cx - rx, cy);
 					ctx.bezierCurveTo(cx - rx, cy - (KAPPA * ry), cx - (KAPPA * rx), cy - ry, cx, cy - ry);
 					ctx.closePath();
 				}
-				
+
 				return new svg.BoundingBox(cx - rx, cy - ry, cx + rx, cy + ry);
 			}
 		}
-		svg.Element.ellipse.prototype = new svg.Element.PathElementBase;			
-		
+		svg.Element.ellipse.prototype = new svg.Element.PathElementBase;
+
 		// line element
-		svg.Element.line = function(node) {
+		svg.Element.line = function (node) {
 			this.base = svg.Element.PathElementBase;
 			this.base(node);
-			
-			this.getPoints = function() {
+
+			this.getPoints = function () {
 				return [
 					new svg.Point(this.attribute('x1').toPixels('x'), this.attribute('y1').toPixels('y')),
 					new svg.Point(this.attribute('x2').toPixels('x'), this.attribute('y2').toPixels('y'))];
 			}
-								
-			this.path = function(ctx) {
+
+			this.path = function (ctx) {
 				var points = this.getPoints();
-				
+
 				if (ctx != null) {
 					ctx.beginPath();
 					ctx.moveTo(points[0].x, points[0].y);
 					ctx.lineTo(points[1].x, points[1].y);
 				}
-				
+
 				return new svg.BoundingBox(points[0].x, points[0].y, points[1].x, points[1].y);
 			}
-			
-			this.getMarkers = function() {
-				var points = this.getPoints();	
+
+			this.getMarkers = function () {
+				var points = this.getPoints();
 				var a = points[0].angleTo(points[1]);
 				return [[points[0], a], [points[1], a]];
 			}
 		}
-		svg.Element.line.prototype = new svg.Element.PathElementBase;		
-				
+		svg.Element.line.prototype = new svg.Element.PathElementBase;
+
 		// polyline element
-		svg.Element.polyline = function(node) {
+		svg.Element.polyline = function (node) {
 			this.base = svg.Element.PathElementBase;
 			this.base(node);
-			
+
 			this.points = svg.CreatePath(this.attribute('points').value);
-			this.path = function(ctx) {
+			this.path = function (ctx) {
 				var bb = new svg.BoundingBox(this.points[0].x, this.points[0].y);
 				if (ctx != null) {
 					ctx.beginPath();
 					ctx.moveTo(this.points[0].x, this.points[0].y);
 				}
-				for (var i=1; i<this.points.length; i++) {
+				for (var i = 1; i < this.points.length; i++) {
 					bb.addPoint(this.points[i].x, this.points[i].y);
 					if (ctx != null) ctx.lineTo(this.points[i].x, this.points[i].y);
 				}
 				return bb;
 			}
-			
-			this.getMarkers = function() {
+
+			this.getMarkers = function () {
 				var markers = [];
-				for (var i=0; i<this.points.length - 1; i++) {
-					markers.push([this.points[i], this.points[i].angleTo(this.points[i+1])]);
+				for (var i = 0; i < this.points.length - 1; i++) {
+					markers.push([this.points[i], this.points[i].angleTo(this.points[i + 1])]);
 				}
-				markers.push([this.points[this.points.length-1], markers[markers.length-1][1]]);
+				markers.push([this.points[this.points.length - 1], markers[markers.length - 1][1]]);
 				return markers;
-			}			
+			}
 		}
-		svg.Element.polyline.prototype = new svg.Element.PathElementBase;				
-				
+		svg.Element.polyline.prototype = new svg.Element.PathElementBase;
+
 		// polygon element
-		svg.Element.polygon = function(node) {
+		svg.Element.polygon = function (node) {
 			this.base = svg.Element.polyline;
 			this.base(node);
-			
+
 			this.basePath = this.path;
-			this.path = function(ctx) {
+			this.path = function (ctx) {
 				var bb = this.basePath(ctx);
 				if (ctx != null) {
 					ctx.lineTo(this.points[0].x, this.points[0].y);
@@ -1169,26 +1167,26 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 		svg.Element.polygon.prototype = new svg.Element.polyline;
 
 		// path element
-		svg.Element.path = function(node) {
+		svg.Element.path = function (node) {
 			this.base = svg.Element.PathElementBase;
 			this.base(node);
-					
+
 			var d = this.attribute('d').value;
 			// TODO: convert to real lexer based on http://www.w3.org/TR/SVG11/paths.html#PathDataBNF
-			d = d.replace(/,/gm,' '); // get rid of all commas
-			d = d.replace(/([MmZzLlHhVvCcSsQqTtAa])([MmZzLlHhVvCcSsQqTtAa])/gm,'$1 $2'); // separate commands from commands
-			d = d.replace(/([MmZzLlHhVvCcSsQqTtAa])([MmZzLlHhVvCcSsQqTtAa])/gm,'$1 $2'); // separate commands from commands
-			d = d.replace(/([MmZzLlHhVvCcSsQqTtAa])([^\s])/gm,'$1 $2'); // separate commands from points
-			d = d.replace(/([^\s])([MmZzLlHhVvCcSsQqTtAa])/gm,'$1 $2'); // separate commands from points
-			d = d.replace(/([0-9])([+\-])/gm,'$1 $2'); // separate digits when no comma
-			d = d.replace(/(\.[0-9]*)(\.)/gm,'$1 $2'); // separate digits when no comma
-			d = d.replace(/([Aa](\s+[0-9]+){3})\s+([01])\s*([01])/gm,'$1 $3 $4 '); // shorthand elliptical arc path syntax
+			d = d.replace(/,/gm, ' '); // get rid of all commas
+			d = d.replace(/([MmZzLlHhVvCcSsQqTtAa])([MmZzLlHhVvCcSsQqTtAa])/gm, '$1 $2'); // separate commands from commands
+			d = d.replace(/([MmZzLlHhVvCcSsQqTtAa])([MmZzLlHhVvCcSsQqTtAa])/gm, '$1 $2'); // separate commands from commands
+			d = d.replace(/([MmZzLlHhVvCcSsQqTtAa])([^\s])/gm, '$1 $2'); // separate commands from points
+			d = d.replace(/([^\s])([MmZzLlHhVvCcSsQqTtAa])/gm, '$1 $2'); // separate commands from points
+			d = d.replace(/([0-9])([+\-])/gm, '$1 $2'); // separate digits when no comma
+			d = d.replace(/(\.[0-9]*)(\.)/gm, '$1 $2'); // separate digits when no comma
+			d = d.replace(/([Aa](\s+[0-9]+){3})\s+([01])\s*([01])/gm, '$1 $3 $4 '); // shorthand elliptical arc path syntax
 			d = svg.compressSpaces(d); // compress multiple spaces
 			d = svg.trim(d);
-			this.PathParser = new (function(d) {
+			this.PathParser = new (function (d) {
 				this.tokens = d.split(' ');
-				
-				this.reset = function() {
+
+				this.reset = function () {
 					this.i = -1;
 					this.command = '';
 					this.previousCommand = '';
@@ -1198,19 +1196,18 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					this.points = [];
 					this.angles = [];
 				}
-								
-				this.isEnd = function() {
+
+				this.isEnd = function () {
 					return this.i >= this.tokens.length - 1;
 				}
-				
-				this.isCommandOrEnd = function() {
+
+				this.isCommandOrEnd = function () {
 					if (this.isEnd()) return true;
 					return this.tokens[this.i + 1].match(/^[A-Za-z]$/) != null;
 				}
-				
-				this.isRelativeCommand = function() {
-					switch(this.command)
-					{
+
+				this.isRelativeCommand = function () {
+					switch (this.command) {
 						case 'm':
 						case 'l':
 						case 'h':
@@ -1226,77 +1223,77 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					}
 					return false;
 				}
-							
-				this.getToken = function() {
+
+				this.getToken = function () {
 					this.i++;
 					return this.tokens[this.i];
 				}
-				
-				this.getScalar = function() {
+
+				this.getScalar = function () {
 					return parseFloat(this.getToken());
 				}
-				
-				this.nextCommand = function() {
+
+				this.nextCommand = function () {
 					this.previousCommand = this.command;
 					this.command = this.getToken();
-				}				
-				
-				this.getPoint = function() {
+				}
+
+				this.getPoint = function () {
 					var p = new svg.Point(this.getScalar(), this.getScalar());
 					return this.makeAbsolute(p);
 				}
-				
-				this.getAsControlPoint = function() {
+
+				this.getAsControlPoint = function () {
 					var p = this.getPoint();
 					this.control = p;
 					return p;
 				}
-				
-				this.getAsCurrentPoint = function() {
+
+				this.getAsCurrentPoint = function () {
 					var p = this.getPoint();
 					this.current = p;
-					return p;	
-				}
-				
-				this.getReflectedControlPoint = function() {
-					if (this.previousCommand.toLowerCase() != 'c' && 
-					    this.previousCommand.toLowerCase() != 's' &&
-						this.previousCommand.toLowerCase() != 'q' && 
-						this.previousCommand.toLowerCase() != 't' ){
-						return this.current;
-					}
-					
-					// reflect point
-					var p = new svg.Point(2 * this.current.x - this.control.x, 2 * this.current.y - this.control.y);					
 					return p;
 				}
-				
-				this.makeAbsolute = function(p) {
+
+				this.getReflectedControlPoint = function () {
+					if (this.previousCommand.toLowerCase() != 'c' &&
+						this.previousCommand.toLowerCase() != 's' &&
+						this.previousCommand.toLowerCase() != 'q' &&
+						this.previousCommand.toLowerCase() != 't') {
+						return this.current;
+					}
+
+					// reflect point
+					var p = new svg.Point(2 * this.current.x - this.control.x, 2 * this.current.y - this.control.y);
+					return p;
+				}
+
+				this.makeAbsolute = function (p) {
 					if (this.isRelativeCommand()) {
 						p.x += this.current.x;
 						p.y += this.current.y;
 					}
 					return p;
 				}
-				
-				this.addMarker = function(p, from, priorTo) {
+
+				this.addMarker = function (p, from, priorTo) {
 					// if the last angle isn't filled in because we didn't have this point yet ...
-					if (priorTo != null && this.angles.length > 0 && this.angles[this.angles.length-1] == null) {
-						this.angles[this.angles.length-1] = this.points[this.points.length-1].angleTo(priorTo);
+					if (priorTo != null && this.angles.length > 0 && this.angles[this.angles.length - 1] == null) {
+						this.angles[this.angles.length - 1] = this.points[this.points.length - 1].angleTo(priorTo);
 					}
 					this.addMarkerAngle(p, from == null ? null : from.angleTo(p));
 				}
-				
-				this.addMarkerAngle = function(p, a) {
+
+				this.addMarkerAngle = function (p, a) {
 					this.points.push(p);
 					this.angles.push(a);
-				}				
-				
-				this.getMarkerPoints = function() { return this.points; }
-				this.getMarkerAngles = function() {
-					for (var i=0; i<this.angles.length; i++) {
+				}
+
+				this.getMarkerPoints = function () { return this.points; }
+				this.getMarkerAngles = function () {
+					for (var i = 0; i < this.angles.length; i++) {
 						if (this.angles[i] == null) {
-							for (var j=i+1; j<this.angles.length; j++) {
+							for (var j = i + 1; j < this.angles.length; j++) {
 								if (this.angles[j] != null) {
 									this.angles[i] = this.angles[j];
 									break;
@@ -1308,7 +1305,7 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 				}
 			})(d);
 
-			this.path = function(ctx) {
+			this.path = function (ctx) {
 				var pp = this.PathParser;
 				pp.reset();
 
@@ -1317,206 +1314,206 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 				while (!pp.isEnd()) {
 					pp.nextCommand();
 					switch (pp.command) {
-					case 'M':
-					case 'm':
-						var p = pp.getAsCurrentPoint();
-						pp.addMarker(p);
-						bb.addPoint(p.x, p.y);
-						if (ctx != null) ctx.moveTo(p.x, p.y);
-						pp.start = pp.current;
-						while (!pp.isCommandOrEnd()) {
+						case 'M':
+						case 'm':
 							var p = pp.getAsCurrentPoint();
-							pp.addMarker(p, pp.start);
+							pp.addMarker(p);
 							bb.addPoint(p.x, p.y);
-							if (ctx != null) ctx.lineTo(p.x, p.y);
-						}
-						break;
-					case 'L':
-					case 'l':
-						while (!pp.isCommandOrEnd()) {
-							var c = pp.current;
-							var p = pp.getAsCurrentPoint();
-							pp.addMarker(p, c);
-							bb.addPoint(p.x, p.y);
-							if (ctx != null) ctx.lineTo(p.x, p.y);
-						}
-						break;
-					case 'H':
-					case 'h':
-						while (!pp.isCommandOrEnd()) {
-							var newP = new svg.Point((pp.isRelativeCommand() ? pp.current.x : 0) + pp.getScalar(), pp.current.y);
-							pp.addMarker(newP, pp.current);
-							pp.current = newP;
-							bb.addPoint(pp.current.x, pp.current.y);
-							if (ctx != null) ctx.lineTo(pp.current.x, pp.current.y);
-						}
-						break;
-					case 'V':
-					case 'v':
-						while (!pp.isCommandOrEnd()) {
-							var newP = new svg.Point(pp.current.x, (pp.isRelativeCommand() ? pp.current.y : 0) + pp.getScalar());
-							pp.addMarker(newP, pp.current);
-							pp.current = newP;
-							bb.addPoint(pp.current.x, pp.current.y);
-							if (ctx != null) ctx.lineTo(pp.current.x, pp.current.y);
-						}
-						break;
-					case 'C':
-					case 'c':
-						while (!pp.isCommandOrEnd()) {
-							var curr = pp.current;
-							var p1 = pp.getPoint();
-							var cntrl = pp.getAsControlPoint();
-							var cp = pp.getAsCurrentPoint();
-							pp.addMarker(cp, cntrl, p1);
-							bb.addBezierCurve(curr.x, curr.y, p1.x, p1.y, cntrl.x, cntrl.y, cp.x, cp.y);
-							if (ctx != null) ctx.bezierCurveTo(p1.x, p1.y, cntrl.x, cntrl.y, cp.x, cp.y);
-						}
-						break;
-					case 'S':
-					case 's':
-						while (!pp.isCommandOrEnd()) {
-							var curr = pp.current;
-							var p1 = pp.getReflectedControlPoint();
-							var cntrl = pp.getAsControlPoint();
-							var cp = pp.getAsCurrentPoint();
-							pp.addMarker(cp, cntrl, p1);
-							bb.addBezierCurve(curr.x, curr.y, p1.x, p1.y, cntrl.x, cntrl.y, cp.x, cp.y);
-							if (ctx != null) ctx.bezierCurveTo(p1.x, p1.y, cntrl.x, cntrl.y, cp.x, cp.y);
-						}
-						break;
-					case 'Q':
-					case 'q':
-						while (!pp.isCommandOrEnd()) {
-							var curr = pp.current;
-							var cntrl = pp.getAsControlPoint();
-							var cp = pp.getAsCurrentPoint();
-							pp.addMarker(cp, cntrl, cntrl);
-							bb.addQuadraticCurve(curr.x, curr.y, cntrl.x, cntrl.y, cp.x, cp.y);
-							if (ctx != null) ctx.quadraticCurveTo(cntrl.x, cntrl.y, cp.x, cp.y);
-						}
-						break;
-					case 'T':
-					case 't':
-						while (!pp.isCommandOrEnd()) {
-							var curr = pp.current;
-							var cntrl = pp.getReflectedControlPoint();
-							pp.control = cntrl;
-							var cp = pp.getAsCurrentPoint();
-							pp.addMarker(cp, cntrl, cntrl);
-							bb.addQuadraticCurve(curr.x, curr.y, cntrl.x, cntrl.y, cp.x, cp.y);
-							if (ctx != null) ctx.quadraticCurveTo(cntrl.x, cntrl.y, cp.x, cp.y);
-						}
-						break;
-					case 'A':
-					case 'a':
-						while (!pp.isCommandOrEnd()) {
-						    var curr = pp.current;
-							var rx = pp.getScalar();
-							var ry = pp.getScalar();
-							var xAxisRotation = pp.getScalar() * (Math.PI / 180.0);
-							var largeArcFlag = pp.getScalar();
-							var sweepFlag = pp.getScalar();
-							var cp = pp.getAsCurrentPoint();
-
-							// Conversion from endpoint to center parameterization
-							// http://www.w3.org/TR/SVG11/implnote.html#ArcImplementationNotes
-							// x1', y1'
-							var currp = new svg.Point(
-								Math.cos(xAxisRotation) * (curr.x - cp.x) / 2.0 + Math.sin(xAxisRotation) * (curr.y - cp.y) / 2.0,
-								-Math.sin(xAxisRotation) * (curr.x - cp.x) / 2.0 + Math.cos(xAxisRotation) * (curr.y - cp.y) / 2.0
-							);
-							// adjust radii
-							var l = Math.pow(currp.x,2)/Math.pow(rx,2)+Math.pow(currp.y,2)/Math.pow(ry,2);
-							if (l > 1) {
-								rx *= Math.sqrt(l);
-								ry *= Math.sqrt(l);
+							if (ctx != null) ctx.moveTo(p.x, p.y);
+							pp.start = pp.current;
+							while (!pp.isCommandOrEnd()) {
+								var p = pp.getAsCurrentPoint();
+								pp.addMarker(p, pp.start);
+								bb.addPoint(p.x, p.y);
+								if (ctx != null) ctx.lineTo(p.x, p.y);
 							}
-							// cx', cy'
-							var s = (largeArcFlag == sweepFlag ? -1 : 1) * Math.sqrt(
-								((Math.pow(rx,2)*Math.pow(ry,2))-(Math.pow(rx,2)*Math.pow(currp.y,2))-(Math.pow(ry,2)*Math.pow(currp.x,2))) /
-								(Math.pow(rx,2)*Math.pow(currp.y,2)+Math.pow(ry,2)*Math.pow(currp.x,2))
-							);
-							if (isNaN(s)) s = 0;
-							var cpp = new svg.Point(s * rx * currp.y / ry, s * -ry * currp.x / rx);
-							// cx, cy
-							var centp = new svg.Point(
-								(curr.x + cp.x) / 2.0 + Math.cos(xAxisRotation) * cpp.x - Math.sin(xAxisRotation) * cpp.y,
-								(curr.y + cp.y) / 2.0 + Math.sin(xAxisRotation) * cpp.x + Math.cos(xAxisRotation) * cpp.y
-							);
-							// vector magnitude
-							var m = function(v) { return Math.sqrt(Math.pow(v[0],2) + Math.pow(v[1],2)); }
-							// ratio between two vectors
-							var r = function(u, v) { return (u[0]*v[0]+u[1]*v[1]) / (m(u)*m(v)) }
-							// angle between two vectors
-							var a = function(u, v) { return (u[0]*v[1] < u[1]*v[0] ? -1 : 1) * Math.acos(r(u,v)); }
-							// initial angle
-							var a1 = a([1,0], [(currp.x-cpp.x)/rx,(currp.y-cpp.y)/ry]);
-							// angle delta
-							var u = [(currp.x-cpp.x)/rx,(currp.y-cpp.y)/ry];
-							var v = [(-currp.x-cpp.x)/rx,(-currp.y-cpp.y)/ry];
-							var ad = a(u, v);
-							if (r(u,v) <= -1) ad = Math.PI;
-							if (r(u,v) >= 1) ad = 0;
-
-							// for markers
-							var dir = 1 - sweepFlag ? 1.0 : -1.0;
-							var ah = a1 + dir * (ad / 2.0);
-							var halfWay = new svg.Point(
-								centp.x + rx * Math.cos(ah),
-								centp.y + ry * Math.sin(ah)
-							);
-							pp.addMarkerAngle(halfWay, ah - dir * Math.PI / 2);
-							pp.addMarkerAngle(cp, ah - dir * Math.PI);
-
-							bb.addPoint(cp.x, cp.y); // TODO: this is too naive, make it better
-							if (ctx != null) {
-								var r = rx > ry ? rx : ry;
-								var sx = rx > ry ? 1 : rx / ry;
-								var sy = rx > ry ? ry / rx : 1;
-
-								ctx.translate(centp.x, centp.y);
-								ctx.rotate(xAxisRotation);
-								ctx.scale(sx, sy);
-								ctx.arc(0, 0, r, a1, a1 + ad, 1 - sweepFlag);
-								ctx.scale(1/sx, 1/sy);
-								ctx.rotate(-xAxisRotation);
-								ctx.translate(-centp.x, -centp.y);
+							break;
+						case 'L':
+						case 'l':
+							while (!pp.isCommandOrEnd()) {
+								var c = pp.current;
+								var p = pp.getAsCurrentPoint();
+								pp.addMarker(p, c);
+								bb.addPoint(p.x, p.y);
+								if (ctx != null) ctx.lineTo(p.x, p.y);
 							}
-						}
-						break;
-					case 'Z':
-					case 'z':
-						if (ctx != null) ctx.closePath();
-						pp.current = pp.start;
+							break;
+						case 'H':
+						case 'h':
+							while (!pp.isCommandOrEnd()) {
+								var newP = new svg.Point((pp.isRelativeCommand() ? pp.current.x : 0) + pp.getScalar(), pp.current.y);
+								pp.addMarker(newP, pp.current);
+								pp.current = newP;
+								bb.addPoint(pp.current.x, pp.current.y);
+								if (ctx != null) ctx.lineTo(pp.current.x, pp.current.y);
+							}
+							break;
+						case 'V':
+						case 'v':
+							while (!pp.isCommandOrEnd()) {
+								var newP = new svg.Point(pp.current.x, (pp.isRelativeCommand() ? pp.current.y : 0) + pp.getScalar());
+								pp.addMarker(newP, pp.current);
+								pp.current = newP;
+								bb.addPoint(pp.current.x, pp.current.y);
+								if (ctx != null) ctx.lineTo(pp.current.x, pp.current.y);
+							}
+							break;
+						case 'C':
+						case 'c':
+							while (!pp.isCommandOrEnd()) {
+								var curr = pp.current;
+								var p1 = pp.getPoint();
+								var cntrl = pp.getAsControlPoint();
+								var cp = pp.getAsCurrentPoint();
+								pp.addMarker(cp, cntrl, p1);
+								bb.addBezierCurve(curr.x, curr.y, p1.x, p1.y, cntrl.x, cntrl.y, cp.x, cp.y);
+								if (ctx != null) ctx.bezierCurveTo(p1.x, p1.y, cntrl.x, cntrl.y, cp.x, cp.y);
+							}
+							break;
+						case 'S':
+						case 's':
+							while (!pp.isCommandOrEnd()) {
+								var curr = pp.current;
+								var p1 = pp.getReflectedControlPoint();
+								var cntrl = pp.getAsControlPoint();
+								var cp = pp.getAsCurrentPoint();
+								pp.addMarker(cp, cntrl, p1);
+								bb.addBezierCurve(curr.x, curr.y, p1.x, p1.y, cntrl.x, cntrl.y, cp.x, cp.y);
+								if (ctx != null) ctx.bezierCurveTo(p1.x, p1.y, cntrl.x, cntrl.y, cp.x, cp.y);
+							}
+							break;
+						case 'Q':
+						case 'q':
+							while (!pp.isCommandOrEnd()) {
+								var curr = pp.current;
+								var cntrl = pp.getAsControlPoint();
+								var cp = pp.getAsCurrentPoint();
+								pp.addMarker(cp, cntrl, cntrl);
+								bb.addQuadraticCurve(curr.x, curr.y, cntrl.x, cntrl.y, cp.x, cp.y);
+								if (ctx != null) ctx.quadraticCurveTo(cntrl.x, cntrl.y, cp.x, cp.y);
+							}
+							break;
+						case 'T':
+						case 't':
+							while (!pp.isCommandOrEnd()) {
+								var curr = pp.current;
+								var cntrl = pp.getReflectedControlPoint();
+								pp.control = cntrl;
+								var cp = pp.getAsCurrentPoint();
+								pp.addMarker(cp, cntrl, cntrl);
+								bb.addQuadraticCurve(curr.x, curr.y, cntrl.x, cntrl.y, cp.x, cp.y);
+								if (ctx != null) ctx.quadraticCurveTo(cntrl.x, cntrl.y, cp.x, cp.y);
+							}
+							break;
+						case 'A':
+						case 'a':
+							while (!pp.isCommandOrEnd()) {
+								var curr = pp.current;
+								var rx = pp.getScalar();
+								var ry = pp.getScalar();
+								var xAxisRotation = pp.getScalar() * (Math.PI / 180.0);
+								var largeArcFlag = pp.getScalar();
+								var sweepFlag = pp.getScalar();
+								var cp = pp.getAsCurrentPoint();
+
+								// Conversion from endpoint to center parameterization
+								// http://www.w3.org/TR/SVG11/implnote.html#ArcImplementationNotes
+								// x1', y1'
+								var currp = new svg.Point(
+									Math.cos(xAxisRotation) * (curr.x - cp.x) / 2.0 + Math.sin(xAxisRotation) * (curr.y - cp.y) / 2.0,
+									-Math.sin(xAxisRotation) * (curr.x - cp.x) / 2.0 + Math.cos(xAxisRotation) * (curr.y - cp.y) / 2.0
+								);
+								// adjust radii
+								var l = Math.pow(currp.x, 2) / Math.pow(rx, 2) + Math.pow(currp.y, 2) / Math.pow(ry, 2);
+								if (l > 1) {
+									rx *= Math.sqrt(l);
+									ry *= Math.sqrt(l);
+								}
+								// cx', cy'
+								var s = (largeArcFlag == sweepFlag ? -1 : 1) * Math.sqrt(
+									((Math.pow(rx, 2) * Math.pow(ry, 2)) - (Math.pow(rx, 2) * Math.pow(currp.y, 2)) - (Math.pow(ry, 2) * Math.pow(currp.x, 2))) /
+									(Math.pow(rx, 2) * Math.pow(currp.y, 2) + Math.pow(ry, 2) * Math.pow(currp.x, 2))
+								);
+								if (isNaN(s)) s = 0;
+								var cpp = new svg.Point(s * rx * currp.y / ry, s * -ry * currp.x / rx);
+								// cx, cy
+								var centp = new svg.Point(
+									(curr.x + cp.x) / 2.0 + Math.cos(xAxisRotation) * cpp.x - Math.sin(xAxisRotation) * cpp.y,
+									(curr.y + cp.y) / 2.0 + Math.sin(xAxisRotation) * cpp.x + Math.cos(xAxisRotation) * cpp.y
+								);
+								// vector magnitude
+								var m = function (v) { return Math.sqrt(Math.pow(v[0], 2) + Math.pow(v[1], 2)); }
+								// ratio between two vectors
+								var r = function (u, v) { return (u[0] * v[0] + u[1] * v[1]) / (m(u) * m(v)) }
+								// angle between two vectors
+								var a = function (u, v) { return (u[0] * v[1] < u[1] * v[0] ? -1 : 1) * Math.acos(r(u, v)); }
+								// initial angle
+								var a1 = a([1, 0], [(currp.x - cpp.x) / rx, (currp.y - cpp.y) / ry]);
+								// angle delta
+								var u = [(currp.x - cpp.x) / rx, (currp.y - cpp.y) / ry];
+								var v = [(-currp.x - cpp.x) / rx, (-currp.y - cpp.y) / ry];
+								var ad = a(u, v);
+								if (r(u, v) <= -1) ad = Math.PI;
+								if (r(u, v) >= 1) ad = 0;
+
+								// for markers
+								var dir = 1 - sweepFlag ? 1.0 : -1.0;
+								var ah = a1 + dir * (ad / 2.0);
+								var halfWay = new svg.Point(
+									centp.x + rx * Math.cos(ah),
+									centp.y + ry * Math.sin(ah)
+								);
+								pp.addMarkerAngle(halfWay, ah - dir * Math.PI / 2);
+								pp.addMarkerAngle(cp, ah - dir * Math.PI);
+
+								bb.addPoint(cp.x, cp.y); // TODO: this is too naive, make it better
+								if (ctx != null) {
+									var r = rx > ry ? rx : ry;
+									var sx = rx > ry ? 1 : rx / ry;
+									var sy = rx > ry ? ry / rx : 1;
+
+									ctx.translate(centp.x, centp.y);
+									ctx.rotate(xAxisRotation);
+									ctx.scale(sx, sy);
+									ctx.arc(0, 0, r, a1, a1 + ad, 1 - sweepFlag);
+									ctx.scale(1 / sx, 1 / sy);
+									ctx.rotate(-xAxisRotation);
+									ctx.translate(-centp.x, -centp.y);
+								}
+							}
+							break;
+						case 'Z':
+						case 'z':
+							if (ctx != null) ctx.closePath();
+							pp.current = pp.start;
 					}
 				}
 
 				return bb;
 			}
 
-			this.getMarkers = function() {
+			this.getMarkers = function () {
 				var points = this.PathParser.getMarkerPoints();
 				var angles = this.PathParser.getMarkerAngles();
-				
+
 				var markers = [];
-				for (var i=0; i<points.length; i++) {
+				for (var i = 0; i < points.length; i++) {
 					markers.push([points[i], angles[i]]);
 				}
 				return markers;
 			}
 		}
 		svg.Element.path.prototype = new svg.Element.PathElementBase;
-		
+
 		// pattern element
-		svg.Element.pattern = function(node) {
+		svg.Element.pattern = function (node) {
 			this.base = svg.Element.ElementBase;
 			this.base(node);
-			
-			this.createPattern = function(ctx, element) {
+
+			this.createPattern = function (ctx, element) {
 				var width = this.attribute('width').toPixels('x', true);
 				var height = this.attribute('height').toPixels('y', true);
-			
+
 				// render me using a temporary svg element
 				var tempSvg = new svg.Element.svg();
 				tempSvg.attributes['viewBox'] = new svg.Property('viewBox', this.attribute('viewBox').value);
@@ -1524,7 +1521,7 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 				tempSvg.attributes['height'] = new svg.Property('height', height + 'px');
 				tempSvg.attributes['transform'] = new svg.Property('transform', this.attribute('patternTransform').value);
 				tempSvg.children = this.children;
-				
+
 				var c = document.createElement('canvas');
 				c.width = width;
 				c.height = height;
@@ -1533,8 +1530,8 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					cctx.translate(this.attribute('x').toPixels('x', true), this.attribute('y').toPixels('y', true));
 				}
 				// render 3x3 grid so when we transform there's no white space on edges
-				for (var x=-1; x<=1; x++) {
-					for (var y=-1; y<=1; y++) {
+				for (var x = -1; x <= 1; x++) {
+					for (var y = -1; y <= 1; y++) {
 						cctx.save();
 						cctx.translate(x * c.width, y * c.height);
 						tempSvg.render(cctx);
@@ -1546,19 +1543,19 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 			}
 		}
 		svg.Element.pattern.prototype = new svg.Element.ElementBase;
-		
+
 		// marker element
-		svg.Element.marker = function(node) {
+		svg.Element.marker = function (node) {
 			this.base = svg.Element.ElementBase;
 			this.base(node);
-			
+
 			this.baseRender = this.render;
-			this.render = function(ctx, point, angle) {
+			this.render = function (ctx, point, angle) {
 				ctx.translate(point.x, point.y);
 				if (this.attribute('orient').valueOrDefault('auto') == 'auto') ctx.rotate(angle);
 				if (this.attribute('markerUnits').valueOrDefault('strokeWidth') == 'strokeWidth') ctx.scale(ctx.lineWidth, ctx.lineWidth);
 				ctx.save();
-							
+
 				// render me using a temporary svg element
 				var tempSvg = new svg.Element.svg();
 				tempSvg.attributes['viewBox'] = new svg.Property('viewBox', this.attribute('viewBox').value);
@@ -1570,49 +1567,49 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 				tempSvg.attributes['stroke'] = new svg.Property('stroke', this.attribute('stroke').valueOrDefault('none'));
 				tempSvg.children = this.children;
 				tempSvg.render(ctx);
-				
+
 				ctx.restore();
-				if (this.attribute('markerUnits').valueOrDefault('strokeWidth') == 'strokeWidth') ctx.scale(1/ctx.lineWidth, 1/ctx.lineWidth);
+				if (this.attribute('markerUnits').valueOrDefault('strokeWidth') == 'strokeWidth') ctx.scale(1 / ctx.lineWidth, 1 / ctx.lineWidth);
 				if (this.attribute('orient').valueOrDefault('auto') == 'auto') ctx.rotate(-angle);
 				ctx.translate(-point.x, -point.y);
 			}
 		}
 		svg.Element.marker.prototype = new svg.Element.ElementBase;
-		
+
 		// definitions element
-		svg.Element.defs = function(node) {
+		svg.Element.defs = function (node) {
 			this.base = svg.Element.ElementBase;
-			this.base(node);	
-			
-			this.render = function(ctx) {
+			this.base(node);
+
+			this.render = function (ctx) {
 				// NOOP
 			}
 		}
 		svg.Element.defs.prototype = new svg.Element.ElementBase;
-		
+
 		// base for gradients
-		svg.Element.GradientBase = function(node) {
+		svg.Element.GradientBase = function (node) {
 			this.base = svg.Element.ElementBase;
 			this.base(node);
-			
+
 			this.gradientUnits = this.attribute('gradientUnits').valueOrDefault('objectBoundingBox');
-			
-			this.stops = [];			
-			for (var i=0; i<this.children.length; i++) {
+
+			this.stops = [];
+			for (var i = 0; i < this.children.length; i++) {
 				var child = this.children[i];
 				if (child.type == 'stop') this.stops.push(child);
-			}	
-			
-			this.getGradient = function() {
-				// OVERRIDE ME!
-			}			
+			}
 
-			this.createGradient = function(ctx, element, parentOpacityProp) {
+			this.getGradient = function () {
+				// OVERRIDE ME!
+			}
+
+			this.createGradient = function (ctx, element, parentOpacityProp) {
 				var stopsContainer = this;
 				if (this.getHrefAttribute().hasValue()) {
 					stopsContainer = this.getHrefAttribute().getDefinition();
 				}
-				
+
 				var addParentOpacity = function (color) {
 					if (parentOpacityProp.hasValue()) {
 						var p = new svg.Property('color', color);
@@ -1620,76 +1617,76 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					}
 					return color;
 				};
-			
+
 				var g = this.getGradient(ctx, element);
 				if (g == null) return addParentOpacity(stopsContainer.stops[stopsContainer.stops.length - 1].color);
-				for (var i=0; i<stopsContainer.stops.length; i++) {
+				for (var i = 0; i < stopsContainer.stops.length; i++) {
 					g.addColorStop(stopsContainer.stops[i].offset, addParentOpacity(stopsContainer.stops[i].color));
 				}
-				
+
 				if (this.attribute('gradientTransform').hasValue()) {
 					// render as transformed pattern on temporary canvas
 					var rootView = svg.ViewPort.viewPorts[0];
-					
+
 					var rect = new svg.Element.rect();
-					rect.attributes['x'] = new svg.Property('x', -svg.MAX_VIRTUAL_PIXELS/3.0);
-					rect.attributes['y'] = new svg.Property('y', -svg.MAX_VIRTUAL_PIXELS/3.0);
+					rect.attributes['x'] = new svg.Property('x', -svg.MAX_VIRTUAL_PIXELS / 3.0);
+					rect.attributes['y'] = new svg.Property('y', -svg.MAX_VIRTUAL_PIXELS / 3.0);
 					rect.attributes['width'] = new svg.Property('width', svg.MAX_VIRTUAL_PIXELS);
 					rect.attributes['height'] = new svg.Property('height', svg.MAX_VIRTUAL_PIXELS);
-					
+
 					var group = new svg.Element.g();
 					group.attributes['transform'] = new svg.Property('transform', this.attribute('gradientTransform').value);
-					group.children = [ rect ];
-					
+					group.children = [rect];
+
 					var tempSvg = new svg.Element.svg();
 					tempSvg.attributes['x'] = new svg.Property('x', 0);
 					tempSvg.attributes['y'] = new svg.Property('y', 0);
 					tempSvg.attributes['width'] = new svg.Property('width', rootView.width);
 					tempSvg.attributes['height'] = new svg.Property('height', rootView.height);
-					tempSvg.children = [ group ];
-					
+					tempSvg.children = [group];
+
 					var c = document.createElement('canvas');
 					c.width = rootView.width;
 					c.height = rootView.height;
 					var tempCtx = c.getContext('2d');
 					tempCtx.fillStyle = g;
-					tempSvg.render(tempCtx);		
+					tempSvg.render(tempCtx);
 					return tempCtx.createPattern(c, 'no-repeat');
 				}
-				
-				return g;				
+
+				return g;
 			}
 		}
 		svg.Element.GradientBase.prototype = new svg.Element.ElementBase;
-		
+
 		// linear gradient element
-		svg.Element.linearGradient = function(node) {
+		svg.Element.linearGradient = function (node) {
 			this.base = svg.Element.GradientBase;
 			this.base(node);
-			
-			this.getGradient = function(ctx, element) {
+
+			this.getGradient = function (ctx, element) {
 				var bb = element.getBoundingBox();
-				
+
 				if (!this.attribute('x1').hasValue()
-				 && !this.attribute('y1').hasValue()
-				 && !this.attribute('x2').hasValue()
-				 && !this.attribute('y2').hasValue()) {
+					&& !this.attribute('y1').hasValue()
+					&& !this.attribute('x2').hasValue()
+					&& !this.attribute('y2').hasValue()) {
 					this.attribute('x1', true).value = 0;
 					this.attribute('y1', true).value = 0;
 					this.attribute('x2', true).value = 1;
 					this.attribute('y2', true).value = 0;
-				 }
-				
-				var x1 = (this.gradientUnits == 'objectBoundingBox' 
-					? bb.x() + bb.width() * this.attribute('x1').numValue() 
+				}
+
+				var x1 = (this.gradientUnits == 'objectBoundingBox'
+					? bb.x() + bb.width() * this.attribute('x1').numValue()
 					: this.attribute('x1').toPixels('x'));
-				var y1 = (this.gradientUnits == 'objectBoundingBox' 
+				var y1 = (this.gradientUnits == 'objectBoundingBox'
 					? bb.y() + bb.height() * this.attribute('y1').numValue()
 					: this.attribute('y1').toPixels('y'));
-				var x2 = (this.gradientUnits == 'objectBoundingBox' 
+				var x2 = (this.gradientUnits == 'objectBoundingBox'
 					? bb.x() + bb.width() * this.attribute('x2').numValue()
 					: this.attribute('x2').toPixels('x'));
-				var y2 = (this.gradientUnits == 'objectBoundingBox' 
+				var y2 = (this.gradientUnits == 'objectBoundingBox'
 					? bb.y() + bb.height() * this.attribute('y2').numValue()
 					: this.attribute('y2').toPixels('y'));
 
@@ -1698,105 +1695,105 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 			}
 		}
 		svg.Element.linearGradient.prototype = new svg.Element.GradientBase;
-		
+
 		// radial gradient element
-		svg.Element.radialGradient = function(node) {
+		svg.Element.radialGradient = function (node) {
 			this.base = svg.Element.GradientBase;
 			this.base(node);
-			
-			this.getGradient = function(ctx, element) {
+
+			this.getGradient = function (ctx, element) {
 				var bb = element.getBoundingBox();
-				
+
 				if (!this.attribute('cx').hasValue()) this.attribute('cx', true).value = '50%';
 				if (!this.attribute('cy').hasValue()) this.attribute('cy', true).value = '50%';
 				if (!this.attribute('r').hasValue()) this.attribute('r', true).value = '50%';
-				
-				var cx = (this.gradientUnits == 'objectBoundingBox' 
-					? bb.x() + bb.width() * this.attribute('cx').numValue() 
+
+				var cx = (this.gradientUnits == 'objectBoundingBox'
+					? bb.x() + bb.width() * this.attribute('cx').numValue()
 					: this.attribute('cx').toPixels('x'));
-				var cy = (this.gradientUnits == 'objectBoundingBox' 
-					? bb.y() + bb.height() * this.attribute('cy').numValue() 
+				var cy = (this.gradientUnits == 'objectBoundingBox'
+					? bb.y() + bb.height() * this.attribute('cy').numValue()
 					: this.attribute('cy').toPixels('y'));
-				
+
 				var fx = cx;
 				var fy = cy;
 				if (this.attribute('fx').hasValue()) {
-					fx = (this.gradientUnits == 'objectBoundingBox' 
-					? bb.x() + bb.width() * this.attribute('fx').numValue() 
-					: this.attribute('fx').toPixels('x'));
+					fx = (this.gradientUnits == 'objectBoundingBox'
+						? bb.x() + bb.width() * this.attribute('fx').numValue()
+						: this.attribute('fx').toPixels('x'));
 				}
 				if (this.attribute('fy').hasValue()) {
-					fy = (this.gradientUnits == 'objectBoundingBox' 
-					? bb.y() + bb.height() * this.attribute('fy').numValue() 
-					: this.attribute('fy').toPixels('y'));
+					fy = (this.gradientUnits == 'objectBoundingBox'
+						? bb.y() + bb.height() * this.attribute('fy').numValue()
+						: this.attribute('fy').toPixels('y'));
 				}
-				
-				var r = (this.gradientUnits == 'objectBoundingBox' 
+
+				var r = (this.gradientUnits == 'objectBoundingBox'
 					? (bb.width() + bb.height()) / 2.0 * this.attribute('r').numValue()
 					: this.attribute('r').toPixels());
-				
+
 				return ctx.createRadialGradient(fx, fy, 0, cx, cy, r);
 			}
 		}
 		svg.Element.radialGradient.prototype = new svg.Element.GradientBase;
-		
+
 		// gradient stop element
-		svg.Element.stop = function(node) {
+		svg.Element.stop = function (node) {
 			this.base = svg.Element.ElementBase;
 			this.base(node);
-			
+
 			this.offset = this.attribute('offset').numValue();
 			if (this.offset < 0) this.offset = 0;
 			if (this.offset > 1) this.offset = 1;
-			
+
 			var stopColor = this.style('stop-color');
 			if (this.style('stop-opacity').hasValue()) stopColor = stopColor.addOpacity(this.style('stop-opacity').value);
 			this.color = stopColor.value;
 		}
 		svg.Element.stop.prototype = new svg.Element.ElementBase;
-		
+
 		// animation base element
-		svg.Element.AnimateBase = function(node) {
+		svg.Element.AnimateBase = function (node) {
 			this.base = svg.Element.ElementBase;
 			this.base(node);
-			
+
 			svg.Animations.push(this);
-			
+
 			this.duration = 0.0;
 			this.begin = this.attribute('begin').toMilliseconds();
 			this.maxDuration = this.begin + this.attribute('dur').toMilliseconds();
-			
-			this.getProperty = function() {
+
+			this.getProperty = function () {
 				var attributeType = this.attribute('attributeType').value;
 				var attributeName = this.attribute('attributeName').value;
-				
+
 				if (attributeType == 'CSS') {
 					return this.parent.style(attributeName, true);
 				}
-				return this.parent.attribute(attributeName, true);			
+				return this.parent.attribute(attributeName, true);
 			};
-			
+
 			this.initialValue = null;
 			this.initialUnits = '';
-			this.removed = false;			
+			this.removed = false;
 
-			this.calcValue = function() {
+			this.calcValue = function () {
 				// OVERRIDE ME!
 				return '';
 			}
-					
-			this.update = function(delta) {	
+
+			this.update = function (delta) {
 				// set initial value
 				if (this.initialValue == null) {
 					this.initialValue = this.getProperty().value;
 					this.initialUnits = this.getProperty().getUnits();
 				}
-			
+
 				// if we're past the end time
 				if (this.duration > this.maxDuration) {
 					// loop for indefinitely repeating animations
 					if (this.attribute('repeatCount').value == 'indefinite'
-					 || this.attribute('repeatDur').value == 'indefinite') {
+						|| this.attribute('repeatDur').value == 'indefinite') {
 						this.duration = 0.0
 					}
 					else if (this.attribute('fill').valueOrDefault('remove') == 'remove' && !this.removed) {
@@ -1807,34 +1804,34 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					else {
 						return false; // no updates made
 					}
-				}			
+				}
 				this.duration = this.duration + delta;
-			
+
 				// if we're past the begin time
 				var updated = false;
 				if (this.begin < this.duration) {
 					var newValue = this.calcValue(); // tween
-					
+
 					if (this.attribute('type').hasValue()) {
 						// for transform, etc.
 						var type = this.attribute('type').value;
 						newValue = type + '(' + newValue + ')';
 					}
-					
+
 					this.getProperty().value = newValue;
 					updated = true;
 				}
-				
+
 				return updated;
 			}
-			
+
 			this.from = this.attribute('from');
 			this.to = this.attribute('to');
 			this.values = this.attribute('values');
 			if (this.values.hasValue()) this.values.value = this.values.value.split(';');
-			
+
 			// fraction of duration we've covered
-			this.progress = function() {
+			this.progress = function () {
 				var ret = { progress: (this.duration - this.begin) / (this.maxDuration - this.begin) };
 				if (this.values.hasValue()) {
 					var p = ret.progress * (this.values.value.length - 1);
@@ -1848,80 +1845,80 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					ret.to = this.to;
 				}
 				return ret;
-			}			
+			}
 		}
 		svg.Element.AnimateBase.prototype = new svg.Element.ElementBase;
-		
+
 		// animate element
-		svg.Element.animate = function(node) {
+		svg.Element.animate = function (node) {
 			this.base = svg.Element.AnimateBase;
 			this.base(node);
-			
-			this.calcValue = function() {
+
+			this.calcValue = function () {
 				var p = this.progress();
-				
+
 				// tween value linearly
-				var newValue = p.from.numValue() + (p.to.numValue() - p.from.numValue()) * p.progress; 
+				var newValue = p.from.numValue() + (p.to.numValue() - p.from.numValue()) * p.progress;
 				return newValue + this.initialUnits;
 			};
 		}
 		svg.Element.animate.prototype = new svg.Element.AnimateBase;
-			
+
 		// animate color element
-		svg.Element.animateColor = function(node) {
+		svg.Element.animateColor = function (node) {
 			this.base = svg.Element.AnimateBase;
 			this.base(node);
 
-			this.calcValue = function() {
+			this.calcValue = function () {
 				var p = this.progress();
 				var from = new RGBColor(p.from.value);
 				var to = new RGBColor(p.to.value);
-				
+
 				if (from.ok && to.ok) {
 					// tween color linearly
 					var r = from.r + (to.r - from.r) * p.progress;
 					var g = from.g + (to.g - from.g) * p.progress;
 					var b = from.b + (to.b - from.b) * p.progress;
-					return 'rgb('+parseInt(r,10)+','+parseInt(g,10)+','+parseInt(b,10)+')';
+					return 'rgb(' + parseInt(r, 10) + ',' + parseInt(g, 10) + ',' + parseInt(b, 10) + ')';
 				}
 				return this.attribute('from').value;
 			};
 		}
 		svg.Element.animateColor.prototype = new svg.Element.AnimateBase;
-		
+
 		// animate transform element
-		svg.Element.animateTransform = function(node) {
+		svg.Element.animateTransform = function (node) {
 			this.base = svg.Element.AnimateBase;
 			this.base(node);
-			
-			this.calcValue = function() {
+
+			this.calcValue = function () {
 				var p = this.progress();
-				
+
 				// tween value linearly
 				var from = svg.ToNumberArray(p.from.value);
 				var to = svg.ToNumberArray(p.to.value);
 				var newValue = '';
-				for (var i=0; i<from.length; i++) {
+				for (var i = 0; i < from.length; i++) {
 					newValue += from[i] + (to[i] - from[i]) * p.progress + ' ';
 				}
 				return newValue;
 			};
 		}
 		svg.Element.animateTransform.prototype = new svg.Element.animate;
-		
+
 		// font element
-		svg.Element.font = function(node) {
+		svg.Element.font = function (node) {
 			this.base = svg.Element.ElementBase;
 			this.base(node);
 
-			this.horizAdvX = this.attribute('horiz-adv-x').numValue();			
-			
+			this.horizAdvX = this.attribute('horiz-adv-x').numValue();
+
 			this.isRTL = false;
 			this.isArabic = false;
 			this.fontFace = null;
 			this.missingGlyph = null;
-			this.glyphs = [];			
-			for (var i=0; i<this.children.length; i++) {
+			this.glyphs = [];
+			for (var i = 0; i < this.children.length; i++) {
 				var child = this.children[i];
 				if (child.type == 'font-face') {
 					this.fontFace = child;
@@ -1934,80 +1931,80 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					if (child.arabicForm != '') {
 						this.isRTL = true;
 						this.isArabic = true;
-						if (typeof(this.glyphs[child.unicode]) == 'undefined') this.glyphs[child.unicode] = [];
+						if (typeof (this.glyphs[child.unicode]) == 'undefined') this.glyphs[child.unicode] = [];
 						this.glyphs[child.unicode][child.arabicForm] = child;
 					}
 					else {
 						this.glyphs[child.unicode] = child;
 					}
 				}
-			}	
+			}
 		}
 		svg.Element.font.prototype = new svg.Element.ElementBase;
-		
+
 		// font-face element
-		svg.Element.fontface = function(node) {
+		svg.Element.fontface = function (node) {
 			this.base = svg.Element.ElementBase;
-			this.base(node);	
-			
+			this.base(node);
+
 			this.ascent = this.attribute('ascent').value;
 			this.descent = this.attribute('descent').value;
-			this.unitsPerEm = this.attribute('units-per-em').numValue();				
+			this.unitsPerEm = this.attribute('units-per-em').numValue();
 		}
 		svg.Element.fontface.prototype = new svg.Element.ElementBase;
-		
+
 		// missing-glyph element
-		svg.Element.missingglyph = function(node) {
+		svg.Element.missingglyph = function (node) {
 			this.base = svg.Element.path;
-			this.base(node);	
-			
+			this.base(node);
+
 			this.horizAdvX = 0;
 		}
 		svg.Element.missingglyph.prototype = new svg.Element.path;
-		
+
 		// glyph element
-		svg.Element.glyph = function(node) {
+		svg.Element.glyph = function (node) {
 			this.base = svg.Element.path;
-			this.base(node);	
-			
+			this.base(node);
+
 			this.horizAdvX = this.attribute('horiz-adv-x').numValue();
 			this.unicode = this.attribute('unicode').value;
 			this.arabicForm = this.attribute('arabic-form').value;
 		}
 		svg.Element.glyph.prototype = new svg.Element.path;
-		
+
 		// text element
-		svg.Element.text = function(node) {
+		svg.Element.text = function (node) {
 			this.captureTextNodes = true;
 			this.base = svg.Element.RenderedElementBase;
 			this.base(node);
-			
+
 			this.baseSetContext = this.setContext;
-			this.setContext = function(ctx) {
+			this.setContext = function (ctx) {
 				this.baseSetContext(ctx);
 				if (this.style('dominant-baseline').hasValue()) ctx.textBaseline = this.style('dominant-baseline').value;
 				if (this.style('alignment-baseline').hasValue()) ctx.textBaseline = this.style('alignment-baseline').value;
 			}
-			
+
 			this.getBoundingBox = function () {
 				// TODO: implement
 				return new svg.BoundingBox(this.attribute('x').toPixels('x'), this.attribute('y').toPixels('y'), 0, 0);
 			}
-			
-			this.renderChildren = function(ctx) {
+
+			this.renderChildren = function (ctx) {
 				this.x = this.attribute('x').toPixels('x');
 				this.y = this.attribute('y').toPixels('y');
 				this.x += this.getAnchorDelta(ctx, this, 0);
-				for (var i=0; i<this.children.length; i++) {
+				for (var i = 0; i < this.children.length; i++) {
 					this.renderChild(ctx, this, i);
 				}
 			}
-			
+
 			this.getAnchorDelta = function (ctx, parent, startI) {
 				var textAnchor = this.style('text-anchor').valueOrDefault('start');
 				if (textAnchor != 'start') {
 					var width = 0;
-					for (var i=startI; i<parent.children.length; i++) {
+					for (var i = startI; i < parent.children.length; i++) {
 						var child = parent.children[i];
 						if (i > startI && child.attribute('x').hasValue()) break; // new group
 						width += child.measureTextRecursive(ctx);
@@ -2016,8 +2013,8 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 				}
 				return 0;
 			}
-			
-			this.renderChild = function(ctx, parent, i) {
+
+			this.renderChild = function (ctx, parent, i) {
 				var child = parent.children[i];
 				if (child.attribute('x').hasValue()) {
 					child.x = child.attribute('x').toPixels('x') + this.getAnchorDelta(ctx, parent, i);
@@ -2028,7 +2025,7 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					child.x = this.x;
 				}
 				this.x = child.x + child.measureText(ctx);
-				
+
 				if (child.attribute('y').hasValue()) {
 					child.y = child.attribute('y').toPixels('y');
 				}
@@ -2038,30 +2035,30 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					child.y = this.y;
 				}
 				this.y = child.y;
-				
+
 				child.render(ctx);
-				
-				for (var i=0; i<child.children.length; i++) {
+
+				for (var i = 0; i < child.children.length; i++) {
 					this.renderChild(ctx, child, i);
 				}
 			}
 		}
 		svg.Element.text.prototype = new svg.Element.RenderedElementBase;
-		
+
 		// text base
-		svg.Element.TextElementBase = function(node) {
+		svg.Element.TextElementBase = function (node) {
 			this.base = svg.Element.RenderedElementBase;
 			this.base(node);
-			
-			this.getGlyph = function(font, text, i) {
+
+			this.getGlyph = function (font, text, i) {
 				var c = text[i];
 				var glyph = null;
 				if (font.isArabic) {
 					var arabicForm = 'isolated';
-					if ((i==0 || text[i-1]==' ') && i<text.length-2 && text[i+1]!=' ') arabicForm = 'terminal'; 
-					if (i>0 && text[i-1]!=' ' && i<text.length-2 && text[i+1]!=' ') arabicForm = 'medial';
-					if (i>0 && text[i-1]!=' ' && (i == text.length-1 || text[i+1]==' ')) arabicForm = 'initial';
-					if (typeof(font.glyphs[c]) != 'undefined') {
+					if ((i == 0 || text[i - 1] == ' ') && i < text.length - 2 && text[i + 1] != ' ') arabicForm = 'terminal';
+					if (i > 0 && text[i - 1] != ' ' && i < text.length - 2 && text[i + 1] != ' ') arabicForm = 'medial';
+					if (i > 0 && text[i - 1] != ' ' && (i == text.length - 1 || text[i + 1] == ' ')) arabicForm = 'initial';
+					if (typeof (font.glyphs[c]) != 'undefined') {
 						glyph = font.glyphs[c][arabicForm];
 						if (glyph == null && font.glyphs[c].type == 'glyph') glyph = font.glyphs[c];
 					}
@@ -2072,17 +2069,17 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 				if (glyph == null) glyph = font.missingGlyph;
 				return glyph;
 			}
-			
-			this.renderChildren = function(ctx) {
+
+			this.renderChildren = function (ctx) {
 				var customFont = this.parent.style('font-family').getDefinition();
 				if (customFont != null) {
 					var fontSize = this.parent.style('font-size').numValueOrDefault(svg.Font.Parse(svg.ctx.font).fontSize);
 					var fontStyle = this.parent.style('font-style').valueOrDefault(svg.Font.Parse(svg.ctx.font).fontStyle);
 					var text = this.getText();
 					if (customFont.isRTL) text = text.split("").reverse().join("");
-					
+
 					var dx = svg.ToNumberArray(this.parent.attribute('dx').value);
-					for (var i=0; i<text.length; i++) {
+					for (var i = 0; i < text.length; i++) {
 						var glyph = this.getGlyph(customFont, text, i);
 						var scale = fontSize / customFont.fontFace.unitsPerEm;
 						ctx.translate(this.x, this.y);
@@ -2093,34 +2090,34 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 						glyph.render(ctx);
 						if (fontStyle == 'italic') ctx.transform(1, 0, -.4, 1, 0, 0);
 						ctx.lineWidth = lw;
-						ctx.scale(1/scale, -1/scale);
-						ctx.translate(-this.x, -this.y);	
-						
+						ctx.scale(1 / scale, -1 / scale);
+						ctx.translate(-this.x, -this.y);
+
 						this.x += fontSize * (glyph.horizAdvX || customFont.horizAdvX) / customFont.fontFace.unitsPerEm;
-						if (typeof(dx[i]) != 'undefined' && !isNaN(dx[i])) {
+						if (typeof (dx[i]) != 'undefined' && !isNaN(dx[i])) {
 							this.x += dx[i];
 						}
 					}
 					return;
 				}
-			
+
 				if (ctx.fillStyle != '') ctx.fillText(svg.compressSpaces(this.getText()), this.x, this.y);
 				if (ctx.strokeStyle != '') ctx.strokeText(svg.compressSpaces(this.getText()), this.x, this.y);
 			}
-			
-			this.getText = function() {
+
+			this.getText = function () {
 				// OVERRIDE ME
 			}
-			
-			this.measureTextRecursive = function(ctx) {
+
+			this.measureTextRecursive = function (ctx) {
 				var width = this.measureText(ctx);
-				for (var i=0; i<this.children.length; i++) {
+				for (var i = 0; i < this.children.length; i++) {
 					width += this.children[i].measureTextRecursive(ctx);
 				}
 				return width;
 			}
-			
-			this.measureText = function(ctx) {
+
+			this.measureText = function (ctx) {
 				var customFont = this.parent.style('font-family').getDefinition();
 				if (customFont != null) {
 					var fontSize = this.parent.style('font-size').numValueOrDefault(svg.Font.Parse(svg.ctx.font).fontSize);
@@ -2128,19 +2125,19 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					var text = this.getText();
 					if (customFont.isRTL) text = text.split("").reverse().join("");
 					var dx = svg.ToNumberArray(this.parent.attribute('dx').value);
-					for (var i=0; i<text.length; i++) {
+					for (var i = 0; i < text.length; i++) {
 						var glyph = this.getGlyph(customFont, text, i);
 						measure += (glyph.horizAdvX || customFont.horizAdvX) * fontSize / customFont.fontFace.unitsPerEm;
-						if (typeof(dx[i]) != 'undefined' && !isNaN(dx[i])) {
+						if (typeof (dx[i]) != 'undefined' && !isNaN(dx[i])) {
 							measure += dx[i];
 						}
 					}
 					return measure;
 				}
-			
+
 				var textToMeasure = svg.compressSpaces(this.getText());
 				if (!ctx.measureText) return textToMeasure.length * 10;
-				
+
 				ctx.save();
 				this.setContext(ctx);
 				var width = ctx.measureText(textToMeasure).width;
@@ -2149,55 +2146,55 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 			}
 		}
 		svg.Element.TextElementBase.prototype = new svg.Element.RenderedElementBase;
-		
+
 		// tspan 
-		svg.Element.tspan = function(node) {
+		svg.Element.tspan = function (node) {
 			this.captureTextNodes = true;
 			this.base = svg.Element.TextElementBase;
 			this.base(node);
-			
+
 			this.text = node.nodeValue || node.text || '';
-			this.getText = function() {
+			this.getText = function () {
 				return this.text;
 			}
 		}
 		svg.Element.tspan.prototype = new svg.Element.TextElementBase;
-		
+
 		// tref
-		svg.Element.tref = function(node) {
+		svg.Element.tref = function (node) {
 			this.base = svg.Element.TextElementBase;
 			this.base(node);
-			
-			this.getText = function() {
+
+			this.getText = function () {
 				var element = this.getHrefAttribute().getDefinition();
 				if (element != null) return element.children[0].getText();
 			}
 		}
-		svg.Element.tref.prototype = new svg.Element.TextElementBase;		
-		
+		svg.Element.tref.prototype = new svg.Element.TextElementBase;
+
 		// a element
-		svg.Element.a = function(node) {
+		svg.Element.a = function (node) {
 			this.base = svg.Element.TextElementBase;
 			this.base(node);
-			
+
 			this.hasText = true;
-			for (var i=0; i<node.childNodes.length; i++) {
+			for (var i = 0; i < node.childNodes.length; i++) {
 				if (node.childNodes[i].nodeType != 3) this.hasText = false;
 			}
-			
+
 			// this might contain text
 			this.text = this.hasText ? node.childNodes[0].nodeValue : '';
-			this.getText = function() {
+			this.getText = function () {
 				return this.text;
-			}		
+			}
 
 			this.baseRenderChildren = this.renderChildren;
-			this.renderChildren = function(ctx) {
+			this.renderChildren = function (ctx) {
 				if (this.hasText) {
 					// render as text element
 					this.baseRenderChildren(ctx);
 					var fontSize = new svg.Property('fontSize', svg.Font.Parse(svg.ctx.font).fontSize);
-					svg.Mouse.checkBoundingBox(this, new svg.BoundingBox(this.x, this.y - fontSize.toPixels('y'), this.x + this.measureText(ctx), this.y));					
+					svg.Mouse.checkBoundingBox(this, new svg.BoundingBox(this.x, this.y - fontSize.toPixels('y'), this.x + this.measureText(ctx), this.y));
 				}
 				else {
 					// render as temporary group
@@ -2207,47 +2204,47 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					g.render(ctx);
 				}
 			}
-			
-			this.onclick = function() {
+
+			this.onclick = function () {
 				window.open(this.getHrefAttribute().value);
 			}
-			
-			this.onmousemove = function() {
+
+			this.onmousemove = function () {
 				svg.ctx.canvas.style.cursor = 'pointer';
 			}
 		}
-		svg.Element.a.prototype = new svg.Element.TextElementBase;		
-		
+		svg.Element.a.prototype = new svg.Element.TextElementBase;
+
 		// image element
-		svg.Element.image = function(node) {
+		svg.Element.image = function (node) {
 			this.base = svg.Element.RenderedElementBase;
 			this.base(node);
-			
+
 			var href = this.getHrefAttribute().value;
 			var isSvg = href.match(/\.svg$/)
-			
+
 			svg.Images.push(this);
 			this.loaded = false;
 			if (!isSvg) {
 				this.img = document.createElement('img');
 				var self = this;
-				this.img.onload = function() { self.loaded = true; }
-				this.img.onerror = function() { if (typeof(console) != 'undefined') { console.log('ERROR: image "' + href + '" not found'); self.loaded = true; } }
+				this.img.onload = function () { self.loaded = true; }
+				this.img.onerror = function () { if (typeof (console) != 'undefined') { console.log('ERROR: image "' + href + '" not found'); self.loaded = true; } }
 				this.img.src = href;
 			}
 			else {
 				this.img = svg.ajax(href);
 				this.loaded = true;
 			}
-			
-			this.renderChildren = function(ctx) {
+
+			this.renderChildren = function (ctx) {
 				var x = this.attribute('x').toPixels('x');
 				var y = this.attribute('y').toPixels('y');
-				
+
 				var width = this.attribute('width').toPixels('x');
-				var height = this.attribute('height').toPixels('y');			
+				var height = this.attribute('height').toPixels('y');
 				if (width == 0 || height == 0) return;
-			
+
 				ctx.save();
 				if (isSvg) {
 					ctx.drawSvg(this.img, x, y, width, height);
@@ -2255,19 +2252,19 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 				else {
 					ctx.translate(x, y);
 					svg.AspectRatio(ctx,
-									this.attribute('preserveAspectRatio').value,
-									width,
-									this.img.width,
-									height,
-									this.img.height,
-									0,
-									0);	
-					ctx.drawImage(this.img, 0, 0);		
+						this.attribute('preserveAspectRatio').value,
+						width,
+						this.img.width,
+						height,
+						this.img.height,
+						0,
+						0);
+					ctx.drawImage(this.img, 0, 0);
 				}
 				ctx.restore();
 			}
-			
-			this.getBoundingBox = function() {
+
+			this.getBoundingBox = function () {
 				var x = this.attribute('x').toPixels('x');
 				var y = this.attribute('y').toPixels('y');
 				var width = this.attribute('width').toPixels('x');
@@ -2276,15 +2273,15 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 			}
 		}
 		svg.Element.image.prototype = new svg.Element.RenderedElementBase;
-		
+
 		// group element
-		svg.Element.g = function(node) {
+		svg.Element.g = function (node) {
 			this.base = svg.Element.RenderedElementBase;
 			this.base(node);
-			
-			this.getBoundingBox = function() {
+
+			this.getBoundingBox = function () {
 				var bb = new svg.BoundingBox();
-				for (var i=0; i<this.children.length; i++) {
+				for (var i = 0; i < this.children.length; i++) {
 					bb.addBoundingBox(this.children[i].getBoundingBox());
 				}
 				return bb;
@@ -2293,60 +2290,60 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 		svg.Element.g.prototype = new svg.Element.RenderedElementBase;
 
 		// symbol element
-		svg.Element.symbol = function(node) {
+		svg.Element.symbol = function (node) {
 			this.base = svg.Element.RenderedElementBase;
 			this.base(node);
-			
+
 			this.baseSetContext = this.setContext;
-			this.setContext = function(ctx) {		
+			this.setContext = function (ctx) {
 				this.baseSetContext(ctx);
-				
+
 				// viewbox
-				if (this.attribute('viewBox').hasValue()) {				
+				if (this.attribute('viewBox').hasValue()) {
 					var viewBox = svg.ToNumberArray(this.attribute('viewBox').value);
 					var minX = viewBox[0];
 					var minY = viewBox[1];
 					width = viewBox[2];
 					height = viewBox[3];
-					
-					svg.AspectRatio(ctx,
-									this.attribute('preserveAspectRatio').value, 
-									this.attribute('width').toPixels('x'),
-									width,
-									this.attribute('height').toPixels('y'),
-									height,
-									minX,
-									minY);
 
-					svg.ViewPort.SetCurrent(viewBox[2], viewBox[3]);						
+					svg.AspectRatio(ctx,
+						this.attribute('preserveAspectRatio').value,
+						this.attribute('width').toPixels('x'),
+						width,
+						this.attribute('height').toPixels('y'),
+						height,
+						minX,
+						minY);
+
+					svg.ViewPort.SetCurrent(viewBox[2], viewBox[3]);
 				}
-			}			
+			}
 		}
-		svg.Element.symbol.prototype = new svg.Element.RenderedElementBase;		
-			
+		svg.Element.symbol.prototype = new svg.Element.RenderedElementBase;
+
 		// style element
-		svg.Element.style = function(node) { 
+		svg.Element.style = function (node) {
 			this.base = svg.Element.ElementBase;
 			this.base(node);
-			
+
 			// text, or spaces then CDATA
 			var css = ''
-			for (var i=0; i<node.childNodes.length; i++) {
-			  css += node.childNodes[i].nodeValue;
+			for (var i = 0; i < node.childNodes.length; i++) {
+				css += node.childNodes[i].nodeValue;
 			}
 			css = css.replace(/(\/\*([^*]|[\r\n]|(\*+([^*\/]|[\r\n])))*\*+\/)|(^[\s]*\/\/.*)/gm, ''); // remove comments
 			css = svg.compressSpaces(css); // replace whitespace
 			var cssDefs = css.split('}');
-			for (var i=0; i<cssDefs.length; i++) {
+			for (var i = 0; i < cssDefs.length; i++) {
 				if (svg.trim(cssDefs[i]) != '') {
 					var cssDef = cssDefs[i].split('{');
 					var cssClasses = cssDef[0].split(',');
 					var cssProps = cssDef[1].split(';');
-					for (var j=0; j<cssClasses.length; j++) {
+					for (var j = 0; j < cssClasses.length; j++) {
 						var cssClass = svg.trim(cssClasses[j]);
 						if (cssClass != '') {
 							var props = {};
-							for (var k=0; k<cssProps.length; k++) {
+							for (var k = 0; k < cssProps.length; k++) {
 								var prop = cssProps[k].indexOf(':');
 								var name = cssProps[k].substr(0, prop);
 								var value = cssProps[k].substr(prop + 1, cssProps[k].length - prop);
@@ -2356,16 +2353,16 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 							}
 							svg.Styles[cssClass] = props;
 							if (cssClass == '@font-face') {
-								var fontFamily = props['font-family'].value.replace(/"/g,'');
+								var fontFamily = props['font-family'].value.replace(/"/g, '');
 								var srcs = props['src'].value.split(',');
-								for (var s=0; s<srcs.length; s++) {
+								for (var s = 0; s < srcs.length; s++) {
 									if (srcs[s].indexOf('format("svg")') > 0) {
 										var urlStart = srcs[s].indexOf('url');
 										var urlEnd = srcs[s].indexOf(')', urlStart);
 										var url = srcs[s].substr(urlStart + 5, urlEnd - urlStart - 6);
 										var doc = svg.parseXml(svg.ajax(url));
 										var fonts = doc.getElementsByTagName('font');
-										for (var f=0; f<fonts.length; f++) {
+										for (var f = 0; f < fonts.length; f++) {
 											var font = svg.CreateElement(fonts[f]);
 											svg.Definitions[fontFamily] = font;
 										}
@@ -2378,37 +2375,37 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 			}
 		}
 		svg.Element.style.prototype = new svg.Element.ElementBase;
-		
+
 		// use element 
-		svg.Element.use = function(node) {
+		svg.Element.use = function (node) {
 			this.base = svg.Element.RenderedElementBase;
 			this.base(node);
-			
+
 			this.baseSetContext = this.setContext;
-			this.setContext = function(ctx) {
+			this.setContext = function (ctx) {
 				this.baseSetContext(ctx);
 				if (this.attribute('x').hasValue()) ctx.translate(this.attribute('x').toPixels('x'), 0);
 				if (this.attribute('y').hasValue()) ctx.translate(0, this.attribute('y').toPixels('y'));
 			}
-			
-			this.getDefinition = function() {
+
+			this.getDefinition = function () {
 				var element = this.getHrefAttribute().getDefinition();
 				if (this.attribute('width').hasValue()) element.attribute('width', true).value = this.attribute('width').value;
 				if (this.attribute('height').hasValue()) element.attribute('height', true).value = this.attribute('height').value;
 				return element;
 			}
-			
-			this.path = function(ctx) {
+
+			this.path = function (ctx) {
 				var element = this.getDefinition();
 				if (element != null) element.path(ctx);
 			}
-			
-			this.getBoundingBox = function() {
+
+			this.getBoundingBox = function () {
 				var element = this.getDefinition();
 				if (element != null) return element.getBoundingBox();
 			}
-			
-			this.renderChildren = function(ctx) {
+
+			this.renderChildren = function (ctx) {
 				var element = this.getDefinition();
 				if (element != null) {
 					// temporarily detach from parent and render
@@ -2420,73 +2417,73 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 			}
 		}
 		svg.Element.use.prototype = new svg.Element.RenderedElementBase;
-		
+
 		// mask element
-		svg.Element.mask = function(node) {
+		svg.Element.mask = function (node) {
 			this.base = svg.Element.ElementBase;
 			this.base(node);
-						
-			this.apply = function(ctx, element) {
+
+			this.apply = function (ctx, element) {
 				// render as temp svg	
 				var x = this.attribute('x').toPixels('x');
 				var y = this.attribute('y').toPixels('y');
 				var width = this.attribute('width').toPixels('x');
 				var height = this.attribute('height').toPixels('y');
-				
+
 				if (width == 0 && height == 0) {
 					var bb = new svg.BoundingBox();
-					for (var i=0; i<this.children.length; i++) {
+					for (var i = 0; i < this.children.length; i++) {
 						bb.addBoundingBox(this.children[i].getBoundingBox());
 					}
 					var x = Math.floor(bb.x1);
 					var y = Math.floor(bb.y1);
 					var width = Math.floor(bb.width());
-					var	height = Math.floor(bb.height());
+					var height = Math.floor(bb.height());
 				}
-				
+
 				// temporarily remove mask to avoid recursion
 				var mask = element.attribute('mask').value;
 				element.attribute('mask').value = '';
-				
-					var cMask = document.createElement('canvas');
-					cMask.width = x + width;
-					cMask.height = y + height;
-					var maskCtx = cMask.getContext('2d');
-					this.renderChildren(maskCtx);
-				
-					var c = document.createElement('canvas');
-					c.width = x + width;
-					c.height = y + height;
-					var tempCtx = c.getContext('2d');
-					element.render(tempCtx);
-					tempCtx.globalCompositeOperation = 'destination-in';
-					tempCtx.fillStyle = maskCtx.createPattern(cMask, 'no-repeat');
-					tempCtx.fillRect(0, 0, x + width, y + height);
-					
-					ctx.fillStyle = tempCtx.createPattern(c, 'no-repeat');
-					ctx.fillRect(0, 0, x + width, y + height);
-					
+
+				var cMask = document.createElement('canvas');
+				cMask.width = x + width;
+				cMask.height = y + height;
+				var maskCtx = cMask.getContext('2d');
+				this.renderChildren(maskCtx);
+
+				var c = document.createElement('canvas');
+				c.width = x + width;
+				c.height = y + height;
+				var tempCtx = c.getContext('2d');
+				element.render(tempCtx);
+				tempCtx.globalCompositeOperation = 'destination-in';
+				tempCtx.fillStyle = maskCtx.createPattern(cMask, 'no-repeat');
+				tempCtx.fillRect(0, 0, x + width, y + height);
+
+				ctx.fillStyle = tempCtx.createPattern(c, 'no-repeat');
+				ctx.fillRect(0, 0, x + width, y + height);
+
 				// reassign mask
-				element.attribute('mask').value = mask;	
+				element.attribute('mask').value = mask;
 			}
-			
-			this.render = function(ctx) {
+
+			this.render = function (ctx) {
 				// NO RENDER
 			}
 		}
 		svg.Element.mask.prototype = new svg.Element.ElementBase;
-		
+
 		// clip element
-		svg.Element.clipPath = function(node) {
+		svg.Element.clipPath = function (node) {
 			this.base = svg.Element.ElementBase;
 			this.base(node);
-			
-			this.apply = function(ctx) {
-				for (var i=0; i<this.children.length; i++) {
+
+			this.apply = function (ctx) {
+				for (var i = 0; i < this.children.length; i++) {
 					var child = this.children[i];
-					if (typeof(child.path) != 'undefined') {
+					if (typeof (child.path) != 'undefined') {
 						var transform = null;
-						if (child.attribute('transform').hasValue()) { 
+						if (child.attribute('transform').hasValue()) {
 							transform = new svg.Transform(child.attribute('transform').value);
 							transform.apply(ctx);
 						}
@@ -2496,85 +2493,85 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					}
 				}
 			}
-			
-			this.render = function(ctx) {
+
+			this.render = function (ctx) {
 				// NO RENDER
 			}
 		}
 		svg.Element.clipPath.prototype = new svg.Element.ElementBase;
 
 		// filters
-		svg.Element.filter = function(node) {
+		svg.Element.filter = function (node) {
 			this.base = svg.Element.ElementBase;
 			this.base(node);
-						
-			this.apply = function(ctx, element) {
+
+			this.apply = function (ctx, element) {
 				// render as temp svg	
 				var bb = element.getBoundingBox();
 				var x = Math.floor(bb.x1);
 				var y = Math.floor(bb.y1);
 				var width = Math.floor(bb.width());
-				var	height = Math.floor(bb.height());
+				var height = Math.floor(bb.height());
 
 				// temporarily remove filter to avoid recursion
 				var filter = element.style('filter').value;
 				element.style('filter').value = '';
-				
+
 				var px = 0, py = 0;
-				for (var i=0; i<this.children.length; i++) {
+				for (var i = 0; i < this.children.length; i++) {
 					var efd = this.children[i].extraFilterDistance || 0;
 					px = Math.max(px, efd);
 					py = Math.max(py, efd);
 				}
-				
+
 				var c = document.createElement('canvas');
-				c.width = width + 2*px;
-				c.height = height + 2*py;
+				c.width = width + 2 * px;
+				c.height = height + 2 * py;
 				var tempCtx = c.getContext('2d');
 				tempCtx.translate(-x + px, -y + py);
 				element.render(tempCtx);
-			
+
 				// apply filters
-				for (var i=0; i<this.children.length; i++) {
-					this.children[i].apply(tempCtx, 0, 0, width + 2*px, height + 2*py);
+				for (var i = 0; i < this.children.length; i++) {
+					this.children[i].apply(tempCtx, 0, 0, width + 2 * px, height + 2 * py);
 				}
-				
+
 				// render on me
-				ctx.drawImage(c, 0, 0, width + 2*px, height + 2*py, x - px, y - py, width + 2*px, height + 2*py);
-				
+				ctx.drawImage(c, 0, 0, width + 2 * px, height + 2 * py, x - px, y - py, width + 2 * px, height + 2 * py);
+
 				// reassign filter
-				element.style('filter', true).value = filter;	
+				element.style('filter', true).value = filter;
 			}
-			
-			this.render = function(ctx) {
+
+			this.render = function (ctx) {
 				// NO RENDER
-			}		
+			}
 		}
 		svg.Element.filter.prototype = new svg.Element.ElementBase;
-		
-		svg.Element.feMorphology = function(node) {
+
+		svg.Element.feMorphology = function (node) {
 			this.base = svg.Element.ElementBase;
 			this.base(node);
-			
-			this.apply = function(ctx, x, y, width, height) {
+
+			this.apply = function (ctx, x, y, width, height) {
 				// TODO: implement
 			}
 		}
 		svg.Element.feMorphology.prototype = new svg.Element.ElementBase;
-		
-		svg.Element.feColorMatrix = function(node) {
+
+		svg.Element.feColorMatrix = function (node) {
 			this.base = svg.Element.ElementBase;
 			this.base(node);
-			
+
 			function imGet(img, x, y, width, height, rgba) {
-				return img[y*width*4 + x*4 + rgba];
+				return img[y * width * 4 + x * 4 + rgba];
 			}
-			
+
 			function imSet(img, x, y, width, height, rgba, val) {
-				img[y*width*4 + x*4 + rgba] = val;
+				img[y * width * 4 + x * 4 + rgba] = val;
 			}
-			
-			this.apply = function(ctx, x, y, width, height) {
+
+			this.apply = function (ctx, x, y, width, height) {
 				// only supporting grayscale for now per Issue 195, need to extend to all matrix
 				// assuming x==0 && y==0 for now
 				var srcData = ctx.getImageData(0, 0, width, height);
@@ -2594,20 +2591,20 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 			}
 		}
 		svg.Element.feColorMatrix.prototype = new svg.Element.ElementBase;
-		
-		svg.Element.feGaussianBlur = function(node) {
+
+		svg.Element.feGaussianBlur = function (node) {
 			this.base = svg.Element.ElementBase;
 			this.base(node);
 
 			this.blurRadius = Math.floor(this.attribute('stdDeviation').numValue());
 			this.extraFilterDistance = this.blurRadius;
-			
-			this.apply = function(ctx, x, y, width, height) {
-				if (typeof(stackBlurCanvasRGBA) == 'undefined') {
-					if (typeof(console) != 'undefined') { console.log('ERROR: StackBlur.js must be included for blur to work'); }
+
+			this.apply = function (ctx, x, y, width, height) {
+				if (typeof (stackBlurCanvasRGBA) == 'undefined') {
+					if (typeof (console) != 'undefined') { console.log('ERROR: StackBlur.js must be included for blur to work'); }
 					return;
 				}
-				
+
 				// StackBlur requires canvas be on document
 				ctx.canvas.id = svg.UniqueId();
 				ctx.canvas.style.display = 'none';
@@ -2617,28 +2614,28 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 			}
 		}
 		svg.Element.feGaussianBlur.prototype = new svg.Element.ElementBase;
-		
+
 		// title element, do nothing
-		svg.Element.title = function(node) {
+		svg.Element.title = function (node) {
 		}
 		svg.Element.title.prototype = new svg.Element.ElementBase;
 
 		// desc element, do nothing
-		svg.Element.desc = function(node) {
+		svg.Element.desc = function (node) {
 		}
-		svg.Element.desc.prototype = new svg.Element.ElementBase;		
-		
-		svg.Element.MISSING = function(node) {
-			if (typeof(console) != 'undefined') { console.log('ERROR: Element \'' + node.nodeName + '\' not yet implemented.'); }
+		svg.Element.desc.prototype = new svg.Element.ElementBase;
+
+		svg.Element.MISSING = function (node) {
+			if (typeof (console) != 'undefined') { console.log('ERROR: Element \'' + node.nodeName + '\' not yet implemented.'); }
 		}
 		svg.Element.MISSING.prototype = new svg.Element.ElementBase;
-		
+
 		// element factory
-		svg.CreateElement = function(node) {	
-			var className = node.nodeName.replace(/^[^:]+:/,''); // remove namespace
-			className = className.replace(/\-/g,''); // remove dashes
+		svg.CreateElement = function (node) {
+			var className = node.nodeName.replace(/^[^:]+:/, ''); // remove namespace
+			className = className.replace(/\-/g, ''); // remove dashes
 			var e = null;
-			if (typeof(svg.Element[className]) != 'undefined') {
+			if (typeof (svg.Element[className]) != 'undefined') {
 				e = new svg.Element[className](node);
 			}
 			else {
@@ -2648,21 +2645,21 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 			e.type = node.nodeName;
 			return e;
 		}
-				
+
 		// load from url
-		svg.load = function(ctx, url) {
+		svg.load = function (ctx, url) {
 			svg.loadXml(ctx, svg.ajax(url));
 		}
-		
+
 		// load from xml
-		svg.loadXml = function(ctx, xml) {
+		svg.loadXml = function (ctx, xml) {
 			svg.loadXmlDoc(ctx, svg.parseXml(xml));
 		}
-		
-		svg.loadXmlDoc = function(ctx, dom) {
+
+		svg.loadXmlDoc = function (ctx, dom) {
 			svg.init(ctx);
-			
-			var mapXY = function(p) {
+
+			var mapXY = function (p) {
 				var e = ctx.canvas;
 				while (e) {
 					p.x -= e.offsetLeft;
@@ -2673,28 +2670,28 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 				if (window.scrollY) p.y += window.scrollY;
 				return p;
 			}
-			
+
 			// bind mouse
 			if (svg.opts['ignoreMouse'] != true) {
-				ctx.canvas.onclick = function(e) {
+				ctx.canvas.onclick = function (e) {
 					var p = mapXY(new svg.Point(e != null ? e.clientX : event.clientX, e != null ? e.clientY : event.clientY));
 					svg.Mouse.onclick(p.x, p.y);
 				};
-				ctx.canvas.onmousemove = function(e) {
+				ctx.canvas.onmousemove = function (e) {
 					var p = mapXY(new svg.Point(e != null ? e.clientX : event.clientX, e != null ? e.clientY : event.clientY));
 					svg.Mouse.onmousemove(p.x, p.y);
 				};
 			}
-		
+
 			var e = svg.CreateElement(dom.documentElement);
 			e.root = true;
-					
+
 			// render loop
 			var isFirstRender = true;
-			var draw = function() {
+			var draw = function () {
 				svg.ViewPort.Clear();
 				if (ctx.canvas.parentNode) svg.ViewPort.SetCurrent(ctx.canvas.parentNode.clientWidth, ctx.canvas.parentNode.clientHeight);
-			
+
 				if (svg.opts['ignoreDimensions'] != true) {
 					// set canvas size
 					if (e.style('width').hasValue()) {
@@ -2712,8 +2709,8 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					cWidth = e.style('width').toPixels('x');
 					cHeight = e.style('height').toPixels('y');
 				}
-				svg.ViewPort.SetCurrent(cWidth, cHeight);		
-				
+				svg.ViewPort.SetCurrent(cWidth, cHeight);
+
 				if (svg.opts['offsetX'] != null) e.attribute('x', true).value = svg.opts['offsetX'];
 				if (svg.opts['offsetY'] != null) e.attribute('y', true).value = svg.opts['offsetY'];
 				if (svg.opts['scaleWidth'] != null && svg.opts['scaleHeight'] != null) {
@@ -2722,13 +2719,13 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 					else if (!isNaN(viewBox[2])) xRatio = viewBox[2] / svg.opts['scaleWidth'];
 					if (e.attribute('height').hasValue()) yRatio = e.attribute('height').toPixels('y') / svg.opts['scaleHeight'];
 					else if (!isNaN(viewBox[3])) yRatio = viewBox[3] / svg.opts['scaleHeight'];
-					
+
 					e.attribute('width', true).value = svg.opts['scaleWidth'];
-					e.attribute('height', true).value = svg.opts['scaleHeight'];			
+					e.attribute('height', true).value = svg.opts['scaleHeight'];
 					e.attribute('viewBox', true).value = '0 0 ' + (cWidth * xRatio) + ' ' + (cHeight * yRatio);
 					e.attribute('preserveAspectRatio', true).value = 'none';
 				}
-			
+
 				// clear and render
 				if (svg.opts['ignoreClear'] != true) {
 					ctx.clearRect(0, 0, cWidth, cHeight);
@@ -2736,118 +2733,120 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 				e.render(ctx);
 				if (isFirstRender) {
 					isFirstRender = false;
-					if (typeof(svg.opts['renderCallback']) == 'function') svg.opts['renderCallback'](dom);
-				}			
+					if (typeof (svg.opts['renderCallback']) == 'function') svg.opts['renderCallback'](dom);
+				}
 			}
-			
+
 			var waitingForImages = true;
 			if (svg.ImagesLoaded()) {
 				waitingForImages = false;
 				draw();
 			}
-			svg.intervalID = setInterval(function() { 
+			svg.intervalID = setInterval(function () {
 				var needUpdate = false;
-				
+
 				if (waitingForImages && svg.ImagesLoaded()) {
 					waitingForImages = false;
 					needUpdate = true;
 				}
-			
+
 				// need update from mouse events?
 				if (svg.opts['ignoreMouse'] != true) {
 					needUpdate = needUpdate | svg.Mouse.hasEvents();
 				}
-			
+
 				// need update from animations?
 				if (svg.opts['ignoreAnimation'] != true) {
-					for (var i=0; i<svg.Animations.length; i++) {
+					for (var i = 0; i < svg.Animations.length; i++) {
 						needUpdate = needUpdate | svg.Animations[i].update(1000 / svg.FRAMERATE);
 					}
 				}
-				
+
 				// need update from redraw?
-				if (typeof(svg.opts['forceRedraw']) == 'function') {
+				if (typeof (svg.opts['forceRedraw']) == 'function') {
 					if (svg.opts['forceRedraw']() == true) needUpdate = true;
 				}
-				
+
 				// render if needed
 				if (needUpdate) {
-					draw();				
+					draw();
 					svg.Mouse.runEvents(); // run and clear our events
 				}
 			}, 1000 / svg.FRAMERATE);
 		}
-		
-		svg.stop = function() {
+
+		svg.stop = function () {
 			if (svg.intervalID) {
 				clearInterval(svg.intervalID);
 			}
 		}
-		
-		svg.Mouse = new (function() {
+
+		svg.Mouse = new (function () {
 			this.events = [];
-			this.hasEvents = function() { return this.events.length != 0; }
-		
-			this.onclick = function(x, y) {
-				this.events.push({ type: 'onclick', x: x, y: y, 
-					run: function(e) { if (e.onclick) e.onclick(); }
+			this.hasEvents = function () { return this.events.length != 0; }
+
+			this.onclick = function (x, y) {
+				this.events.push({
+					type: 'onclick', x: x, y: y,
+					run: function (e) { if (e.onclick) e.onclick(); }
 				});
 			}
-			
-			this.onmousemove = function(x, y) {
-				this.events.push({ type: 'onmousemove', x: x, y: y,
-					run: function(e) { if (e.onmousemove) e.onmousemove(); }
+
+			this.onmousemove = function (x, y) {
+				this.events.push({
+					type: 'onmousemove', x: x, y: y,
+					run: function (e) { if (e.onmousemove) e.onmousemove(); }
 				});
-			}			
-			
+			}
+
 			this.eventElements = [];
-			
-			this.checkPath = function(element, ctx) {
-				for (var i=0; i<this.events.length; i++) {
+
+			this.checkPath = function (element, ctx) {
+				for (var i = 0; i < this.events.length; i++) {
 					var e = this.events[i];
 					if (ctx.isPointInPath && ctx.isPointInPath(e.x, e.y)) this.eventElements[i] = element;
 				}
 			}
-			
-			this.checkBoundingBox = function(element, bb) {
-				for (var i=0; i<this.events.length; i++) {
+
+			this.checkBoundingBox = function (element, bb) {
+				for (var i = 0; i < this.events.length; i++) {
 					var e = this.events[i];
 					if (bb.isPointInBox(e.x, e.y)) this.eventElements[i] = element;
-				}			
+				}
 			}
-			
-			this.runEvents = function() {
+
+			this.runEvents = function () {
 				svg.ctx.canvas.style.cursor = '';
-				
-				for (var i=0; i<this.events.length; i++) {
+
+				for (var i = 0; i < this.events.length; i++) {
 					var e = this.events[i];
 					var element = this.eventElements[i];
 					while (element) {
 						e.run(element);
 						element = element.parent;
 					}
-				}		
-			
+				}
+
 				// done running, clear
-				this.events = []; 
+				this.events = [];
 				this.eventElements = [];
 			}
 		});
-		
+
 		return svg;
 	}
 })();
 
-if (typeof(CanvasRenderingContext2D) != 'undefined') {
-	CanvasRenderingContext2D.prototype.drawSvg = function(s, dx, dy, dw, dh) {
-		canvg(this.canvas, s, { 
-			ignoreMouse: true, 
-			ignoreAnimation: true, 
-			ignoreDimensions: true, 
-			ignoreClear: true, 
-			offsetX: dx, 
-			offsetY: dy, 
-			scaleWidth: dw, 
+if (typeof (CanvasRenderingContext2D) != 'undefined') {
+	CanvasRenderingContext2D.prototype.drawSvg = function (s, dx, dy, dw, dh) {
+		canvg(this.canvas, s, {
+			ignoreMouse: true,
+			ignoreAnimation: true,
+			ignoreDimensions: true,
+			ignoreClear: true,
+			offsetX: dx,
+			offsetY: dy,
+			scaleWidth: dw,
 			scaleHeight: dh
 		});
 	}
@@ -2858,285 +2857,284 @@ if (typeof(CanvasRenderingContext2D) != 'undefined') {
  * @link   http://www.phpied.com/rgb-color-parser-in-javascript/
  * @license Use it if you like it
  */
-function RGBColor(color_string)
-{
-    this.ok = false;
+function RGBColor(color_string) {
+	this.ok = false;
 
-    // strip any leading #
-    if (color_string.charAt(0) == '#') { // remove # if any
-        color_string = color_string.substr(1,6);
-    }
+	// strip any leading #
+	if (color_string.charAt(0) == '#') { // remove # if any
+		color_string = color_string.substr(1, 6);
+	}
 
-    color_string = color_string.replace(/ /g,'');
-    color_string = color_string.toLowerCase();
+	color_string = color_string.replace(/ /g, '');
+	color_string = color_string.toLowerCase();
 
-    // before getting into regexps, try simple matches
-    // and overwrite the input
-    var simple_colors = {
-        aliceblue: 'f0f8ff',
-        antiquewhite: 'faebd7',
-        aqua: '00ffff',
-        aquamarine: '7fffd4',
-        azure: 'f0ffff',
-        beige: 'f5f5dc',
-        bisque: 'ffe4c4',
-        black: '000000',
-        blanchedalmond: 'ffebcd',
-        blue: '0000ff',
-        blueviolet: '8a2be2',
-        brown: 'a52a2a',
-        burlywood: 'deb887',
-        cadetblue: '5f9ea0',
-        chartreuse: '7fff00',
-        chocolate: 'd2691e',
-        coral: 'ff7f50',
-        cornflowerblue: '6495ed',
-        cornsilk: 'fff8dc',
-        crimson: 'dc143c',
-        cyan: '00ffff',
-        darkblue: '00008b',
-        darkcyan: '008b8b',
-        darkgoldenrod: 'b8860b',
-        darkgray: 'a9a9a9',
-        darkgreen: '006400',
-        darkkhaki: 'bdb76b',
-        darkmagenta: '8b008b',
-        darkolivegreen: '556b2f',
-        darkorange: 'ff8c00',
-        darkorchid: '9932cc',
-        darkred: '8b0000',
-        darksalmon: 'e9967a',
-        darkseagreen: '8fbc8f',
-        darkslateblue: '483d8b',
-        darkslategray: '2f4f4f',
-        darkturquoise: '00ced1',
-        darkviolet: '9400d3',
-        deeppink: 'ff1493',
-        deepskyblue: '00bfff',
-        dimgray: '696969',
-        dodgerblue: '1e90ff',
-        feldspar: 'd19275',
-        firebrick: 'b22222',
-        floralwhite: 'fffaf0',
-        forestgreen: '228b22',
-        fuchsia: 'ff00ff',
-        gainsboro: 'dcdcdc',
-        ghostwhite: 'f8f8ff',
-        gold: 'ffd700',
-        goldenrod: 'daa520',
-        gray: '808080',
-        green: '008000',
-        greenyellow: 'adff2f',
-        honeydew: 'f0fff0',
-        hotpink: 'ff69b4',
-        indianred : 'cd5c5c',
-        indigo : '4b0082',
-        ivory: 'fffff0',
-        khaki: 'f0e68c',
-        lavender: 'e6e6fa',
-        lavenderblush: 'fff0f5',
-        lawngreen: '7cfc00',
-        lemonchiffon: 'fffacd',
-        lightblue: 'add8e6',
-        lightcoral: 'f08080',
-        lightcyan: 'e0ffff',
-        lightgoldenrodyellow: 'fafad2',
-        lightgrey: 'd3d3d3',
-        lightgreen: '90ee90',
-        lightpink: 'ffb6c1',
-        lightsalmon: 'ffa07a',
-        lightseagreen: '20b2aa',
-        lightskyblue: '87cefa',
-        lightslateblue: '8470ff',
-        lightslategray: '778899',
-        lightsteelblue: 'b0c4de',
-        lightyellow: 'ffffe0',
-        lime: '00ff00',
-        limegreen: '32cd32',
-        linen: 'faf0e6',
-        magenta: 'ff00ff',
-        maroon: '800000',
-        mediumaquamarine: '66cdaa',
-        mediumblue: '0000cd',
-        mediumorchid: 'ba55d3',
-        mediumpurple: '9370d8',
-        mediumseagreen: '3cb371',
-        mediumslateblue: '7b68ee',
-        mediumspringgreen: '00fa9a',
-        mediumturquoise: '48d1cc',
-        mediumvioletred: 'c71585',
-        midnightblue: '191970',
-        mintcream: 'f5fffa',
-        mistyrose: 'ffe4e1',
-        moccasin: 'ffe4b5',
-        navajowhite: 'ffdead',
-        navy: '000080',
-        oldlace: 'fdf5e6',
-        olive: '808000',
-        olivedrab: '6b8e23',
-        orange: 'ffa500',
-        orangered: 'ff4500',
-        orchid: 'da70d6',
-        palegoldenrod: 'eee8aa',
-        palegreen: '98fb98',
-        paleturquoise: 'afeeee',
-        palevioletred: 'd87093',
-        papayawhip: 'ffefd5',
-        peachpuff: 'ffdab9',
-        peru: 'cd853f',
-        pink: 'ffc0cb',
-        plum: 'dda0dd',
-        powderblue: 'b0e0e6',
-        purple: '800080',
-        red: 'ff0000',
-        rosybrown: 'bc8f8f',
-        royalblue: '4169e1',
-        saddlebrown: '8b4513',
-        salmon: 'fa8072',
-        sandybrown: 'f4a460',
-        seagreen: '2e8b57',
-        seashell: 'fff5ee',
-        sienna: 'a0522d',
-        silver: 'c0c0c0',
-        skyblue: '87ceeb',
-        slateblue: '6a5acd',
-        slategray: '708090',
-        snow: 'fffafa',
-        springgreen: '00ff7f',
-        steelblue: '4682b4',
-        tan: 'd2b48c',
-        teal: '008080',
-        thistle: 'd8bfd8',
-        tomato: 'ff6347',
-        turquoise: '40e0d0',
-        violet: 'ee82ee',
-        violetred: 'd02090',
-        wheat: 'f5deb3',
-        white: 'ffffff',
-        whitesmoke: 'f5f5f5',
-        yellow: 'ffff00',
-        yellowgreen: '9acd32'
-    };
-    for (var key in simple_colors) {
-        if (color_string == key) {
-            color_string = simple_colors[key];
-        }
-    }
-    // emd of simple type-in colors
+	// before getting into regexps, try simple matches
+	// and overwrite the input
+	var simple_colors = {
+		aliceblue: 'f0f8ff',
+		antiquewhite: 'faebd7',
+		aqua: '00ffff',
+		aquamarine: '7fffd4',
+		azure: 'f0ffff',
+		beige: 'f5f5dc',
+		bisque: 'ffe4c4',
+		black: '000000',
+		blanchedalmond: 'ffebcd',
+		blue: '0000ff',
+		blueviolet: '8a2be2',
+		brown: 'a52a2a',
+		burlywood: 'deb887',
+		cadetblue: '5f9ea0',
+		chartreuse: '7fff00',
+		chocolate: 'd2691e',
+		coral: 'ff7f50',
+		cornflowerblue: '6495ed',
+		cornsilk: 'fff8dc',
+		crimson: 'dc143c',
+		cyan: '00ffff',
+		darkblue: '00008b',
+		darkcyan: '008b8b',
+		darkgoldenrod: 'b8860b',
+		darkgray: 'a9a9a9',
+		darkgreen: '006400',
+		darkkhaki: 'bdb76b',
+		darkmagenta: '8b008b',
+		darkolivegreen: '556b2f',
+		darkorange: 'ff8c00',
+		darkorchid: '9932cc',
+		darkred: '8b0000',
+		darksalmon: 'e9967a',
+		darkseagreen: '8fbc8f',
+		darkslateblue: '483d8b',
+		darkslategray: '2f4f4f',
+		darkturquoise: '00ced1',
+		darkviolet: '9400d3',
+		deeppink: 'ff1493',
+		deepskyblue: '00bfff',
+		dimgray: '696969',
+		dodgerblue: '1e90ff',
+		feldspar: 'd19275',
+		firebrick: 'b22222',
+		floralwhite: 'fffaf0',
+		forestgreen: '228b22',
+		fuchsia: 'ff00ff',
+		gainsboro: 'dcdcdc',
+		ghostwhite: 'f8f8ff',
+		gold: 'ffd700',
+		goldenrod: 'daa520',
+		gray: '808080',
+		green: '008000',
+		greenyellow: 'adff2f',
+		honeydew: 'f0fff0',
+		hotpink: 'ff69b4',
+		indianred: 'cd5c5c',
+		indigo: '4b0082',
+		ivory: 'fffff0',
+		khaki: 'f0e68c',
+		lavender: 'e6e6fa',
+		lavenderblush: 'fff0f5',
+		lawngreen: '7cfc00',
+		lemonchiffon: 'fffacd',
+		lightblue: 'add8e6',
+		lightcoral: 'f08080',
+		lightcyan: 'e0ffff',
+		lightgoldenrodyellow: 'fafad2',
+		lightgrey: 'd3d3d3',
+		lightgreen: '90ee90',
+		lightpink: 'ffb6c1',
+		lightsalmon: 'ffa07a',
+		lightseagreen: '20b2aa',
+		lightskyblue: '87cefa',
+		lightslateblue: '8470ff',
+		lightslategray: '778899',
+		lightsteelblue: 'b0c4de',
+		lightyellow: 'ffffe0',
+		lime: '00ff00',
+		limegreen: '32cd32',
+		linen: 'faf0e6',
+		magenta: 'ff00ff',
+		maroon: '800000',
+		mediumaquamarine: '66cdaa',
+		mediumblue: '0000cd',
+		mediumorchid: 'ba55d3',
+		mediumpurple: '9370d8',
+		mediumseagreen: '3cb371',
+		mediumslateblue: '7b68ee',
+		mediumspringgreen: '00fa9a',
+		mediumturquoise: '48d1cc',
+		mediumvioletred: 'c71585',
+		midnightblue: '191970',
+		mintcream: 'f5fffa',
+		mistyrose: 'ffe4e1',
+		moccasin: 'ffe4b5',
+		navajowhite: 'ffdead',
+		navy: '000080',
+		oldlace: 'fdf5e6',
+		olive: '808000',
+		olivedrab: '6b8e23',
+		orange: 'ffa500',
+		orangered: 'ff4500',
+		orchid: 'da70d6',
+		palegoldenrod: 'eee8aa',
+		palegreen: '98fb98',
+		paleturquoise: 'afeeee',
+		palevioletred: 'd87093',
+		papayawhip: 'ffefd5',
+		peachpuff: 'ffdab9',
+		peru: 'cd853f',
+		pink: 'ffc0cb',
+		plum: 'dda0dd',
+		powderblue: 'b0e0e6',
+		purple: '800080',
+		red: 'ff0000',
+		rosybrown: 'bc8f8f',
+		royalblue: '4169e1',
+		saddlebrown: '8b4513',
+		salmon: 'fa8072',
+		sandybrown: 'f4a460',
+		seagreen: '2e8b57',
+		seashell: 'fff5ee',
+		sienna: 'a0522d',
+		silver: 'c0c0c0',
+		skyblue: '87ceeb',
+		slateblue: '6a5acd',
+		slategray: '708090',
+		snow: 'fffafa',
+		springgreen: '00ff7f',
+		steelblue: '4682b4',
+		tan: 'd2b48c',
+		teal: '008080',
+		thistle: 'd8bfd8',
+		tomato: 'ff6347',
+		turquoise: '40e0d0',
+		violet: 'ee82ee',
+		violetred: 'd02090',
+		wheat: 'f5deb3',
+		white: 'ffffff',
+		whitesmoke: 'f5f5f5',
+		yellow: 'ffff00',
+		yellowgreen: '9acd32'
+	};
+	for (var key in simple_colors) {
+		if (color_string == key) {
+			color_string = simple_colors[key];
+		}
+	}
+	// emd of simple type-in colors
 
-    // array of color definition objects
-    var color_defs = [
-        {
-            re: /^rgb\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})\)$/,
-            example: ['rgb(123, 234, 45)', 'rgb(255,234,245)'],
-            process: function (bits){
-                return [
-                    parseInt(bits[1]),
-                    parseInt(bits[2]),
-                    parseInt(bits[3])
-                ];
-            }
-        },
-        {
-            re: /^(\w{2})(\w{2})(\w{2})$/,
-            example: ['#00ff00', '336699'],
-            process: function (bits){
-                return [
-                    parseInt(bits[1], 16),
-                    parseInt(bits[2], 16),
-                    parseInt(bits[3], 16)
-                ];
-            }
-        },
-        {
-            re: /^(\w{1})(\w{1})(\w{1})$/,
-            example: ['#fb0', 'f0f'],
-            process: function (bits){
-                return [
-                    parseInt(bits[1] + bits[1], 16),
-                    parseInt(bits[2] + bits[2], 16),
-                    parseInt(bits[3] + bits[3], 16)
-                ];
-            }
-        }
-    ];
+	// array of color definition objects
+	var color_defs = [
+		{
+			re: /^rgb\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})\)$/,
+			example: ['rgb(123, 234, 45)', 'rgb(255,234,245)'],
+			process: function (bits) {
+				return [
+					parseInt(bits[1]),
+					parseInt(bits[2]),
+					parseInt(bits[3])
+				];
+			}
+		},
+		{
+			re: /^(\w{2})(\w{2})(\w{2})$/,
+			example: ['#00ff00', '336699'],
+			process: function (bits) {
+				return [
+					parseInt(bits[1], 16),
+					parseInt(bits[2], 16),
+					parseInt(bits[3], 16)
+				];
+			}
+		},
+		{
+			re: /^(\w{1})(\w{1})(\w{1})$/,
+			example: ['#fb0', 'f0f'],
+			process: function (bits) {
+				return [
+					parseInt(bits[1] + bits[1], 16),
+					parseInt(bits[2] + bits[2], 16),
+					parseInt(bits[3] + bits[3], 16)
+				];
+			}
+		}
+	];
 
-    // search through the definitions to find a match
-    for (var i = 0; i < color_defs.length; i++) {
-        var re = color_defs[i].re;
-        var processor = color_defs[i].process;
-        var bits = re.exec(color_string);
-        if (bits) {
-            channels = processor(bits);
-            this.r = channels[0];
-            this.g = channels[1];
-            this.b = channels[2];
-            this.ok = true;
-        }
+	// search through the definitions to find a match
+	for (var i = 0; i < color_defs.length; i++) {
+		var re = color_defs[i].re;
+		var processor = color_defs[i].process;
+		var bits = re.exec(color_string);
+		if (bits) {
+			channels = processor(bits);
+			this.r = channels[0];
+			this.g = channels[1];
+			this.b = channels[2];
+			this.ok = true;
+		}
 
-    }
+	}
 
-    // validate/cleanup values
-    this.r = (this.r < 0 || isNaN(this.r)) ? 0 : ((this.r > 255) ? 255 : this.r);
-    this.g = (this.g < 0 || isNaN(this.g)) ? 0 : ((this.g > 255) ? 255 : this.g);
-    this.b = (this.b < 0 || isNaN(this.b)) ? 0 : ((this.b > 255) ? 255 : this.b);
+	// validate/cleanup values
+	this.r = (this.r < 0 || isNaN(this.r)) ? 0 : ((this.r > 255) ? 255 : this.r);
+	this.g = (this.g < 0 || isNaN(this.g)) ? 0 : ((this.g > 255) ? 255 : this.g);
+	this.b = (this.b < 0 || isNaN(this.b)) ? 0 : ((this.b > 255) ? 255 : this.b);
 
-    // some getters
-    this.toRGB = function () {
-        return 'rgb(' + this.r + ', ' + this.g + ', ' + this.b + ')';
-    }
-    this.toHex = function () {
-        var r = this.r.toString(16);
-        var g = this.g.toString(16);
-        var b = this.b.toString(16);
-        if (r.length == 1) r = '0' + r;
-        if (g.length == 1) g = '0' + g;
-        if (b.length == 1) b = '0' + b;
-        return '#' + r + g + b;
-    }
+	// some getters
+	this.toRGB = function () {
+		return 'rgb(' + this.r + ', ' + this.g + ', ' + this.b + ')';
+	}
+	this.toHex = function () {
+		var r = this.r.toString(16);
+		var g = this.g.toString(16);
+		var b = this.b.toString(16);
+		if (r.length == 1) r = '0' + r;
+		if (g.length == 1) g = '0' + g;
+		if (b.length == 1) b = '0' + b;
+		return '#' + r + g + b;
+	}
 
-    // help
-    this.getHelpXML = function () {
+	// help
+	this.getHelpXML = function () {
 
-        var examples = new Array();
-        // add regexps
-        for (var i = 0; i < color_defs.length; i++) {
-            var example = color_defs[i].example;
-            for (var j = 0; j < example.length; j++) {
-                examples[examples.length] = example[j];
-            }
-        }
-        // add type-in colors
-        for (var sc in simple_colors) {
-            examples[examples.length] = sc;
-        }
+		var examples = new Array();
+		// add regexps
+		for (var i = 0; i < color_defs.length; i++) {
+			var example = color_defs[i].example;
+			for (var j = 0; j < example.length; j++) {
+				examples[examples.length] = example[j];
+			}
+		}
+		// add type-in colors
+		for (var sc in simple_colors) {
+			examples[examples.length] = sc;
+		}
 
-        var xml = document.createElement('ul');
-        xml.setAttribute('id', 'rgbcolor-examples');
-        for (var i = 0; i < examples.length; i++) {
-            try {
-                var list_item = document.createElement('li');
-                var list_color = new RGBColor(examples[i]);
-                var example_div = document.createElement('div');
-                example_div.style.cssText =
-                        'margin: 3px; '
-                        + 'border: 1px solid black; '
-                        + 'background:' + list_color.toHex() + '; '
-                        + 'color:' + list_color.toHex()
-                ;
-                example_div.appendChild(document.createTextNode('test'));
-                var list_item_value = document.createTextNode(
-                    ' ' + examples[i] + ' -> ' + list_color.toRGB() + ' -> ' + list_color.toHex()
-                );
-                list_item.appendChild(example_div);
-                list_item.appendChild(list_item_value);
-                xml.appendChild(list_item);
+		var xml = document.createElement('ul');
+		xml.setAttribute('id', 'rgbcolor-examples');
+		for (var i = 0; i < examples.length; i++) {
+			try {
+				var list_item = document.createElement('li');
+				var list_color = new RGBColor(examples[i]);
+				var example_div = document.createElement('div');
+				example_div.style.cssText =
+					'margin: 3px; '
+					+ 'border: 1px solid black; '
+					+ 'background:' + list_color.toHex() + '; '
+					+ 'color:' + list_color.toHex()
+					;
+				example_div.appendChild(document.createTextNode('test'));
+				var list_item_value = document.createTextNode(
+					' ' + examples[i] + ' -> ' + list_color.toRGB() + ' -> ' + list_color.toHex()
+				);
+				list_item.appendChild(example_div);
+				list_item.appendChild(list_item_value);
+				xml.appendChild(list_item);
 
-            } catch(e){}
-        }
-        return xml;
+			} catch (e) { }
+		}
+		return xml;
 
-    }
+	}
 
 }
 
@@ -3183,221 +3181,213 @@ OTHER DEALINGS IN THE SOFTWARE.
 */
 
 var mul_table = [
-        512,512,456,512,328,456,335,512,405,328,271,456,388,335,292,512,
-        454,405,364,328,298,271,496,456,420,388,360,335,312,292,273,512,
-        482,454,428,405,383,364,345,328,312,298,284,271,259,496,475,456,
-        437,420,404,388,374,360,347,335,323,312,302,292,282,273,265,512,
-        497,482,468,454,441,428,417,405,394,383,373,364,354,345,337,328,
-        320,312,305,298,291,284,278,271,265,259,507,496,485,475,465,456,
-        446,437,428,420,412,404,396,388,381,374,367,360,354,347,341,335,
-        329,323,318,312,307,302,297,292,287,282,278,273,269,265,261,512,
-        505,497,489,482,475,468,461,454,447,441,435,428,422,417,411,405,
-        399,394,389,383,378,373,368,364,359,354,350,345,341,337,332,328,
-        324,320,316,312,309,305,301,298,294,291,287,284,281,278,274,271,
-        268,265,262,259,257,507,501,496,491,485,480,475,470,465,460,456,
-        451,446,442,437,433,428,424,420,416,412,408,404,400,396,392,388,
-        385,381,377,374,370,367,363,360,357,354,350,347,344,341,338,335,
-        332,329,326,323,320,318,315,312,310,307,304,302,299,297,294,292,
-        289,287,285,282,280,278,275,273,271,269,267,265,263,261,259];
-        
-   
+	512, 512, 456, 512, 328, 456, 335, 512, 405, 328, 271, 456, 388, 335, 292, 512,
+	454, 405, 364, 328, 298, 271, 496, 456, 420, 388, 360, 335, 312, 292, 273, 512,
+	482, 454, 428, 405, 383, 364, 345, 328, 312, 298, 284, 271, 259, 496, 475, 456,
+	437, 420, 404, 388, 374, 360, 347, 335, 323, 312, 302, 292, 282, 273, 265, 512,
+	497, 482, 468, 454, 441, 428, 417, 405, 394, 383, 373, 364, 354, 345, 337, 328,
+	320, 312, 305, 298, 291, 284, 278, 271, 265, 259, 507, 496, 485, 475, 465, 456,
+	446, 437, 428, 420, 412, 404, 396, 388, 381, 374, 367, 360, 354, 347, 341, 335,
+	329, 323, 318, 312, 307, 302, 297, 292, 287, 282, 278, 273, 269, 265, 261, 512,
+	505, 497, 489, 482, 475, 468, 461, 454, 447, 441, 435, 428, 422, 417, 411, 405,
+	399, 394, 389, 383, 378, 373, 368, 364, 359, 354, 350, 345, 341, 337, 332, 328,
+	324, 320, 316, 312, 309, 305, 301, 298, 294, 291, 287, 284, 281, 278, 274, 271,
+	268, 265, 262, 259, 257, 507, 501, 496, 491, 485, 480, 475, 470, 465, 460, 456,
+	451, 446, 442, 437, 433, 428, 424, 420, 416, 412, 408, 404, 400, 396, 392, 388,
+	385, 381, 377, 374, 370, 367, 363, 360, 357, 354, 350, 347, 344, 341, 338, 335,
+	332, 329, 326, 323, 320, 318, 315, 312, 310, 307, 304, 302, 299, 297, 294, 292,
+	289, 287, 285, 282, 280, 278, 275, 273, 271, 269, 267, 265, 263, 261, 259];
+
+
 var shg_table = [
-	     9, 11, 12, 13, 13, 14, 14, 15, 15, 15, 15, 16, 16, 16, 16, 17, 
-		17, 17, 17, 17, 17, 17, 18, 18, 18, 18, 18, 18, 18, 18, 18, 19, 
-		19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 20, 20, 20,
-		20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 21,
-		21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
-		21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 22, 22, 22, 22, 22, 22, 
-		22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22,
-		22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 
-		23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23,
-		23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23,
-		23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 
-		23, 23, 23, 23, 23, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 
-		24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24,
-		24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24,
-		24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24,
-		24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24 ];
+	9, 11, 12, 13, 13, 14, 14, 15, 15, 15, 15, 16, 16, 16, 16, 17,
+	17, 17, 17, 17, 17, 17, 18, 18, 18, 18, 18, 18, 18, 18, 18, 19,
+	19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 20, 20, 20,
+	20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 21,
+	21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
+	21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 22, 22, 22, 22, 22, 22,
+	22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22,
+	22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23,
+	23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23,
+	23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23,
+	23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23,
+	23, 23, 23, 23, 23, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24,
+	24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24,
+	24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24,
+	24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24,
+	24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24];
 
-function stackBlurImage( imageID, canvasID, radius, blurAlphaChannel )
-{
-			
- 	var img = document.getElementById( imageID );
+function stackBlurImage(imageID, canvasID, radius, blurAlphaChannel) {
+
+	var img = document.getElementById(imageID);
 	var w = img.naturalWidth;
-    var h = img.naturalHeight;
-       
-	var canvas = document.getElementById( canvasID );
-      
-    canvas.style.width  = w + "px";
-    canvas.style.height = h + "px";
-    canvas.width = w;
-    canvas.height = h;
-    
-    var context = canvas.getContext("2d");
-    context.clearRect( 0, 0, w, h );
-    context.drawImage( img, 0, 0 );
+	var h = img.naturalHeight;
 
-	if ( isNaN(radius) || radius < 1 ) return;
-	
-	if ( blurAlphaChannel )
-		stackBlurCanvasRGBA( canvasID, 0, 0, w, h, radius );
-	else 
-		stackBlurCanvasRGB( canvasID, 0, 0, w, h, radius );
+	var canvas = document.getElementById(canvasID);
+
+	canvas.style.width = w + "px";
+	canvas.style.height = h + "px";
+	canvas.width = w;
+	canvas.height = h;
+
+	var context = canvas.getContext("2d");
+	context.clearRect(0, 0, w, h);
+	context.drawImage(img, 0, 0);
+
+	if (isNaN(radius) || radius < 1) return;
+
+	if (blurAlphaChannel)
+		stackBlurCanvasRGBA(canvasID, 0, 0, w, h, radius);
+	else
+		stackBlurCanvasRGB(canvasID, 0, 0, w, h, radius);
 }
 
 
-function stackBlurCanvasRGBA( id, top_x, top_y, width, height, radius )
-{
-	if ( isNaN(radius) || radius < 1 ) return;
+function stackBlurCanvasRGBA(id, top_x, top_y, width, height, radius) {
+	if (isNaN(radius) || radius < 1) return;
 	radius |= 0;
-	
-	var canvas  = document.getElementById( id );
+
+	var canvas = document.getElementById(id);
 	var context = canvas.getContext("2d");
 	var imageData;
-	
+
 	try {
-	  try {
-		imageData = context.getImageData( top_x, top_y, width, height );
-	  } catch(e) {
-	  
-		// NOTE: this part is supposedly only needed if you want to work with local files
-		// so it might be okay to remove the whole try/catch block and just use
-		// imageData = context.getImageData( top_x, top_y, width, height );
 		try {
-			netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
-			imageData = context.getImageData( top_x, top_y, width, height );
-		} catch(e) {
-			alert("Cannot access local image");
-			throw new Error("unable to access local image data: " + e);
-			return;
+			imageData = context.getImageData(top_x, top_y, width, height);
+		} catch (e) {
+
+			// NOTE: this part is supposedly only needed if you want to work with local files
+			// so it might be okay to remove the whole try/catch block and just use
+			// imageData = context.getImageData( top_x, top_y, width, height );
+			try {
+				netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+				imageData = context.getImageData(top_x, top_y, width, height);
+			} catch (e) {
+				alert("Cannot access local image");
+				throw new Error("unable to access local image data: " + e);
+				return;
+			}
 		}
-	  }
-	} catch(e) {
-	  alert("Cannot access image");
-	  throw new Error("unable to access image data: " + e);
+	} catch (e) {
+		alert("Cannot access image");
+		throw new Error("unable to access image data: " + e);
 	}
-			
+
 	var pixels = imageData.data;
-			
-	var x, y, i, p, yp, yi, yw, r_sum, g_sum, b_sum, a_sum, 
-	r_out_sum, g_out_sum, b_out_sum, a_out_sum,
-	r_in_sum, g_in_sum, b_in_sum, a_in_sum, 
-	pr, pg, pb, pa, rbs;
-			
+
+	var x, y, i, p, yp, yi, yw, r_sum, g_sum, b_sum, a_sum,
+		r_out_sum, g_out_sum, b_out_sum, a_out_sum,
+		r_in_sum, g_in_sum, b_in_sum, a_in_sum,
+		pr, pg, pb, pa, rbs;
+
 	var div = radius + radius + 1;
 	var w4 = width << 2;
-	var widthMinus1  = width - 1;
+	var widthMinus1 = width - 1;
 	var heightMinus1 = height - 1;
-	var radiusPlus1  = radius + 1;
-	var sumFactor = radiusPlus1 * ( radiusPlus1 + 1 ) / 2;
-	
+	var radiusPlus1 = radius + 1;
+	var sumFactor = radiusPlus1 * (radiusPlus1 + 1) / 2;
+
 	var stackStart = new BlurStack();
 	var stack = stackStart;
-	for ( i = 1; i < div; i++ )
-	{
+	for (i = 1; i < div; i++) {
 		stack = stack.next = new BlurStack();
-		if ( i == radiusPlus1 ) var stackEnd = stack;
+		if (i == radiusPlus1) var stackEnd = stack;
 	}
 	stack.next = stackStart;
 	var stackIn = null;
 	var stackOut = null;
-	
+
 	yw = yi = 0;
-	
+
 	var mul_sum = mul_table[radius];
 	var shg_sum = shg_table[radius];
-	
-	for ( y = 0; y < height; y++ )
-	{
+
+	for (y = 0; y < height; y++) {
 		r_in_sum = g_in_sum = b_in_sum = a_in_sum = r_sum = g_sum = b_sum = a_sum = 0;
-		
-		r_out_sum = radiusPlus1 * ( pr = pixels[yi] );
-		g_out_sum = radiusPlus1 * ( pg = pixels[yi+1] );
-		b_out_sum = radiusPlus1 * ( pb = pixels[yi+2] );
-		a_out_sum = radiusPlus1 * ( pa = pixels[yi+3] );
-		
+
+		r_out_sum = radiusPlus1 * (pr = pixels[yi]);
+		g_out_sum = radiusPlus1 * (pg = pixels[yi + 1]);
+		b_out_sum = radiusPlus1 * (pb = pixels[yi + 2]);
+		a_out_sum = radiusPlus1 * (pa = pixels[yi + 3]);
+
 		r_sum += sumFactor * pr;
 		g_sum += sumFactor * pg;
 		b_sum += sumFactor * pb;
 		a_sum += sumFactor * pa;
-		
+
 		stack = stackStart;
-		
-		for( i = 0; i < radiusPlus1; i++ )
-		{
+
+		for (i = 0; i < radiusPlus1; i++) {
 			stack.r = pr;
 			stack.g = pg;
 			stack.b = pb;
 			stack.a = pa;
 			stack = stack.next;
 		}
-		
-		for( i = 1; i < radiusPlus1; i++ )
-		{
-			p = yi + (( widthMinus1 < i ? widthMinus1 : i ) << 2 );
-			r_sum += ( stack.r = ( pr = pixels[p])) * ( rbs = radiusPlus1 - i );
-			g_sum += ( stack.g = ( pg = pixels[p+1])) * rbs;
-			b_sum += ( stack.b = ( pb = pixels[p+2])) * rbs;
-			a_sum += ( stack.a = ( pa = pixels[p+3])) * rbs;
-			
+
+		for (i = 1; i < radiusPlus1; i++) {
+			p = yi + ((widthMinus1 < i ? widthMinus1 : i) << 2);
+			r_sum += (stack.r = (pr = pixels[p])) * (rbs = radiusPlus1 - i);
+			g_sum += (stack.g = (pg = pixels[p + 1])) * rbs;
+			b_sum += (stack.b = (pb = pixels[p + 2])) * rbs;
+			a_sum += (stack.a = (pa = pixels[p + 3])) * rbs;
+
 			r_in_sum += pr;
 			g_in_sum += pg;
 			b_in_sum += pb;
 			a_in_sum += pa;
-			
+
 			stack = stack.next;
 		}
-		
-		
+
+
 		stackIn = stackStart;
 		stackOut = stackEnd;
-		for ( x = 0; x < width; x++ )
-		{
-			pixels[yi+3] = pa = (a_sum * mul_sum) >> shg_sum;
-			if ( pa != 0 )
-			{
+		for (x = 0; x < width; x++) {
+			pixels[yi + 3] = pa = (a_sum * mul_sum) >> shg_sum;
+			if (pa != 0) {
 				pa = 255 / pa;
-				pixels[yi]   = ((r_sum * mul_sum) >> shg_sum) * pa;
-				pixels[yi+1] = ((g_sum * mul_sum) >> shg_sum) * pa;
-				pixels[yi+2] = ((b_sum * mul_sum) >> shg_sum) * pa;
+				pixels[yi] = ((r_sum * mul_sum) >> shg_sum) * pa;
+				pixels[yi + 1] = ((g_sum * mul_sum) >> shg_sum) * pa;
+				pixels[yi + 2] = ((b_sum * mul_sum) >> shg_sum) * pa;
 			} else {
-				pixels[yi] = pixels[yi+1] = pixels[yi+2] = 0;
+				pixels[yi] = pixels[yi + 1] = pixels[yi + 2] = 0;
 			}
-			
+
 			r_sum -= r_out_sum;
 			g_sum -= g_out_sum;
 			b_sum -= b_out_sum;
 			a_sum -= a_out_sum;
-			
+
 			r_out_sum -= stackIn.r;
 			g_out_sum -= stackIn.g;
 			b_out_sum -= stackIn.b;
 			a_out_sum -= stackIn.a;
-			
-			p =  ( yw + ( ( p = x + radius + 1 ) < widthMinus1 ? p : widthMinus1 ) ) << 2;
-			
-			r_in_sum += ( stackIn.r = pixels[p]);
-			g_in_sum += ( stackIn.g = pixels[p+1]);
-			b_in_sum += ( stackIn.b = pixels[p+2]);
-			a_in_sum += ( stackIn.a = pixels[p+3]);
-			
+
+			p = (yw + ((p = x + radius + 1) < widthMinus1 ? p : widthMinus1)) << 2;
+
+			r_in_sum += (stackIn.r = pixels[p]);
+			g_in_sum += (stackIn.g = pixels[p + 1]);
+			b_in_sum += (stackIn.b = pixels[p + 2]);
+			a_in_sum += (stackIn.a = pixels[p + 3]);
+
 			r_sum += r_in_sum;
 			g_sum += g_in_sum;
 			b_sum += b_in_sum;
 			a_sum += a_in_sum;
-			
+
 			stackIn = stackIn.next;
-			
-			r_out_sum += ( pr = stackOut.r );
-			g_out_sum += ( pg = stackOut.g );
-			b_out_sum += ( pb = stackOut.b );
-			a_out_sum += ( pa = stackOut.a );
-			
+
+			r_out_sum += (pr = stackOut.r);
+			g_out_sum += (pg = stackOut.g);
+			b_out_sum += (pb = stackOut.b);
+			a_out_sum += (pa = stackOut.a);
+
 			r_in_sum -= pr;
 			g_in_sum -= pg;
 			b_in_sum -= pb;
 			a_in_sum -= pa;
-			
+
 			stackOut = stackOut.next;
 
 			yi += 4;
@@ -3405,248 +3395,236 @@ function stackBlurCanvasRGBA( id, top_x, top_y, width, height, radius )
 		yw += width;
 	}
 
-	
-	for ( x = 0; x < width; x++ )
-	{
+
+	for (x = 0; x < width; x++) {
 		g_in_sum = b_in_sum = a_in_sum = r_in_sum = g_sum = b_sum = a_sum = r_sum = 0;
-		
+
 		yi = x << 2;
-		r_out_sum = radiusPlus1 * ( pr = pixels[yi]);
-		g_out_sum = radiusPlus1 * ( pg = pixels[yi+1]);
-		b_out_sum = radiusPlus1 * ( pb = pixels[yi+2]);
-		a_out_sum = radiusPlus1 * ( pa = pixels[yi+3]);
-		
+		r_out_sum = radiusPlus1 * (pr = pixels[yi]);
+		g_out_sum = radiusPlus1 * (pg = pixels[yi + 1]);
+		b_out_sum = radiusPlus1 * (pb = pixels[yi + 2]);
+		a_out_sum = radiusPlus1 * (pa = pixels[yi + 3]);
+
 		r_sum += sumFactor * pr;
 		g_sum += sumFactor * pg;
 		b_sum += sumFactor * pb;
 		a_sum += sumFactor * pa;
-		
+
 		stack = stackStart;
-		
-		for( i = 0; i < radiusPlus1; i++ )
-		{
+
+		for (i = 0; i < radiusPlus1; i++) {
 			stack.r = pr;
 			stack.g = pg;
 			stack.b = pb;
 			stack.a = pa;
 			stack = stack.next;
 		}
-		
+
 		yp = width;
-		
-		for( i = 1; i <= radius; i++ )
-		{
-			yi = ( yp + x ) << 2;
-			
-			r_sum += ( stack.r = ( pr = pixels[yi])) * ( rbs = radiusPlus1 - i );
-			g_sum += ( stack.g = ( pg = pixels[yi+1])) * rbs;
-			b_sum += ( stack.b = ( pb = pixels[yi+2])) * rbs;
-			a_sum += ( stack.a = ( pa = pixels[yi+3])) * rbs;
-		   
+
+		for (i = 1; i <= radius; i++) {
+			yi = (yp + x) << 2;
+
+			r_sum += (stack.r = (pr = pixels[yi])) * (rbs = radiusPlus1 - i);
+			g_sum += (stack.g = (pg = pixels[yi + 1])) * rbs;
+			b_sum += (stack.b = (pb = pixels[yi + 2])) * rbs;
+			a_sum += (stack.a = (pa = pixels[yi + 3])) * rbs;
+
 			r_in_sum += pr;
 			g_in_sum += pg;
 			b_in_sum += pb;
 			a_in_sum += pa;
-			
+
 			stack = stack.next;
-		
-			if( i < heightMinus1 )
-			{
+
+			if (i < heightMinus1) {
 				yp += width;
 			}
 		}
-		
+
 		yi = x;
 		stackIn = stackStart;
 		stackOut = stackEnd;
-		for ( y = 0; y < height; y++ )
-		{
+		for (y = 0; y < height; y++) {
 			p = yi << 2;
-			pixels[p+3] = pa = (a_sum * mul_sum) >> shg_sum;
-			if ( pa > 0 )
-			{
+			pixels[p + 3] = pa = (a_sum * mul_sum) >> shg_sum;
+			if (pa > 0) {
 				pa = 255 / pa;
-				pixels[p]   = ((r_sum * mul_sum) >> shg_sum ) * pa;
-				pixels[p+1] = ((g_sum * mul_sum) >> shg_sum ) * pa;
-				pixels[p+2] = ((b_sum * mul_sum) >> shg_sum ) * pa;
+				pixels[p] = ((r_sum * mul_sum) >> shg_sum) * pa;
+				pixels[p + 1] = ((g_sum * mul_sum) >> shg_sum) * pa;
+				pixels[p + 2] = ((b_sum * mul_sum) >> shg_sum) * pa;
 			} else {
-				pixels[p] = pixels[p+1] = pixels[p+2] = 0;
+				pixels[p] = pixels[p + 1] = pixels[p + 2] = 0;
 			}
-			
+
 			r_sum -= r_out_sum;
 			g_sum -= g_out_sum;
 			b_sum -= b_out_sum;
 			a_sum -= a_out_sum;
-		   
+
 			r_out_sum -= stackIn.r;
 			g_out_sum -= stackIn.g;
 			b_out_sum -= stackIn.b;
 			a_out_sum -= stackIn.a;
-			
-			p = ( x + (( ( p = y + radiusPlus1) < heightMinus1 ? p : heightMinus1 ) * width )) << 2;
-			
-			r_sum += ( r_in_sum += ( stackIn.r = pixels[p]));
-			g_sum += ( g_in_sum += ( stackIn.g = pixels[p+1]));
-			b_sum += ( b_in_sum += ( stackIn.b = pixels[p+2]));
-			a_sum += ( a_in_sum += ( stackIn.a = pixels[p+3]));
-		   
+
+			p = (x + (((p = y + radiusPlus1) < heightMinus1 ? p : heightMinus1) * width)) << 2;
+
+			r_sum += (r_in_sum += (stackIn.r = pixels[p]));
+			g_sum += (g_in_sum += (stackIn.g = pixels[p + 1]));
+			b_sum += (b_in_sum += (stackIn.b = pixels[p + 2]));
+			a_sum += (a_in_sum += (stackIn.a = pixels[p + 3]));
+
 			stackIn = stackIn.next;
-			
-			r_out_sum += ( pr = stackOut.r );
-			g_out_sum += ( pg = stackOut.g );
-			b_out_sum += ( pb = stackOut.b );
-			a_out_sum += ( pa = stackOut.a );
-			
+
+			r_out_sum += (pr = stackOut.r);
+			g_out_sum += (pg = stackOut.g);
+			b_out_sum += (pb = stackOut.b);
+			a_out_sum += (pa = stackOut.a);
+
 			r_in_sum -= pr;
 			g_in_sum -= pg;
 			b_in_sum -= pb;
 			a_in_sum -= pa;
-			
+
 			stackOut = stackOut.next;
-			
+
 			yi += width;
 		}
 	}
-	
-	context.putImageData( imageData, top_x, top_y );
-	
+
+	context.putImageData(imageData, top_x, top_y);
+
 }
 
 
-function stackBlurCanvasRGB( id, top_x, top_y, width, height, radius )
-{
-	if ( isNaN(radius) || radius < 1 ) return;
+function stackBlurCanvasRGB(id, top_x, top_y, width, height, radius) {
+	if (isNaN(radius) || radius < 1) return;
 	radius |= 0;
-	
-	var canvas  = document.getElementById( id );
+
+	var canvas = document.getElementById(id);
 	var context = canvas.getContext("2d");
 	var imageData;
-	
+
 	try {
-	  try {
-		imageData = context.getImageData( top_x, top_y, width, height );
-	  } catch(e) {
-	  
-		// NOTE: this part is supposedly only needed if you want to work with local files
-		// so it might be okay to remove the whole try/catch block and just use
-		// imageData = context.getImageData( top_x, top_y, width, height );
 		try {
-			netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
-			imageData = context.getImageData( top_x, top_y, width, height );
-		} catch(e) {
-			alert("Cannot access local image");
-			throw new Error("unable to access local image data: " + e);
-			return;
+			imageData = context.getImageData(top_x, top_y, width, height);
+		} catch (e) {
+
+			// NOTE: this part is supposedly only needed if you want to work with local files
+			// so it might be okay to remove the whole try/catch block and just use
+			// imageData = context.getImageData( top_x, top_y, width, height );
+			try {
+				netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+				imageData = context.getImageData(top_x, top_y, width, height);
+			} catch (e) {
+				alert("Cannot access local image");
+				throw new Error("unable to access local image data: " + e);
+				return;
+			}
 		}
-	  }
-	} catch(e) {
-	  alert("Cannot access image");
-	  throw new Error("unable to access image data: " + e);
+	} catch (e) {
+		alert("Cannot access image");
+		throw new Error("unable to access image data: " + e);
 	}
-			
+
 	var pixels = imageData.data;
-			
+
 	var x, y, i, p, yp, yi, yw, r_sum, g_sum, b_sum,
-	r_out_sum, g_out_sum, b_out_sum,
-	r_in_sum, g_in_sum, b_in_sum,
-	pr, pg, pb, rbs;
-			
+		r_out_sum, g_out_sum, b_out_sum,
+		r_in_sum, g_in_sum, b_in_sum,
+		pr, pg, pb, rbs;
+
 	var div = radius + radius + 1;
 	var w4 = width << 2;
-	var widthMinus1  = width - 1;
+	var widthMinus1 = width - 1;
 	var heightMinus1 = height - 1;
-	var radiusPlus1  = radius + 1;
-	var sumFactor = radiusPlus1 * ( radiusPlus1 + 1 ) / 2;
-	
+	var radiusPlus1 = radius + 1;
+	var sumFactor = radiusPlus1 * (radiusPlus1 + 1) / 2;
+
 	var stackStart = new BlurStack();
 	var stack = stackStart;
-	for ( i = 1; i < div; i++ )
-	{
+	for (i = 1; i < div; i++) {
 		stack = stack.next = new BlurStack();
-		if ( i == radiusPlus1 ) var stackEnd = stack;
+		if (i == radiusPlus1) var stackEnd = stack;
 	}
 	stack.next = stackStart;
 	var stackIn = null;
 	var stackOut = null;
-	
+
 	yw = yi = 0;
-	
+
 	var mul_sum = mul_table[radius];
 	var shg_sum = shg_table[radius];
-	
-	for ( y = 0; y < height; y++ )
-	{
+
+	for (y = 0; y < height; y++) {
 		r_in_sum = g_in_sum = b_in_sum = r_sum = g_sum = b_sum = 0;
-		
-		r_out_sum = radiusPlus1 * ( pr = pixels[yi] );
-		g_out_sum = radiusPlus1 * ( pg = pixels[yi+1] );
-		b_out_sum = radiusPlus1 * ( pb = pixels[yi+2] );
-		
+
+		r_out_sum = radiusPlus1 * (pr = pixels[yi]);
+		g_out_sum = radiusPlus1 * (pg = pixels[yi + 1]);
+		b_out_sum = radiusPlus1 * (pb = pixels[yi + 2]);
+
 		r_sum += sumFactor * pr;
 		g_sum += sumFactor * pg;
 		b_sum += sumFactor * pb;
-		
+
 		stack = stackStart;
-		
-		for( i = 0; i < radiusPlus1; i++ )
-		{
+
+		for (i = 0; i < radiusPlus1; i++) {
 			stack.r = pr;
 			stack.g = pg;
 			stack.b = pb;
 			stack = stack.next;
 		}
-		
-		for( i = 1; i < radiusPlus1; i++ )
-		{
-			p = yi + (( widthMinus1 < i ? widthMinus1 : i ) << 2 );
-			r_sum += ( stack.r = ( pr = pixels[p])) * ( rbs = radiusPlus1 - i );
-			g_sum += ( stack.g = ( pg = pixels[p+1])) * rbs;
-			b_sum += ( stack.b = ( pb = pixels[p+2])) * rbs;
-			
+
+		for (i = 1; i < radiusPlus1; i++) {
+			p = yi + ((widthMinus1 < i ? widthMinus1 : i) << 2);
+			r_sum += (stack.r = (pr = pixels[p])) * (rbs = radiusPlus1 - i);
+			g_sum += (stack.g = (pg = pixels[p + 1])) * rbs;
+			b_sum += (stack.b = (pb = pixels[p + 2])) * rbs;
+
 			r_in_sum += pr;
 			g_in_sum += pg;
 			b_in_sum += pb;
-			
+
 			stack = stack.next;
 		}
-		
-		
+
+
 		stackIn = stackStart;
 		stackOut = stackEnd;
-		for ( x = 0; x < width; x++ )
-		{
-			pixels[yi]   = (r_sum * mul_sum) >> shg_sum;
-			pixels[yi+1] = (g_sum * mul_sum) >> shg_sum;
-			pixels[yi+2] = (b_sum * mul_sum) >> shg_sum;
-			
+		for (x = 0; x < width; x++) {
+			pixels[yi] = (r_sum * mul_sum) >> shg_sum;
+			pixels[yi + 1] = (g_sum * mul_sum) >> shg_sum;
+			pixels[yi + 2] = (b_sum * mul_sum) >> shg_sum;
+
 			r_sum -= r_out_sum;
 			g_sum -= g_out_sum;
 			b_sum -= b_out_sum;
-			
+
 			r_out_sum -= stackIn.r;
 			g_out_sum -= stackIn.g;
 			b_out_sum -= stackIn.b;
-			
-			p =  ( yw + ( ( p = x + radius + 1 ) < widthMinus1 ? p : widthMinus1 ) ) << 2;
-			
-			r_in_sum += ( stackIn.r = pixels[p]);
-			g_in_sum += ( stackIn.g = pixels[p+1]);
-			b_in_sum += ( stackIn.b = pixels[p+2]);
-			
+
+			p = (yw + ((p = x + radius + 1) < widthMinus1 ? p : widthMinus1)) << 2;
+
+			r_in_sum += (stackIn.r = pixels[p]);
+			g_in_sum += (stackIn.g = pixels[p + 1]);
+			b_in_sum += (stackIn.b = pixels[p + 2]);
+
 			r_sum += r_in_sum;
 			g_sum += g_in_sum;
 			b_sum += b_in_sum;
-			
+
 			stackIn = stackIn.next;
-			
-			r_out_sum += ( pr = stackOut.r );
-			g_out_sum += ( pg = stackOut.g );
-			b_out_sum += ( pb = stackOut.b );
-			
+
+			r_out_sum += (pr = stackOut.r);
+			g_out_sum += (pg = stackOut.g);
+			b_out_sum += (pb = stackOut.b);
+
 			r_in_sum -= pr;
 			g_in_sum -= pg;
 			b_in_sum -= pb;
-			
+
 			stackOut = stackOut.next;
 
 			yi += 4;
@@ -3654,98 +3632,92 @@ function stackBlurCanvasRGB( id, top_x, top_y, width, height, radius )
 		yw += width;
 	}
 
-	
-	for ( x = 0; x < width; x++ )
-	{
+
+	for (x = 0; x < width; x++) {
 		g_in_sum = b_in_sum = r_in_sum = g_sum = b_sum = r_sum = 0;
-		
+
 		yi = x << 2;
-		r_out_sum = radiusPlus1 * ( pr = pixels[yi]);
-		g_out_sum = radiusPlus1 * ( pg = pixels[yi+1]);
-		b_out_sum = radiusPlus1 * ( pb = pixels[yi+2]);
-		
+		r_out_sum = radiusPlus1 * (pr = pixels[yi]);
+		g_out_sum = radiusPlus1 * (pg = pixels[yi + 1]);
+		b_out_sum = radiusPlus1 * (pb = pixels[yi + 2]);
+
 		r_sum += sumFactor * pr;
 		g_sum += sumFactor * pg;
 		b_sum += sumFactor * pb;
-		
+
 		stack = stackStart;
-		
-		for( i = 0; i < radiusPlus1; i++ )
-		{
+
+		for (i = 0; i < radiusPlus1; i++) {
 			stack.r = pr;
 			stack.g = pg;
 			stack.b = pb;
 			stack = stack.next;
 		}
-		
+
 		yp = width;
-		
-		for( i = 1; i <= radius; i++ )
-		{
-			yi = ( yp + x ) << 2;
-			
-			r_sum += ( stack.r = ( pr = pixels[yi])) * ( rbs = radiusPlus1 - i );
-			g_sum += ( stack.g = ( pg = pixels[yi+1])) * rbs;
-			b_sum += ( stack.b = ( pb = pixels[yi+2])) * rbs;
-			
+
+		for (i = 1; i <= radius; i++) {
+			yi = (yp + x) << 2;
+
+			r_sum += (stack.r = (pr = pixels[yi])) * (rbs = radiusPlus1 - i);
+			g_sum += (stack.g = (pg = pixels[yi + 1])) * rbs;
+			b_sum += (stack.b = (pb = pixels[yi + 2])) * rbs;
+
 			r_in_sum += pr;
 			g_in_sum += pg;
 			b_in_sum += pb;
-			
+
 			stack = stack.next;
-		
-			if( i < heightMinus1 )
-			{
+
+			if (i < heightMinus1) {
 				yp += width;
 			}
 		}
-		
+
 		yi = x;
 		stackIn = stackStart;
 		stackOut = stackEnd;
-		for ( y = 0; y < height; y++ )
-		{
+		for (y = 0; y < height; y++) {
 			p = yi << 2;
-			pixels[p]   = (r_sum * mul_sum) >> shg_sum;
-			pixels[p+1] = (g_sum * mul_sum) >> shg_sum;
-			pixels[p+2] = (b_sum * mul_sum) >> shg_sum;
-			
+			pixels[p] = (r_sum * mul_sum) >> shg_sum;
+			pixels[p + 1] = (g_sum * mul_sum) >> shg_sum;
+			pixels[p + 2] = (b_sum * mul_sum) >> shg_sum;
+
 			r_sum -= r_out_sum;
 			g_sum -= g_out_sum;
 			b_sum -= b_out_sum;
-			
+
 			r_out_sum -= stackIn.r;
 			g_out_sum -= stackIn.g;
 			b_out_sum -= stackIn.b;
-			
-			p = ( x + (( ( p = y + radiusPlus1) < heightMinus1 ? p : heightMinus1 ) * width )) << 2;
-			
-			r_sum += ( r_in_sum += ( stackIn.r = pixels[p]));
-			g_sum += ( g_in_sum += ( stackIn.g = pixels[p+1]));
-			b_sum += ( b_in_sum += ( stackIn.b = pixels[p+2]));
-			
+
+			p = (x + (((p = y + radiusPlus1) < heightMinus1 ? p : heightMinus1) * width)) << 2;
+
+			r_sum += (r_in_sum += (stackIn.r = pixels[p]));
+			g_sum += (g_in_sum += (stackIn.g = pixels[p + 1]));
+			b_sum += (b_in_sum += (stackIn.b = pixels[p + 2]));
+
 			stackIn = stackIn.next;
-			
-			r_out_sum += ( pr = stackOut.r );
-			g_out_sum += ( pg = stackOut.g );
-			b_out_sum += ( pb = stackOut.b );
-			
+
+			r_out_sum += (pr = stackOut.r);
+			g_out_sum += (pg = stackOut.g);
+			b_out_sum += (pb = stackOut.b);
+
 			r_in_sum -= pr;
 			g_in_sum -= pg;
 			b_in_sum -= pb;
-			
+
 			stackOut = stackOut.next;
-			
+
 			yi += width;
 		}
 	}
-	
-	context.putImageData( imageData, top_x, top_y );
-	
+
+	context.putImageData(imageData, top_x, top_y);
+
 }
 
-function BlurStack()
-{
+function BlurStack() {
 	this.r = 0;
 	this.g = 0;
 	this.b = 0;
@@ -3755,138 +3727,140 @@ function BlurStack()
 // requires: joint.format.svg.js plugin
 // support 3rd party library: canvg - canvg.js, rgbcolor.js, StackBlur.js
 
-joint.dia.Paper.prototype.toDataURL = function(callback, options) {
+joint.dia.Paper.prototype.toDataURL = function (callback, options) {
 
-    // check whether the svg export plugin was loaded.
-    if (typeof this.toSVG !== 'function') throw new Error('The joint.format.svg.js plugin must be loaded.');
+	// check whether the svg export plugin was loaded.
+	if (typeof this.toSVG !== 'function') throw new Error('The joint.format.svg.js plugin must be loaded.');
 
-    // options: type, width, height, quality (works only with type set to 'image/jpeg' or 'image/webp'),
-    // backgroundColor
-    options = options || {};
+	// options: type, width, height, quality (works only with type set to 'image/jpeg' or 'image/webp'),
+	// backgroundColor
+	options = options || {};
 
-    var imageWidth, imageHeight, contentHeight, contentWidth, padding = options.padding || 0;
+	var imageWidth, imageHeight, contentHeight, contentWidth, padding = options.padding || 0;
 
-    if (!options.width || !options.height) {
+	if (!options.width || !options.height) {
 
-	// The raster size wasn't defined. We get the size of the bounding client rect of the viewport instead.
-	var clientRect = this.viewport.getBoundingClientRect();
+		// The raster size wasn't defined. We get the size of the bounding client rect of the viewport instead.
+		var clientRect = this.viewport.getBoundingClientRect();
 
-	// the dimensions of the image content (without padding)
-	contentWidth = clientRect.width || 1;
-	contentHeight = clientRect.height || 1;
+		// the dimensions of the image content (without padding)
+		contentWidth = clientRect.width || 1;
+		contentHeight = clientRect.height || 1;
 
-	// the dimensions of the output image
-	imageWidth = contentWidth + 2*padding;
-	imageHeight = contentHeight + 2*padding;
+		// the dimensions of the output image
+		imageWidth = contentWidth + 2 * padding;
+		imageHeight = contentHeight + 2 * padding;
 
-    } else {
+	} else {
 
-	imageWidth = options.width;
-	imageHeight = options.height;
+		imageWidth = options.width;
+		imageHeight = options.height;
 
-	// The padding value has to be smaller than half a width and half a height.
-	padding = Math.min(padding, imageWidth/2 - 1, imageHeight/2 - 1);
+		// The padding value has to be smaller than half a width and half a height.
+		padding = Math.min(padding, imageWidth / 2 - 1, imageHeight / 2 - 1);
 
-	contentWidth = imageWidth - 2*padding;
-	contentHeight = imageHeight - 2*padding;
-    }
-
-    var img = new Image();
-
-    // Drawing an image into the canvas has to be done after the image was completely loaded.
-    img.onload = function() {
-
-	var dataURL, context, canvas;
-
-	// Helper to create a new canvas.
-	function createCanvas() {
-
-	    canvas = document.createElement('canvas');
-	    canvas.width = imageWidth;
-	    canvas.height = imageHeight;
-
-	    // Draw rectangle of a certain color covering the whole canvas area.
-	    // A JPEG image has black background by default and it might not be desirable.
-	    context = canvas.getContext('2d');
-	    context.fillStyle = options.backgroundColor || 'white';
-	    context.fillRect(0, 0, imageWidth, imageHeight);
-	};
-
-	createCanvas();
-
-	// Draw the image to the canvas with native `drawImage` method.
-	context.drawImage(img, padding, padding, contentWidth, contentHeight);
-
-	// Drawing SVG images can taint our canvas in some browsers. That means we won't be able
-	// to read canvas back as it would fail with `Error: SecurityError: DOM Exception 18`.
-	// See `http://getcontext.net/read/chrome-securityerror-dom-exception-18`.
-	try {
-
-	    // Try to read the content of our canvas.
-	    dataURL = canvas.toDataURL(options.type, options.quality);
-
-	} catch (e) {
-
-	    // The security error was thrown. We have to parse and render the SVG image with
-	    // `canvg` library (https://code.google.com/p/canvg/).
-
-	    if (typeof canvg === 'undefined') {
-
-		// The library is not present.
-		console.error('Canvas tainted. Canvg library required.');
-		return;
-	    }
-
-	    // The canvas was tainted. We need to render a new one. Clearing only the content won't help.
-	    createCanvas();
-
-	    // Draw the SVG with canvg library.
-	    canvg(canvas, svg, {
-
-		ignoreDimensions: true,
-		ignoreClear: true,
-		offsetX: padding,
-		offsetY: padding,
-
-		renderCallback: function() {
-
-		    // Read content of our canvas once again.
-		    dataURL = canvas.toDataURL(options.type, options.quality);
-
-		    // Return dataURL in the given callback.
-		    callback(dataURL);
-		}
-	    });
-
-	    return;
+		contentWidth = imageWidth - 2 * padding;
+		contentHeight = imageHeight - 2 * padding;
 	}
 
-	// Return dataURL in the given callback.
-	callback(dataURL);
-    };
+	var img = new Image();
 
-    var svg = this.toSVG();
+	img.onload = function () {
+		console.log('inside load');
+		var dataURL, context, canvas;
 
-    // A canvas doesn't like width and height to be defined as percentage for some reason. We need to replace it
-    // with desired width and height instead.
-    svg = svg.replace('width="100%"','width="' + contentWidth + '"').replace('height="100%"','height="' + contentHeight + '"');
+		// Helper to create a new canvas.
+		function createCanvas() {
 
-    // An image starts loading when we assign its source.
-    img.src = 'data:image/svg+xml;base64,' + btoa(svg);
+			canvas = document.createElement('canvas');
+			canvas.width = imageWidth;
+			canvas.height = imageHeight;
+
+			// Draw rectangle of a certain color covering the whole canvas area.
+			// A JPEG image has black background by default and it might not be desirable.
+			context = canvas.getContext('2d');
+			context.fillStyle = options.backgroundColor || 'white';
+			context.fillRect(0, 0, imageWidth, imageHeight);
+		};
+
+		createCanvas();
+
+		// Draw the image to the canvas with native `drawImage` method.
+		context.drawImage(img, padding, padding, contentWidth, contentHeight);
+
+		// Drawing SVG images can taint our canvas in some browsers. That means we won't be able
+		// to read canvas back as it would fail with `Error: SecurityError: DOM Exception 18`.
+		// See `http://getcontext.net/read/chrome-securityerror-dom-exception-18`.
+		try {
+
+			// Try to read the content of our canvas.
+			dataURL = canvas.toDataURL(options.type, options.quality);
+
+		} catch (e) {
+
+			// The security error was thrown. We have to parse and render the SVG image with
+			// `canvg` library (https://code.google.com/p/canvg/).
+
+			if (typeof canvg === 'undefined') {
+
+				// The library is not present.
+				console.error('Canvas tainted. Canvg library required.');
+				return;
+			}
+
+			// The canvas was tainted. We need to render a new one. Clearing only the content won't help.
+			createCanvas();
+
+			// Draw the SVG with canvg library.
+			canvg(canvas, svg, {
+
+				ignoreDimensions: true,
+				ignoreClear: true,
+				offsetX: padding,
+				offsetY: padding,
+
+				renderCallback: function () {
+
+					// Read content of our canvas once again.
+					dataURL = canvas.toDataURL(options.type, options.quality);
+
+					// Return dataURL in the given callback.
+					callback(dataURL);
+				}
+			});
+
+			return;
+		}
+
+		// Return dataURL in the given callback.
+		callback(dataURL);
+	};
+	// Drawing an image into the canvas has to be done after the image was completely loaded.
+
+
+	var svg = this.toSVG();
+
+	// A canvas doesn't like width and height to be defined as percentage for some reason. We need to replace it
+	// with desired width and height instead.
+	svg = svg.replace('width="100%"', 'width="' + contentWidth + '"').replace('height="100%"', 'height="' + contentHeight + '"');
+	// console.log('svg: ', svg);
+
+	// An image starts loading when we assign its source.
+	img.src = 'data:image/svg+xml;base64,' + btoa(svg);
 }
 
-joint.dia.Paper.prototype.toPNG = function(callback, options) {
+joint.dia.Paper.prototype.toPNG = function (callback, options) {
 
-    // options: width, height, backgroundColor
-    options = options || {};
-    options.type = 'image/png';
-    this.toDataURL(callback, options);
+	// options: width, height, backgroundColor
+	options = options || {};
+	options.type = 'image/png';
+	this.toDataURL(callback, options);
 }
 
-joint.dia.Paper.prototype.toJPEG = function(callback, options) {
+joint.dia.Paper.prototype.toJPEG = function (callback, options) {
 
-    // options: width, height, backgroundColor, quality
-    options = options || {};
-    options.type = 'image/jpeg';
-    this.toDataURL(callback, options);
+	// options: width, height, backgroundColor, quality
+	options = options || {};
+	options.type = 'image/jpeg';
+	this.toDataURL(callback, options);
 }
