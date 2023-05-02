@@ -10,6 +10,7 @@
 
     <properties>
         <widget.version>0.1.3</widget.version>
+        <java.jdk.version>1.7</java.jdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <directory.root>src/main/java</directory.root>
         <directory.resources>src/main/resources</directory.resources>
@@ -154,6 +155,8 @@
                         <artifactId>maven-compiler-plugin</artifactId>
                         <version>${maven-compiler-plugin.version}</version>
                         <configuration>
+                            <source>${java.jdk.version}</source>
+                            <target>${java.jdk.version}</target>
                             <excludes>
                                 <exclude>${directory.appexclude}</exclude>
                             </excludes>
