@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>jointjs-diagram-builder</artifactId>
     <groupId>com.biit.vaadin</groupId>
-    <version>0.1.3-WIDGET</version>
+    <version>1.0.0-WIDGET</version>
     <packaging>jar</packaging>
     <name>JointJs Diagram Builder for Vaadin</name>
 
