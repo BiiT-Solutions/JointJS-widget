@@ -281,7 +281,15 @@ If you have installed Maven, it will do all hard work for you. Simply execute on
 mvn clean install
 ```
 
-For compiling currently a Vaadin 7 license is needed.
+For compiling no Vaadin 7 license is needed.
+
+## How to create the widget
+
+To create the widget and use it on other pieces of software, run:
+
+```
+mvn clean install -Prelease
+```
 
 ### How to test
 
