@@ -38,14 +38,14 @@
         <snapshotRepository>
             <id>github</id>
             <name>GitHub Packages</name>
-            <url>https://maven.pkg.github.com/BiiT-Solutions/LiferayServiceCommon</url>
+            <url>https://maven.pkg.github.com/BiiT-Solutions/JointJS-widget</url>
         </snapshotRepository>
     </distributionManagement>
 
     <scm>
-        <connection>scm:git:ssh://git@github.com/BiiT-Solutions/LiferayServiceCommon.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/BiiT-Solutions/LiferayServiceCommon.git</developerConnection>
-        <url>https://github.com/BiiT-Solutions/LiferayServiceCommon.git</url>
+        <connection>scm:git:ssh://git@github.com/BiiT-Solutions/JointJS-widget.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/BiiT-Solutions/JointJS-widget.git</developerConnection>
+        <url>https://github.com/BiiT-Solutions/JointJS-widget.git</url>
         <tag>liferay-service-common-0.8.1</tag>
     </scm>
 
